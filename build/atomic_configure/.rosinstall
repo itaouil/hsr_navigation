@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/hrl/catkin_ws/src/hsr_planner/build/devel/setup.sh

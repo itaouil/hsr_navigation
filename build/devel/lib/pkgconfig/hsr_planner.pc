@@ -1,0 +1,8 @@
+prefix=/home/hrl/catkin_ws/src/hsr_planner/build/devel
+
+Name: hsr_planner
+Description: Description of hsr_planner
+Version: 0.0.0
+Cflags: -I/home/hrl/catkin_ws/src/hsr_planner/build/devel/include -I/home/hrl/catkin_ws/src/hsr_planner/config -I/home/hrl/catkin_ws/src/hsr_planner/include
+Libs: -L${prefix}/lib 
+Requires: roscpp message_runtime
