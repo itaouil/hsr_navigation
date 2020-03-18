@@ -21,8 +21,12 @@ private:
      * Class methods
      */
 
+    // ROS services
     void loadStaticMap();
     void requestClutterPlan();
+
+    // General
+    void populatePlannerRequest(hsr_planner::ClutterPlannerService &);
 
     /**
      * Class members

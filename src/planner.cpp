@@ -5,6 +5,8 @@
 // General imports
 #include <iostream>
 
+// ROS imports
+#include <geometry_msgs/PoseStamped>
 #include <hsr_planner/ClutterPlannerService.h>
 
 /**
@@ -34,7 +36,7 @@ void Planner::loadStaticMap()
     ros::ServiceClient l_map_service_client;
     l_map_service_client = m_nodeHandle.serviceClient<nav_msgs::GetMap>("map");
 
-    // Service response
+    // Service request
     nav_msgs::GetMap l_srv_map;
 
     // Load map if service is
@@ -57,8 +59,52 @@ void Planner::loadStaticMap()
 void Planner::requestClutterPlan()
 {
     // Create clutter planner client
-    ros::ServiceClient l_clutter_planner_client;
-    l_clutter_planner_client = m_nodeHandle.serviceClient
+    ros::ServiceClient l_client;
+    l_client = m_nodeHandle.serviceClient<hsr_planner::ClutterPlannerService>("clutter_planner");
+
+    // Service request
+    hsr_planner::ClutterPlannerService l_service;
+    populatePlannerRequest(l_service);
+
+    // Call service
+    if (l_client.call(l_service))
+    {
+        //TODO: do something with the path received
+    }
+    else
+    {
+        ROS_ERROR("Failed to call service clutter_planner");
+        return;
+    }
+}
+
+/**
+ * Populate clutter planner request.
+ */
+void Planner::populatePlannerRequest(hsr_planner::ClutterPlannerService &p_service)
+{
+    // Start pose
+    geometry_msgs::PoseStamped l_start;
+    l_start.header.frame_id = "map";
+	l_start.pose.position.x = 1.0;
+	l_start.pose.position.y = 7.5;
+	l_start.pose.orientation.w = 1.0;
+
+    // Goal pose
+    geometry_msgs::PoseStamped l_goal;
+    l_goal.header.frame_id = "map";
+	l_goal.pose.position.x = 1.0;
+	l_goal.pose.position.y = 8.0;
+	l_goal.pose.orientation.w = 0.5;
+
+    // Objects (no object for the moment)
+    std::vector<hsr_planner::ObjectMessage> objects(0);
+
+    // Populate request parameter by reference
+	p_service.request.start = start;
+    p_service.request.goal = goal;
+	p_service.request.obstacles_in = objects;
+    p_service.request.grid = m_occupacyGrid;
 }
 
 int main(int argc, char **argv)
