@@ -1,6 +1,12 @@
 #ifndef PLANNER_HPP_
 #define PLANNER_HPP_
 
+// ROS imports
+#include "ros/ros.h"
+#include <nav_msgs/GetMap.h>
+#include <nav_msgs/OccupancyGrid.h>
+#include <hsr_planner/ClutterPlannerService.h>
+
 class Planner
 {
 public:
@@ -10,15 +16,21 @@ public:
     // Destructor (virtual)
     virtual ~Planner();
 
-// Methods
 private:
-    void dwaPlanning();
-    void aStarPlanning();
-    void loadOccupancyMap();
+    /**
+     * Class methods
+     */
 
-// Members
-private:
-    //TODO: create members 
+    void loadStaticMap();
+    void requestClutterPlan();
+
+    /**
+     * Class members
+     */
+
+    // ROS members
+    ros::NodeHandle m_nodeHandle;
+    nav_msgs::OccupancyGrid m_occupacyGrid;
 };
 
 #endif // PLANNER_HPP_
