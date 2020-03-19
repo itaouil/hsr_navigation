@@ -859,5 +859,20 @@ void ClutterPlanner::cellPathToOutput(std::vector<Cell> &path,
 
 int main(int argc, char **argv)
 {
+	ros::init(argc, argv, "clutter_planner");
+	ros::NodeHandle l_nh;
+
+	// Class object
+	ClutterPlanner l_cp;
+
+	// Create ROS service
+	ros::ServiceServer l_service;
+	l_service = l_nh.advertiseService("clutter_planner_service",
+									  &ClutterPlanner::clutterPlannerSrv,
+									  &l_cp);
+	
+	ROS_INFO("Clutter Planner Service: RUNNING...");
+	ros::spin();
+
 	return 0;
 }

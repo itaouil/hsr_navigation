@@ -5,10 +5,6 @@
 // General imports
 #include <iostream>
 
-// ROS imports
-#include <geometry_msgs/PoseStamped>
-#include <hsr_planner/ClutterPlannerService.h>
-
 /**
  * Default constructor.
  */
@@ -16,6 +12,9 @@ Planner::Planner()
 {
     // Load static map
     loadStaticMap();
+
+    // Request clutter planning
+    requestClutterPlan();
 }
 
 /** 
@@ -28,13 +27,12 @@ Planner::~Planner()
 /**
  * Load static map used
  * as input to the Clutter
- * 
  */
 void Planner::loadStaticMap()
 {
     // Create map service client
     ros::ServiceClient l_map_service_client;
-    l_map_service_client = m_nodeHandle.serviceClient<nav_msgs::GetMap>("map");
+    l_map_service_client = m_nodeHandle.serviceClient<nav_msgs::GetMap>("static_map");
 
     // Service request
     nav_msgs::GetMap l_srv_map;
@@ -44,7 +42,7 @@ void Planner::loadStaticMap()
     if (l_map_service_client.call(l_srv_map))
     {
         ROS_INFO("Map service called successfully");
-        const nav_msgs::OccupancyGrid &m_occupacyGrid(l_srv_map.response.map);
+        m_occupacyGrid = l_srv_map.response.map;
     }
     else
     {
@@ -60,7 +58,7 @@ void Planner::requestClutterPlan()
 {
     // Create clutter planner client
     ros::ServiceClient l_client;
-    l_client = m_nodeHandle.serviceClient<hsr_planner::ClutterPlannerService>("clutter_planner");
+    l_client = m_nodeHandle.serviceClient<hsr_planner::ClutterPlannerService>("clutter_planner_service");
 
     // Service request
     hsr_planner::ClutterPlannerService l_service;
@@ -69,7 +67,7 @@ void Planner::requestClutterPlan()
     // Call service
     if (l_client.call(l_service))
     {
-        //TODO: do something with the path received
+        ROS_INFO("Clutter planner succesful response...");
     }
     else
     {
@@ -98,12 +96,12 @@ void Planner::populatePlannerRequest(hsr_planner::ClutterPlannerService &p_servi
 	l_goal.pose.orientation.w = 0.5;
 
     // Objects (no object for the moment)
-    std::vector<hsr_planner::ObjectMessage> objects(0);
+    std::vector<hsr_planner::ObjectMessage> l_objects(0);
 
     // Populate request parameter by reference
-	p_service.request.start = start;
-    p_service.request.goal = goal;
-	p_service.request.obstacles_in = objects;
+	p_service.request.start = l_start;
+    p_service.request.goal = l_goal;
+	p_service.request.obstacles_in = l_objects;
     p_service.request.grid = m_occupacyGrid;
 }
 

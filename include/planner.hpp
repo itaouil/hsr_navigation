@@ -5,6 +5,7 @@
 #include "ros/ros.h"
 #include <nav_msgs/GetMap.h>
 #include <nav_msgs/OccupancyGrid.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <hsr_planner/ClutterPlannerService.h>
 
 class Planner
