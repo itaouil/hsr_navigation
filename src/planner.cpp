@@ -67,7 +67,11 @@ void Planner::requestClutterPlan()
     // Call service
     if (l_client.call(l_service))
     {
-        ROS_INFO("Clutter planner succesful response...");
+        ROS_INFO("Planner service called successfully");
+        for (int i=0; i<l_service.response.path.size(); i++)
+        {
+            std::cout << "Path: " << i << " " << l_service.response.path[i] << std::endl;
+        }
     }
     else
     {
@@ -84,15 +88,15 @@ void Planner::populatePlannerRequest(hsr_planner::ClutterPlannerService &p_servi
     // Start pose
     geometry_msgs::PoseStamped l_start;
     l_start.header.frame_id = "map";
-	l_start.pose.position.x = 1.0;
-	l_start.pose.position.y = 7.5;
+	l_start.pose.position.x = 0.02;
+	l_start.pose.position.y = 0.06;
 	l_start.pose.orientation.w = 1.0;
 
     // Goal pose
     geometry_msgs::PoseStamped l_goal;
     l_goal.header.frame_id = "map";
-	l_goal.pose.position.x = 1.0;
-	l_goal.pose.position.y = 8.0;
+	l_goal.pose.position.x = 1.69;
+	l_goal.pose.position.y = 0.07;
 	l_goal.pose.orientation.w = 0.5;
 
     // Objects (no object for the moment)
