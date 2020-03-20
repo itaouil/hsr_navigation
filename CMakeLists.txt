@@ -79,7 +79,7 @@ catkin_package(
   INCLUDE_DIRS
     config
     include
-  #LIBRARIES hsr_planner
+  LIBRARIES hsr_planner
   CATKIN_DEPENDS 
     roscpp 
     message_runtime
