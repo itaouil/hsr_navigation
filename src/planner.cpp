@@ -8,10 +8,10 @@
 /**
  * Default constructor.
  */
-Planner::Planner()
+Planner::Planner() 
 {
-    // Create path publisher
-    m_pub = m_nodeHandle.advertise<nav_msgs::Path>("/base_local_path", 1);
+    // Initialize members
+    initialize();
 
     // Load static map
     loadStaticMap();
@@ -25,6 +25,21 @@ Planner::Planner()
  */
 Planner::~Planner()
 {
+}
+
+/**
+ * Initialize members
+ */
+void Planner::initialize()
+{
+    // Create path publisher
+    m_pub = m_nodeHandle.advertise<nav_msgs::Path>("/base_local_path", 1);
+
+    // Create costmap object
+    m_costMap = Costmap2DROS("hsr_costmap", m_tf);
+
+    // Initialize dwa local planner
+    m_dp.initialize("hrs_dwa_planner", &m_tf, &m_costMap);
 }
 
 /**
@@ -74,6 +89,9 @@ void Planner::requestClutterPlan()
 
         // Publish service plan on RVIZ
         publishServicePlan(l_service);
+
+        // Send velocity cmds to the robot
+        dwaTrajectoryControl();
     }
     else
     {
