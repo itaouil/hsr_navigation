@@ -25,9 +25,6 @@ Planner::Planner()
  */
 Planner::~Planner()
 {
-    // Clean shared pointers
-    m_tf.reset();
-    m_costMap.reset();
 }
 
 /**
@@ -39,11 +36,10 @@ void Planner::initialize()
     m_pub = m_nodeHandle.advertise<nav_msgs::Path>("/base_local_path", 1);
 
     // Create shared pointers instances
-    m_tf.reset(new TransformListener(ros::Duration(10)));
-    m_costMap.reset(new Costmap2DROS("hsr_costmap", m_tf));
+    m_costMap = new costmap_2d::Costmap2DROS("hsr_costmap", m_tfBuffer);
 
     // Initialize dwa local planner
-    m_dp.initialize("hrs_dwa_planner", &m_tf, &m_costMap);
+    m_dp.initialize("hrs_dwa_planner", &m_tfBuffer, m_costMap);
 }
 
 /**
@@ -156,7 +152,7 @@ int main(int argc, char **argv)
     ROS_INFO("Created Planner node...");
 
     // Create Planner instance
-    Planner planner = Planner();
+    Planner planner();
 
     // Spin ROS
     ros::spin();
