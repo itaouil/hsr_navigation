@@ -47,11 +47,11 @@ private:
 
     // ROS members
     ros::Publisher m_pub;
-    tf::TransformListener m_tf;
     ros::NodeHandle m_nodeHandle;
-    costmap_2d::Costmap2DROS m_costMap;
     dwa_local_planner::DWAPlannerROS m_dp;
     nav_msgs::OccupancyGrid m_occupacyGrid;
+    boost::shared<tf::TransformListener> m_tf;
+    boost::shared<costmap_2d::Costmap2DROS> m_costMap;
 };
 
 #endif // PLANNER_HPP_
