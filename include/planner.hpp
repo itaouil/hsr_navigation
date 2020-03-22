@@ -28,7 +28,7 @@ private:
     void requestClutterPlan();
     
     // ROS publishers
-    void publishServicePlan(geometry_msgs::PoseStamped &);
+    void publishServicePlan(const hsr_planner::ClutterPlannerService &);
 
     // General
     void populatePlannerRequest(hsr_planner::ClutterPlannerService &);

@@ -73,7 +73,7 @@ void Planner::requestClutterPlan()
         ROS_INFO("Planner service called successfully");
 
         // Publish service plan on RVIZ
-        publishServicePlan(l_service.response.path);
+        publishServicePlan(l_service);
     }
     else
     {
@@ -85,13 +85,13 @@ void Planner::requestClutterPlan()
 /**
  * Publishes the service plan response.
  */
-void Planner::publishServicePlan(geometry_msgs::PoseStamped &p_poses)
+void Planner::publishServicePlan(const hsr_planner::ClutterPlannerService &p_service)
 {
     // Create navigation message
     nav_msgs::Path l_navPath;
 
     // Populate path
-    l_navPath.poses = p_poses;
+    l_navPath.poses = p_service.response.path;
 
     m_pub.publish(l_navPath)
 }
