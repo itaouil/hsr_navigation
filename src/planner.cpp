@@ -20,7 +20,7 @@ Planner::Planner()
     requestClutterPlan();
 }
 
-/** 
+/**
  * Destructor.
  */
 Planner::~Planner()
@@ -91,9 +91,11 @@ void Planner::publishServicePlan(const hsr_planner::ClutterPlannerService &p_ser
     nav_msgs::Path l_navPath;
 
     // Populate path
+    l_navPath.header.stamp = ros::Time::now();;
+    l_navPath.header.frame_id = "map";
     l_navPath.poses = p_service.response.path;
 
-    m_pub.publish(l_navPath)
+    m_pub.publish(l_navPath);
 }
 
 /**
@@ -111,9 +113,9 @@ void Planner::populatePlannerRequest(hsr_planner::ClutterPlannerService &p_servi
     // Goal pose
     geometry_msgs::PoseStamped l_goal;
     l_goal.header.frame_id = "map";
-	l_goal.pose.position.x = 1.69;
-	l_goal.pose.position.y = 0.07;
-	l_goal.pose.orientation.w = 0.5;
+	l_goal.pose.position.x = 6.15;
+	l_goal.pose.position.y = 7;
+	l_goal.pose.orientation.w = 0.00185;
 
     // Objects (no object for the moment)
     std::vector<hsr_planner::ObjectMessage> l_objects(0);
