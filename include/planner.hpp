@@ -3,6 +3,7 @@
 
 // ROS imports
 #include "ros/ros.h"
+#include <nav_msgs/Path.h>
 #include <nav_msgs/GetMap.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -25,6 +26,9 @@ private:
     // ROS services
     void loadStaticMap();
     void requestClutterPlan();
+    
+    // ROS publishers
+    void publishServicePlan(geometry_msgs::PoseStamped &);
 
     // General
     void populatePlannerRequest(hsr_planner::ClutterPlannerService &);
@@ -34,6 +38,7 @@ private:
      */
 
     // ROS members
+    ros::Publisher m_pub;
     ros::NodeHandle m_nodeHandle;
     nav_msgs::OccupancyGrid m_occupacyGrid;
 };

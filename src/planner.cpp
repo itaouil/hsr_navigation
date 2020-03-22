@@ -10,6 +10,9 @@
  */
 Planner::Planner()
 {
+    // Create path publisher
+    m_pub = m_nodeHandle.advertise<nav_msgs::Path>("/base_local_path", 1);
+
     // Load static map
     loadStaticMap();
 
@@ -68,16 +71,29 @@ void Planner::requestClutterPlan()
     if (l_client.call(l_service))
     {
         ROS_INFO("Planner service called successfully");
-        for (int i=0; i<l_service.response.path.size(); i++)
-        {
-            std::cout << "Path: " << i << " " << l_service.response.path[i] << std::endl;
-        }
+
+        // Publish service plan on RVIZ
+        publishServicePlan(l_service.response.path);
     }
     else
     {
         ROS_ERROR("Failed to call service clutter_planner");
         return;
     }
+}
+
+/**
+ * Publishes the service plan response.
+ */
+void Planner::publishServicePlan(geometry_msgs::PoseStamped &p_poses)
+{
+    // Create navigation message
+    nav_msgs::Path l_navPath;
+
+    // Populate path
+    l_navPath.poses = p_poses;
+
+    m_pub.publish(l_navPath)
 }
 
 /**
