@@ -1,5 +1,5 @@
-#ifndef PARAMETERS_H_
-#define PARAMETERS_H_
+#ifndef PLANNER_PARAMETERS_HPP_
+#define PLANNER_PARAMETERS_HPP_
 
 bool BACKUPPLAN = false;
 float ROBOTRADIUS = 0.20;

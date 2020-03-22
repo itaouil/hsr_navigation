@@ -48,6 +48,9 @@
 #include <hsr_planner/ObjectMessage.h>
 #include <hsr_planner/ClutterPlannerService.h>
 
+// Parameters
+#include "planner_parameters.hpp"
+
 enum ObjectClass
 {
   BACKGROUND,
