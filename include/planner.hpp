@@ -2,12 +2,14 @@
 #define PLANNER_HPP_
 
 // General imports
+#include <iostream>
 #include <boost/thread/thread.hpp>
 
 // ROS imports
 #include "ros/ros.h"
 #include <nav_msgs/Path.h>
 #include <nav_msgs/GetMap.h>
+#include <geometry_msgs/Twist.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <costmap_2d/costmap_2d_ros.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -38,8 +40,8 @@ private:
 
     // General
     void initialize();
-    void dwaTrajectoryControl();
     void populatePlannerRequest(hsr_planner::ClutterPlannerService &);
+    void dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &);
 
     /**
      * Class members
@@ -47,6 +49,7 @@ private:
 
     // ROS members
     ros::Publisher m_pub;
+    ros::Publisher m_velPub;
     tf2_ros::Buffer m_tfBuffer;
     ros::NodeHandle m_nodeHandle;
     dwa_local_planner::DWAPlannerROS m_dp;
