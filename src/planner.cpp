@@ -91,7 +91,7 @@ void Planner::requestClutterPlan()
         publishServicePlan(l_service);
 
         // Send velocity cmds to the robot
-        dwaTrajectoryControl();
+        // dwaTrajectoryControl();
     }
     else
     {

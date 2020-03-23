@@ -10,9 +10,11 @@ add_compile_options(-std=c++11)
 find_package(catkin REQUIRED COMPONENTS
   tf
   roscpp
+  tf2_ros
   std_msgs
   nav_msgs
   pluginlib
+  costmap_2d
   geometry_msgs
   actionlib_msgs
   message_generation
