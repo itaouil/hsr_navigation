@@ -2,9 +2,6 @@
 #include "planner.hpp"
 #include "clutter_planner.hpp"
 
-// General imports
-#include <iostream>
-
 /**
  * Default constructor.
  */
@@ -34,6 +31,9 @@ void Planner::initialize()
 {
     // Create path publisher
     m_pub = m_nodeHandle.advertise<nav_msgs::Path>("/base_local_path", 1);
+
+    // Create velocity publisher
+    m_velPub = m_nodeHandle.advertise<geometry_msgs::Twist>("/hsrb/command_velocity", 1);
 
     // Create shared pointers instances
     m_costMap = new costmap_2d::Costmap2DROS("hsr_costmap", m_tfBuffer);
@@ -88,32 +88,16 @@ void Planner::requestClutterPlan()
         ROS_INFO("Planner service called successfully");
 
         // Publish service plan on RVIZ
-        publishServicePlan(l_service);
+        //publishServicePlan(l_service);
 
         // Send velocity cmds to the robot
-        // dwaTrajectoryControl();
+        dwaTrajectoryControl(l_service);
     }
     else
     {
         ROS_ERROR("Failed to call service clutter_planner");
         return;
     }
-}
-
-/**
- * Publishes the service plan response.
- */
-void Planner::publishServicePlan(const hsr_planner::ClutterPlannerService &p_service)
-{
-    // Create navigation message
-    nav_msgs::Path l_navPath;
-
-    // Populate path
-    l_navPath.header.stamp = ros::Time::now();;
-    l_navPath.header.frame_id = "map";
-    l_navPath.poses = p_service.response.path;
-
-    m_pub.publish(l_navPath);
 }
 
 /**
@@ -143,6 +127,50 @@ void Planner::populatePlannerRequest(hsr_planner::ClutterPlannerService &p_servi
     p_service.request.goal = l_goal;
 	p_service.request.obstacles_in = l_objects;
     p_service.request.grid = m_occupacyGrid;
+}
+
+/**
+ * Publishes the service plan response.
+ */
+void Planner::publishServicePlan(const hsr_planner::ClutterPlannerService &p_service)
+{
+    // Create navigation message
+    nav_msgs::Path l_navPath;
+
+    // Populate path
+    l_navPath.header.stamp = ros::Time::now();;
+    l_navPath.header.frame_id = "map";
+    l_navPath.poses = p_service.response.path;
+
+    m_pub.publish(l_navPath);
+}
+
+/**
+ * Compute velocity commands to
+ * be sent to the robot in order
+ * to reach the goal.
+ */
+void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_service)
+{
+    // Check that planner is initialized
+    if (!m_dp.isInitialized())
+    {
+        ROS_ERROR("DWA local planner is not initialized...");
+        return;
+    }
+
+    // Set global plan for local planner
+    m_dp.setPlan(p_service.response.path);
+
+    // Create twist messag to be
+    // populate by the local planner
+    geometry_msgs::Twist cmd_vel;
+
+    // Compute velocity commands
+    m_dp.computeVelocityCommands(cmd_vel);
+
+    // Send commands
+    m_velPub.publish(cmd_vel);
 }
 
 int main(int argc, char **argv)
