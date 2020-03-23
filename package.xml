@@ -38,8 +38,9 @@
   <build_depend>nav_msgs</build_depend>
   <build_depend>costmap_2d</build_depend>
   <build_depend>geometry_msgs</build_depend>
-  <build_depend>message_generation</build_depend>
   <build_depend>eigen_conversions</build_depend>
+  <build_depend>dwa_local_planner</build_depend>
+  <build_depend>message_generation</build_depend>
 
   <!-- Build Export Dependencies -->
   <build_export_depend>roscpp</build_export_depend>
@@ -47,6 +48,7 @@
   <build_export_depend>std_msgs</build_export_depend>
   <build_export_depend>costmap_2d</build_export_depend>
   <build_export_depend>eigen_conversions</build_export_depend>
+  <build_export_depend>dwa_local_planner</build_export_depend>
 
   <!-- Execution Dependencies -->
   <exec_depend>roscpp</exec_depend>
@@ -57,4 +59,5 @@
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>message_runtime</exec_depend>
   <exec_depend>eigen_conversions</exec_depend>
+  <exec_depend>dwa_local_planner</exec_depend>
 </package>

@@ -17,8 +17,9 @@ find_package(catkin REQUIRED COMPONENTS
   costmap_2d
   geometry_msgs
   actionlib_msgs
-  message_generation
   eigen_conversions
+  dwa_local_planner
+  message_generation
 )
 
 ################################################
