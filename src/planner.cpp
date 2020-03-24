@@ -29,6 +29,9 @@ Planner::~Planner()
  */
 void Planner::initialize()
 {
+    // Set servicing thread
+    m_tfBuffer.setUsingDedicatedThread(true);
+
     // Create path publisher
     m_pub = m_nodeHandle.advertise<nav_msgs::Path>("/base_local_path", 1);
 
