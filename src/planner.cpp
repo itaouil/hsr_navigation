@@ -180,7 +180,7 @@ int main(int argc, char **argv)
     ROS_INFO("Created Planner node...");
 
     // Create Planner instance
-    Planner planner();
+    Planner planner;
 
     // Spin ROS
     ros::spin();
