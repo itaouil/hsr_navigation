@@ -5,7 +5,8 @@
 /**
  * Default constructor.
  */
-Planner::Planner() 
+Planner::Planner(tf2_ros::Buffer &p_buffer, tf2_ros::TransformListener &p_tf):
+    m_buffer(p_buffer), m_tf(p_tf)
 {
     // Initialize members
     initialize();
@@ -30,7 +31,7 @@ Planner::~Planner()
 void Planner::initialize()
 {
     // Set servicing thread
-    m_tfBuffer.setUsingDedicatedThread(true);
+    // m_buffer.setUsingDedicatedThread(true);
 
     // Create path publisher
     m_pub = m_nodeHandle.advertise<nav_msgs::Path>("/base_local_path", 1);
@@ -39,10 +40,10 @@ void Planner::initialize()
     m_velPub = m_nodeHandle.advertise<geometry_msgs::Twist>("/hsrb/command_velocity", 1);
 
     // Create shared pointers instances
-    m_costMap = new costmap_2d::Costmap2DROS("hsr_costmap", m_tfBuffer);
+    m_costMap = new costmap_2d::Costmap2DROS("hsr_costmap", m_buffer);
 
     // Initialize dwa local planner
-    m_dp.initialize("hrs_dwa_planner", &m_tfBuffer, m_costMap);
+    m_dp.initialize("hrs_dwa_planner", &m_buffer, m_costMap);
 }
 
 /**
@@ -182,8 +183,12 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "planner");
     ROS_INFO("Created Planner node...");
 
+    // TF2 objects
+    tf2_ros::Buffer l_buffer(ros::Duration(10));
+    tf2_ros::TransformListener l_tf(l_buffer);
+
     // Create Planner instance
-    Planner planner;
+    Planner planner(l_buffer, l_tf);
 
     // Spin ROS
     ros::spin();
