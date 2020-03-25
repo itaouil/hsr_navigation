@@ -109,19 +109,31 @@ void Planner::requestClutterPlan()
  */
 void Planner::populatePlannerRequest(hsr_planner::ClutterPlannerService &p_service)
 {
+    // Get global pose
+    geometry_msgs::PoseStamped l_global_pose;
+    m_costMap->getRobotPose(l_global_pose);
+
     // Start pose
     geometry_msgs::PoseStamped l_start;
     l_start.header.frame_id = "map";
-	l_start.pose.position.x = 0.02;
-	l_start.pose.position.y = 0.06;
-	l_start.pose.orientation.w = 1.0;
+	l_start.pose.position.x = l_global_pose.pose.position.x;
+	l_start.pose.position.y = l_global_pose.pose.position.y;
+    l_start.pose.position.z = l_global_pose.pose.position.z;
+    l_start.pose.orientation.x = l_global_pose.pose.orientation.x;
+    l_start.pose.orientation.y = l_global_pose.pose.orientation.y;
+    l_start.pose.orientation.z = l_global_pose.pose.orientation.z;
+	l_start.pose.orientation.w = l_global_pose.pose.orientation.w;
 
     // Goal pose
     geometry_msgs::PoseStamped l_goal;
     l_goal.header.frame_id = "map";
-	l_goal.pose.position.x = 6.15;
-	l_goal.pose.position.y = 7;
-	l_goal.pose.orientation.w = 0.00185;
+    l_goal.pose.position.x = 0.439;
+	l_goal.pose.position.y = 0.274;
+    l_goal.pose.position.z = 0;
+    l_goal.pose.orientation.x = 0;
+    l_goal.pose.orientation.y = 0;
+    l_goal.pose.orientation.z = 0;
+	l_goal.pose.orientation.w = 0;
 
     // Objects (no object for the moment)
     std::vector<hsr_planner::ObjectMessage> l_objects(0);
@@ -160,21 +172,51 @@ void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_s
     if (!m_dp.isInitialized())
     {
         ROS_ERROR("DWA local planner is not initialized...");
-        return;
     }
 
     // Set global plan for local planner
-    m_dp.setPlan(p_service.response.path);
-
+    if (m_dp.setPlan(p_service.response.path))
+    {
+        ROS_INFO("DWA set plan: SUCCESS");
+    }
+    else
+    {
+        ROS_ERROR("DWA set plan: FAILED");
+    }
+    
     // Create twist messag to be
     // populate by the local planner
-    geometry_msgs::Twist cmd_vel;
+    geometry_msgs::Twist l_cmd_vel;
+    l_cmd_vel.linear.x = 0;
+    l_cmd_vel.linear.y = 0;
+    l_cmd_vel.linear.z = 0;
+    l_cmd_vel.angular.x = 0;
+    l_cmd_vel.angular.y = 0;
+    l_cmd_vel.angular.z = 0;
 
-    // Compute velocity commands
-    m_dp.computeVelocityCommands(cmd_vel);
+    // Get robot pose in the map
+    geometry_msgs::PoseStamped l_global_pose;
+    m_costMap->getRobotPose(l_global_pose);
 
-    // Send commands
-    m_velPub.publish(cmd_vel);
+    // Keep sending commands
+    // until goal is reached
+    while (!m_dp.isGoalReached())
+    {
+        ROS_INFO(m_dp.isGoalReached());
+
+        // Compute velocity commands
+        if (m_dp.dwaComputeVelocityCommands(l_global_pose, l_cmd_vel))
+        {
+            ROS_INFO("DWA compute cmd_vel: SUCCESS");
+        }
+        else
+        {
+            ROS_ERROR("DWA compute cmd_vel: FAILED");
+        }
+
+        // Send commands
+        m_velPub.publish(l_cmd_vel);
+    }
 }
 
 int main(int argc, char **argv)
