@@ -5,8 +5,7 @@
 /**
  * Default constructor.
  */
-Planner::Planner(tf2_ros::Buffer &p_buffer, tf2_ros::TransformListener &p_tf):
-    m_buffer(p_buffer), m_tf(p_tf)
+Planner::Planner()
 {
     // Initialize members
     initialize();
@@ -169,15 +168,12 @@ void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_s
     tf2_ros::Buffer l_buffer(ros::Duration(10));
     tf2_ros::TransformListener l_tf(l_buffer);
 
-    // Create shared pointers instances
+    // Create costmap
     costmap_2d::Costmap2DROS l_costmap("hsr_costmap", l_buffer);
-
-    ROS_INFO("Created costmap...");
 
     // Check that planner is initialized
     if (!m_dp.isInitialized())
     {
-
         // Initialize dwa local planner
         m_dp.initialize("hsr_dwa_planner", &l_buffer, &l_costmap);
 
@@ -212,8 +208,6 @@ void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_s
     // until goal is reached
     while (!m_dp.isGoalReached())
     {
-        ROS_INFO(m_dp.isGoalReached());
-
         // Compute velocity commands
         if (m_dp.computeVelocityCommands(l_cmd_vel))
         {
