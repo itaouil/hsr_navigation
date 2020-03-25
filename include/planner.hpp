@@ -21,7 +21,7 @@ class Planner
 {
 public:
     // Contructor (explicit)
-    explicit Planner(tf2_ros::Buffer&, tf2_ros::TransformListener&);
+    explicit Planner();
 
     // Destructor (virtual)
     virtual ~Planner();
@@ -50,9 +50,7 @@ private:
     // ROS members
     ros::Publisher m_pub;
     ros::Publisher m_velPub;
-    tf2_ros::Buffer& m_buffer;
     ros::NodeHandle m_nodeHandle;
-    tf2_ros::TransformListener& m_tf;
     dwa_local_planner::DWAPlannerROS m_dp;
     nav_msgs::OccupancyGrid m_occupacyGrid;
     costmap_2d::Costmap2DROS* m_costMap = nullptr;
