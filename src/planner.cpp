@@ -169,7 +169,7 @@ void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_s
     tf2_ros::TransformListener l_tf(l_buffer);
 
     // Create costmap
-    costmap_2d::Costmap2DROS l_costmap("hsr_costmap", l_buffer);
+    costmap_2d::Costmap2DROS l_costmap("local_costmap", l_buffer);
 
     // Check that planner is initialized
     if (!m_dp.isInitialized())
