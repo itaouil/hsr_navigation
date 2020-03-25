@@ -128,8 +128,8 @@ void Planner::populatePlannerRequest(hsr_planner::ClutterPlannerService &p_servi
     // Goal pose
     geometry_msgs::PoseStamped l_goal;
     l_goal.header.frame_id = "map";
-    l_goal.pose.position.x = 0.439;
-	l_goal.pose.position.y = 0.274;
+    l_goal.pose.position.x = 6.16;
+	l_goal.pose.position.y = 4;
     l_goal.pose.position.z = 0;
     l_goal.pose.orientation.x = 0;
     l_goal.pose.orientation.y = 0;
@@ -201,8 +201,8 @@ void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_s
     while (!m_dp.isGoalReached())
     {
         // Update costmaps
-        m_local->update();
-        m_global->update();
+        m_local->updateMap();
+        m_global->updateMap();
 
         // Compute velocity commands
         if (m_dp.computeVelocityCommands(l_cmd_vel))
