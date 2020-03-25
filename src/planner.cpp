@@ -5,7 +5,8 @@
 /**
  * Default constructor.
  */
-Planner::Planner()
+Planner::Planner(tf2_ros::Buffer &p_buffer, tf2_ros::TransformListener &p_tf):
+    m_buffer(p_buffer), m_tf(p_tf)
 {
     // Initialize members
     initialize();
@@ -22,6 +23,11 @@ Planner::Planner()
  */
 Planner::~Planner()
 {
+    if (m_local)
+        delete m_local;
+    
+    if (m_global)
+        delete m_global;
 }
 
 /**
@@ -30,10 +36,18 @@ Planner::~Planner()
 void Planner::initialize()
 {
     // Create path publisher
-    m_pub = m_nodeHandle.advertise<nav_msgs::Path>("/base_local_path", 1);
+    m_pub = m_nodeHandle.advertise<nav_msgs::Path>("/service_path", 1);
 
     // Create velocity publisher
     m_velPub = m_nodeHandle.advertise<geometry_msgs::Twist>("/hsrb/command_velocity", 1);
+
+    // Initialize costmaps (global and local)
+    m_local = new costmap_2d::Costmap2DROS("local_costmap", m_buffer);
+    m_global = new costmap_2d::Costmap2DROS("global_costmap", m_buffer);
+
+    // Start costmaps
+    m_local->start();
+    m_global->start();
 }
 
 /**
@@ -49,8 +63,7 @@ void Planner::loadStaticMap()
     // Service request
     nav_msgs::GetMap l_srv_map;
 
-    // Load map if service is
-    // successful, otherwise abort
+    // Load map
     if (l_map_service_client.call(l_srv_map))
     {
         ROS_INFO("Map service called successfully");
@@ -81,7 +94,7 @@ void Planner::requestClutterPlan()
         ROS_INFO("Planner service called successfully");
 
         // Publish service plan on RVIZ
-        //publishServicePlan(l_service);
+        publishServicePlan(l_service);
 
         // Send velocity cmds to the robot
         dwaTrajectoryControl(l_service);
@@ -89,7 +102,6 @@ void Planner::requestClutterPlan()
     else
     {
         ROS_ERROR("Failed to call service clutter_planner");
-        return;
     }
 }
 
@@ -99,26 +111,19 @@ void Planner::requestClutterPlan()
 void Planner::populatePlannerRequest(hsr_planner::ClutterPlannerService &p_service)
 {
     // // Get global pose
-    // geometry_msgs::PoseStamped l_global_pose;
-    // m_costMap->getRobotPose(l_global_pose);
+    geometry_msgs::PoseStamped l_global_pose;
+    m_global->getRobotPose(l_global_pose);
 
     // Start pose
     geometry_msgs::PoseStamped l_start;
     l_start.header.frame_id = "map";
-    l_start.pose.position.x = 0;
-	l_start.pose.position.y = 0;
-    l_start.pose.position.z = 0;
-    l_start.pose.orientation.x = 0;
-    l_start.pose.orientation.y = 0;
-    l_start.pose.orientation.z = 0;
-	l_start.pose.orientation.w = 0;
-	// l_start.pose.position.x = l_global_pose.pose.position.x;
-	// l_start.pose.position.y = l_global_pose.pose.position.y;
-    // l_start.pose.position.z = l_global_pose.pose.position.z;
-    // l_start.pose.orientation.x = l_global_pose.pose.orientation.x;
-    // l_start.pose.orientation.y = l_global_pose.pose.orientation.y;
-    // l_start.pose.orientation.z = l_global_pose.pose.orientation.z;
-	// l_start.pose.orientation.w = l_global_pose.pose.orientation.w;
+	l_start.pose.position.x = l_global_pose.pose.position.x;
+	l_start.pose.position.y = l_global_pose.pose.position.y;
+    l_start.pose.position.z = l_global_pose.pose.position.z;
+    l_start.pose.orientation.x = l_global_pose.pose.orientation.x;
+    l_start.pose.orientation.y = l_global_pose.pose.orientation.y;
+    l_start.pose.orientation.z = l_global_pose.pose.orientation.z;
+	l_start.pose.orientation.w = l_global_pose.pose.orientation.w;
 
     // Goal pose
     geometry_msgs::PoseStamped l_goal;
@@ -164,18 +169,11 @@ void Planner::publishServicePlan(const hsr_planner::ClutterPlannerService &p_ser
  */
 void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_service)
 {
-    // TF2 objects
-    tf2_ros::Buffer l_buffer(ros::Duration(10));
-    tf2_ros::TransformListener l_tf(l_buffer);
-
-    // Create costmap
-    costmap_2d::Costmap2DROS l_costmap("local_costmap", l_buffer);
-
     // Check that planner is initialized
     if (!m_dp.isInitialized())
     {
         // Initialize dwa local planner
-        m_dp.initialize("hsr_dwa_planner", &l_buffer, &l_costmap);
+        m_dp.initialize("hsr_dwa_planner", &m_buffer, m_local);
 
         ROS_INFO("DWA has been initialized successfully...");
     }
@@ -193,21 +191,19 @@ void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_s
     // Create twist messag to be
     // populate by the local planner
     geometry_msgs::Twist l_cmd_vel;
-    // l_cmd_vel.linear.x = 0;
-    // l_cmd_vel.linear.y = 0;
-    // l_cmd_vel.linear.z = 0;
-    // l_cmd_vel.angular.x = 0;
-    // l_cmd_vel.angular.y = 0;
-    // l_cmd_vel.angular.z = 0;
 
     // Get robot pose in the map
     geometry_msgs::PoseStamped l_global_pose;
-    l_costmap.getRobotPose(l_global_pose);
+    m_global->getRobotPose(l_global_pose);
 
     // Keep sending commands
     // until goal is reached
     while (!m_dp.isGoalReached())
     {
+        // Update costmaps
+        m_local->update();
+        m_global->update();
+
         // Compute velocity commands
         if (m_dp.computeVelocityCommands(l_cmd_vel))
         {
@@ -229,8 +225,12 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "planner");
     ROS_INFO("Created Planner node...");
 
+    // TF2 objects
+    tf2_ros::Buffer l_buffer(ros::Duration(10));
+    tf2_ros::TransformListener l_tf(l_buffer);
+
     // Create Planner instance
-    Planner planner;
+    Planner planner(l_buffer, l_tf);
 
     // Spin ROS
     ros::spin();
