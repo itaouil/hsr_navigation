@@ -204,6 +204,7 @@ void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_s
     // Get robot pose in the map
     geometry_msgs::PoseStamped l_global_pose;
     m_global->getRobotPose(l_global_pose);
+    ROS_INFO_STREAM(l_global_pose);
 
     // Keep sending commands
     // until goal is reached
@@ -224,6 +225,7 @@ void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_s
         }
 
         // Send commands
+        ROS_INFO_STREAM(l_cmd_vel);
         m_velPub.publish(l_cmd_vel);
     }
 }
