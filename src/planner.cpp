@@ -36,7 +36,7 @@ Planner::~Planner()
 void Planner::initialize()
 {
     // Create path publisher
-    m_pub = m_nodeHandle.advertise<nav_msgs::Path>("/service_path", 1000);
+    m_pub = m_nodeHandle.advertise<nav_msgs::Path>("/base_local_path", 1000);
 
     // Create velocity publisher
     m_velPub = m_nodeHandle.advertise<geometry_msgs::Twist>("/hsrb/command_velocity", 1000);

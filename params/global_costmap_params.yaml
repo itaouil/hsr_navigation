@@ -4,7 +4,8 @@ global_costmap:
   transform_tolerance: 2.0
   robot_base_frame: "base_link"
 
-plugins: 
-    - {name: static_layer,    type: "costmap_2d::StaticLayer"}
-    - {name: obstacle_layer,  type: "costmap_2d::VoxelLayer"}
-    - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
+  plugins: 
+      - {name: static_layer,    type: "costmap_2d::StaticLayer"}
+      - {name: obstacle_layer,  type: "costmap_2d::VoxelLayer"}
+      - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
+

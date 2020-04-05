@@ -1,17 +1,12 @@
 <launch>
 
-<!-- Run the map server --> 
-<!-- <node name="map_server" pkg="map_server" type="map_server" args="$(find tmc_potential_maps)/maps/mega_web/map.pgm"/> -->
-
-<!--- Run AMCL --> 
-<node pkg="amcl" type="amcl" name="amcl" output="screen" args="$(arg scan)" />
-
 <!-- Launch HSR planner --> 
-<!-- <node pkg="hsr_planner" type="planner" respawn="false" name="hsr_planner" output="screen">
+<node pkg="hsr_planner" type="planner" respawn="false" name="hsr_planner" output="screen">
     <rosparam file="$(find hsr_planner)/params/costmap_common_params.yaml" command="load" ns="global_costmap" /> 
     <rosparam file="$(find hsr_planner)/params/costmap_common_params.yaml" command="load" ns="local_costmap" />
     <rosparam file="$(find hsr_planner)/params/local_costmap_params.yaml" command="load" />
     <rosparam file="$(find hsr_planner)/params/global_costmap_params.yaml" command="load" /> 
-</node> -->
+</node>
 
 </launch>
+
