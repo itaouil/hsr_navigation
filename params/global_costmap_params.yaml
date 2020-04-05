@@ -1,11 +1,11 @@
 global_costmap:
   global_frame: "map"
-  rolling_window: true
   transform_tolerance: 2.0
   robot_base_frame: "base_link"
+  always_send_full_costmap: true
 
   plugins: 
-      - {name: static_layer,    type: "costmap_2d::StaticLayer"}
-      - {name: obstacle_layer,  type: "costmap_2d::VoxelLayer"}
-      - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
+      - {name: static_map,    type: "costmap_2d::StaticLayer"}
+      - {name: obstacles,  type: "costmap_2d::VoxelLayer"}
+      - {name: inflations, type: "costmap_2d::InflationLayer"}
 
