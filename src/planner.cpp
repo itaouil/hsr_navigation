@@ -46,8 +46,8 @@ void Planner::initialize()
     m_global = new costmap_2d::Costmap2DROS("global_costmap", m_buffer);
 
     // Start costmaps
-    //m_local->start();
-    //m_global->start();
+    m_local->start();
+    m_global->start();
 }
 
 /**
@@ -116,29 +116,20 @@ void Planner::populatePlannerRequest(hsr_planner::ClutterPlannerService &p_servi
 
     // Start pose
     geometry_msgs::PoseStamped l_start;
-    // l_start.header.frame_id = "map";
-	// l_start.pose.position.x = l_global_pose.pose.position.x;
-	// l_start.pose.position.y = l_global_pose.pose.position.y;
-    // l_start.pose.position.z = l_global_pose.pose.position.z;
-    // l_start.pose.orientation.x = l_global_pose.pose.orientation.x;
-    // l_start.pose.orientation.y = l_global_pose.pose.orientation.y;
-    // l_start.pose.orientation.z = l_global_pose.pose.orientation.z;
-	// l_start.pose.orientation.w = l_global_pose.pose.orientation.w;
-
     l_start.header.frame_id = "map";
-    l_start.pose.position.x = 0;
-	l_start.pose.position.y = 0;
-    l_start.pose.position.z = 0;
-    l_start.pose.orientation.x = 0;
-    l_start.pose.orientation.y = 0;
-    l_start.pose.orientation.z = 0;
-	l_start.pose.orientation.w = 0;
+	l_start.pose.position.x = l_global_pose.pose.position.x;
+	l_start.pose.position.y = l_global_pose.pose.position.y;
+    l_start.pose.position.z = l_global_pose.pose.position.z;
+    l_start.pose.orientation.x = l_global_pose.pose.orientation.x;
+    l_start.pose.orientation.y = l_global_pose.pose.orientation.y;
+    l_start.pose.orientation.z = l_global_pose.pose.orientation.z;
+	l_start.pose.orientation.w = l_global_pose.pose.orientation.w;
 
     // Goal pose
     geometry_msgs::PoseStamped l_goal;
     l_goal.header.frame_id = "map";
-    l_goal.pose.position.x = 6.16;
-	l_goal.pose.position.y = 4;
+    l_goal.pose.position.x = m_x_unif(m_re);
+	l_goal.pose.position.y = m_y_unif(m_re);
     l_goal.pose.position.z = 0;
     l_goal.pose.orientation.x = 0;
     l_goal.pose.orientation.y = 0;
@@ -211,8 +202,8 @@ void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_s
     while (!m_dp.isGoalReached())
     {
         // Update costmaps
-        // m_local->updateMap();
-        // m_global->updateMap();
+        m_local->updateMap();
+        m_global->updateMap();
 
         // Compute velocity commands
         if (m_dp.computeVelocityCommands(l_cmd_vel))
@@ -228,6 +219,9 @@ void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_s
         ROS_INFO_STREAM(l_cmd_vel);
         m_velPub.publish(l_cmd_vel);
     }
+
+    ROS_INFO("Goal was reached. New pose will be set now...");
+    requestClutterPlan();
 }
 
 int main(int argc, char **argv)

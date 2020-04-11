@@ -2,6 +2,7 @@
 #define PLANNER_HPP_
 
 // General imports
+#include <random>
 #include <iostream>
 #include <boost/thread/thread.hpp>
 
@@ -46,6 +47,11 @@ private:
     /**
      * Class members
      */
+
+    // General members
+    std::default_random_engine m_re;
+    std::uniform_real_distribution<float> m_x_unif(1.18, 6.2);
+    std::uniform_real_distribution<float> m_y_unif(0.44, 6.3);
 
     // ROS members
     ros::Publisher m_pub;
