@@ -50,8 +50,8 @@ private:
 
     // General members
     std::default_random_engine m_re;
-    std::uniform_real_distribution<float> m_x_unif(1.18, 6.2);
-    std::uniform_real_distribution<float> m_y_unif(0.44, 6.3);
+    std::uniform_real_distribution<float> m_x_unif{1, 5.5f};
+    std::uniform_real_distribution<float> m_y_unif{-0.23f, 0.9f};
 
     // ROS members
     ros::Publisher m_pub;

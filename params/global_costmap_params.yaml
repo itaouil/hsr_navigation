@@ -1,11 +1,12 @@
 global_costmap:
-  global_frame: "map"
-  transform_tolerance: 2.0
-  robot_base_frame: "base_link"
-  always_send_full_costmap: true
+  # Set the global and robot frames for the costmap
+  global_frame: map
+  robot_base_frame: base_link
 
-  plugins: 
-      - {name: static_map,    type: "costmap_2d::StaticLayer"}
-      - {name: obstacles,  type: "costmap_2d::VoxelLayer"}
-      - {name: inflations, type: "costmap_2d::InflationLayer"}
+  # Set the update and publish frequency of the costmap
+  update_frequency: 5.0
+  publish_frequency: 0.0
 
+  # We'll use a map served by the map_server to initialize this costmap
+  static_map: true
+  rolling_window: false

@@ -136,6 +136,9 @@ void Planner::populatePlannerRequest(hsr_planner::ClutterPlannerService &p_servi
     l_goal.pose.orientation.z = 0;
 	l_goal.pose.orientation.w = 0;
 
+    ROS_INFO_STREAM(l_start);
+    ROS_INFO_STREAM(l_goal);
+
     // Objects (no object for the moment)
     std::vector<hsr_planner::ObjectMessage> l_objects(0);
 
@@ -216,7 +219,7 @@ void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_s
         }
 
         // Send commands
-        ROS_INFO_STREAM(l_cmd_vel);
+        //ROS_INFO_STREAM(l_cmd_vel);
         m_velPub.publish(l_cmd_vel);
     }
 
