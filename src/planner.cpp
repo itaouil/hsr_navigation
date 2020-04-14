@@ -224,6 +224,8 @@ void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_s
         // Send commands
         ROS_INFO_STREAM(l_cmd_vel);
         m_velPub.publish(l_cmd_vel);
+
+        ros::spinOnce();
     }
 
     ROS_INFO("Goal was reached. New pose will be set now...");
