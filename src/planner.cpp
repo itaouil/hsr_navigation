@@ -36,13 +36,13 @@ Planner::~Planner()
 void Planner::initialize()
 {
     // Subscriber to global costmap
-    m_sub = m_nodeHandle.subscribe("/hsr_planner/global_costmap/costmap", 
-                                   1,
+    m_sub = m_nodeHandle.subscribe<nav_msgs::OccupancyGrid>("/hsr_planner/global_costmap/costmap", 
+                                   1000,
                                    &Planner::setGlobalCostmap,
                                    this);
 
     // Create velocity publisher (DWA)
-    m_velPub = m_nodeHandle.advertise<geometry_msgs::Twist>("/hsrb/command_velocity", 1);
+    m_velPub = m_nodeHandle.advertise<geometry_msgs::Twist>("/hsrb/command_velocity", 1000);
 
     // Initialize costmaps (global and local)
     m_local = new costmap_2d::Costmap2DROS("local_costmap", m_buffer);
@@ -155,9 +155,9 @@ void Planner::populatePlannerRequest(hsr_planner::ClutterPlannerService &p_servi
     else
     {
         ROS_INFO("Using Global Costmap for planning");
-        m_mtx.lock()
+        ROS_INFO_STREAM(m_globalCostmap.header);
+        ROS_INFO_STREAM(m_globalCostmap.info);
         p_service.request.grid = m_globalCostmap;
-        m_mtx.unlock();
     }
 }
 
@@ -194,7 +194,9 @@ void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_s
     // Get robot pose in the map
     geometry_msgs::PoseStamped l_global_pose;
     m_global->getRobotPose(l_global_pose);
-    ROS_INFO_STREAM(l_global_pose);
+
+    // Planner status
+    bool l_completionStatus = true;
 
     // Keep sending commands
     // until goal is reached
@@ -211,19 +213,29 @@ void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_s
         {
             ROS_ERROR("DWA planning failed: obstacle/s on the path.");
 
-            // Re-plan due to obstacle on the way
-            requestClutterPlan(false);
+            // Reset completion status
+            l_completionStatus = false;
+
+            // Break from loop
+            break;
         }
 
         // Send commands
-        // ROS_INFO_STREAM(l_cmd_vel);
+        ROS_INFO_STREAM(l_cmd_vel);
         m_velPub.publish(l_cmd_vel);
 
         ros::spinOnce();
     }
 
-    ROS_INFO("Goal was reached.");
-    // requestClutterPlan();
+    if (l_completionStatus)
+    {
+        ROS_INFO("Goal reached successfully...");
+    }
+    else
+    {
+        ROS_INFO("Obstacle on path encountered... Re-planning.");
+        requestClutterPlan(false);
+    }
 }
 
 int main(int argc, char **argv)

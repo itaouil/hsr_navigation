@@ -49,9 +49,7 @@ private:
     // Setters
     inline void setGlobalCostmap(const nav_msgs::OccupancyGrid p_globalCostmap)
     {
-        m_mtx.lock();
         m_globalCostmap = p_globalCostmap;
-        m_mtx.unlock();
     }
 
     // General members
@@ -61,7 +59,7 @@ private:
     std::uniform_real_distribution<float> m_y_unif{-0.23f, 0.9f};
 
     // ROS members
-    ros::Publisher m_sub;
+    ros::Subscriber m_sub;
     ros::Publisher m_velPub;
     tf2_ros::Buffer &m_buffer;
     ros::NodeHandle m_nodeHandle;

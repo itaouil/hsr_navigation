@@ -30,10 +30,12 @@ raytrace_range: 3.0
 
 robot_radius: 0.215
 
-publish_frequency: 1
+publish_frequency: 5
+
+always_send_full_costmap: true
 
 inflation_layer:
-  inflation_radius: 0.2
+  inflation_radius: 0.1
 
 obstacles_layer:
   observation_sources: laser_scan_sensor
