@@ -54,7 +54,7 @@ private:
     std::uniform_real_distribution<float> m_y_unif{-0.23f, 0.9f};
 
     // ROS members
-    ros::Publisher m_pub;
+    ros::Publisher m_sub;
     ros::Publisher m_velPub;
     tf2_ros::Buffer &m_buffer;
     ros::NodeHandle m_nodeHandle;

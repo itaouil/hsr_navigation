@@ -35,10 +35,9 @@ Planner::~Planner()
  */
 void Planner::initialize()
 {
-    // Create path publisher
-    m_pub = m_nodeHandle.advertise<nav_msgs::Path>("/base_local_path", 1000);
+    // Subscriber to local costmap
 
-    // Create velocity publisher
+    // Create velocity publisher (DWA)
     m_velPub = m_nodeHandle.advertise<geometry_msgs::Twist>("/hsrb/command_velocity", 1000);
 
     // Initialize costmaps (global and local)
@@ -131,16 +130,15 @@ void Planner::populatePlannerRequest(hsr_planner::ClutterPlannerService &p_servi
     // Goal pose
     geometry_msgs::PoseStamped l_goal;
     l_goal.header.frame_id = "map";
-    l_goal.pose.position.x = m_x_unif(m_re);
-	l_goal.pose.position.y = m_y_unif(m_re);
+    // l_goal.pose.position.x = m_x_unif(m_re);
+	// l_goal.pose.position.y = m_y_unif(m_re);
+    l_goal.pose.position.x = 6.17;
+	l_goal.pose.position.y = 2.36;
     l_goal.pose.position.z = 0;
     l_goal.pose.orientation.x = 0;
     l_goal.pose.orientation.y = 0;
     l_goal.pose.orientation.z = 0;
 	l_goal.pose.orientation.w = 0;
-
-    ROS_INFO_STREAM(l_start);
-    ROS_INFO_STREAM(l_goal);
 
     // Objects (no object for the moment)
     std::vector<hsr_planner::ObjectMessage> l_objects(0);
@@ -164,8 +162,6 @@ void Planner::publishServicePlan(const hsr_planner::ClutterPlannerService &p_ser
     l_navPath.header.stamp = ros::Time::now();;
     l_navPath.header.frame_id = "map";
     l_navPath.poses = p_service.response.path;
-
-    m_pub.publish(l_navPath);
 }
 
 /**
@@ -211,25 +207,25 @@ void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_s
         //m_local->updateMap();
         //m_global->updateMap();
 
-        // Compute velocity commands
-        if (m_dp.computeVelocityCommands(l_cmd_vel))
+        // If DWA local planner fails
+        // due to obstacles on the path
+        // re-plan.
+        if (!m_dp.computeVelocityCommands(l_cmd_vel))
         {
-            ROS_INFO("DWA compute cmd_vel: SUCCESS");
-        }
-        else
-        {
-            ROS_ERROR("DWA compute cmd_vel: FAILED");
+            ROS_ERROR("DWA planning failed: obstacle/s on the path.");
+
+            //TODO: Merge costmap and replan/action
         }
 
         // Send commands
-        ROS_INFO_STREAM(l_cmd_vel);
+        // ROS_INFO_STREAM(l_cmd_vel);
         m_velPub.publish(l_cmd_vel);
 
         ros::spinOnce();
     }
 
-    ROS_INFO("Goal was reached. New pose will be set now...");
-    requestClutterPlan();
+    ROS_INFO("Goal was reached.");
+    // requestClutterPlan();
 }
 
 int main(int argc, char **argv)
