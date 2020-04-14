@@ -15,7 +15,7 @@ Planner::Planner(tf2_ros::Buffer &p_buffer, tf2_ros::TransformListener &p_tf):
     loadStaticMap();
 
     // Request clutter planning
-    requestClutterPlan();
+    requestClutterPlan(true);
 }
 
 /**
@@ -35,10 +35,14 @@ Planner::~Planner()
  */
 void Planner::initialize()
 {
-    // Subscriber to local costmap
+    // Subscriber to global costmap
+    m_sub = m_nodeHandle.subscribe("/hsr_planner/global_costmap/costmap", 
+                                   1,
+                                   &Planner::setGlobalCostmap,
+                                   this);
 
     // Create velocity publisher (DWA)
-    m_velPub = m_nodeHandle.advertise<geometry_msgs::Twist>("/hsrb/command_velocity", 1000);
+    m_velPub = m_nodeHandle.advertise<geometry_msgs::Twist>("/hsrb/command_velocity", 1);
 
     // Initialize costmaps (global and local)
     m_local = new costmap_2d::Costmap2DROS("local_costmap", m_buffer);
@@ -77,7 +81,7 @@ void Planner::loadStaticMap()
 /**
  * Requests a clutter plan service.
  */
-void Planner::requestClutterPlan()
+void Planner::requestClutterPlan(const bool &p_useStaticMap)
 {
     // Create clutter planner client
     ros::ServiceClient l_client;
@@ -85,15 +89,12 @@ void Planner::requestClutterPlan()
 
     // Service request
     hsr_planner::ClutterPlannerService l_service;
-    populatePlannerRequest(l_service);
+    populatePlannerRequest(l_service, p_useStaticMap);
 
     // Call service
     if (l_client.call(l_service))
     {
         ROS_INFO("Planner service called successfully");
-
-        // Publish service plan on RVIZ
-        publishServicePlan(l_service);
 
         // Send velocity cmds to the robot
         dwaTrajectoryControl(l_service);
@@ -107,14 +108,12 @@ void Planner::requestClutterPlan()
 /**
  * Populate clutter planner request.
  */
-void Planner::populatePlannerRequest(hsr_planner::ClutterPlannerService &p_service)
+void Planner::populatePlannerRequest(hsr_planner::ClutterPlannerService &p_service,
+                                     const bool &p_useStaticMap)
 {
     // // Get global pose
     geometry_msgs::PoseStamped l_global_pose;
-    geometry_msgs::PoseStamped l_global_pose_local;
     m_global->getRobotPose(l_global_pose);
-    m_local->getRobotPose(l_global_pose_local);
-    ROS_INFO_STREAM(l_global_pose_local);
 
     // Start pose
     geometry_msgs::PoseStamped l_start;
@@ -147,21 +146,19 @@ void Planner::populatePlannerRequest(hsr_planner::ClutterPlannerService &p_servi
 	p_service.request.start = l_start;
     p_service.request.goal = l_goal;
 	p_service.request.obstacles_in = l_objects;
-    p_service.request.grid = m_occupacyGrid;
-}
 
-/**
- * Publishes the service plan response.
- */
-void Planner::publishServicePlan(const hsr_planner::ClutterPlannerService &p_service)
-{
-    // Create navigation message
-    nav_msgs::Path l_navPath;
-
-    // Populate path
-    l_navPath.header.stamp = ros::Time::now();;
-    l_navPath.header.frame_id = "map";
-    l_navPath.poses = p_service.response.path;
+    if (p_useStaticMap) 
+    {
+        ROS_INFO("Using Static Map for planning");
+        p_service.request.grid = m_occupacyGrid;
+    }
+    else
+    {
+        ROS_INFO("Using Global Costmap for planning");
+        m_mtx.lock()
+        p_service.request.grid = m_globalCostmap;
+        m_mtx.unlock();
+    }
 }
 
 /**
@@ -214,7 +211,8 @@ void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_s
         {
             ROS_ERROR("DWA planning failed: obstacle/s on the path.");
 
-            //TODO: Merge costmap and replan/action
+            // Re-plan due to obstacle on the way
+            requestClutterPlan(false);
         }
 
         // Send commands
