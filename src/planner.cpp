@@ -46,8 +46,8 @@ void Planner::initialize()
     m_global = new costmap_2d::Costmap2DROS("global_costmap", m_buffer);
 
     // Start costmaps
-    m_local->start();
-    m_global->start();
+    //m_local->start();
+    //m_global->start();
 }
 
 /**
@@ -112,7 +112,10 @@ void Planner::populatePlannerRequest(hsr_planner::ClutterPlannerService &p_servi
 {
     // // Get global pose
     geometry_msgs::PoseStamped l_global_pose;
+    geometry_msgs::PoseStamped l_global_pose_local;
     m_global->getRobotPose(l_global_pose);
+    m_local->getRobotPose(l_global_pose_local);
+    ROS_INFO_STREAM(l_global_pose_local);
 
     // Start pose
     geometry_msgs::PoseStamped l_start;
@@ -205,8 +208,8 @@ void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_s
     while (!m_dp.isGoalReached())
     {
         // Update costmaps
-        m_local->updateMap();
-        m_global->updateMap();
+        //m_local->updateMap();
+        //m_global->updateMap();
 
         // Compute velocity commands
         if (m_dp.computeVelocityCommands(l_cmd_vel))
@@ -219,7 +222,7 @@ void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_s
         }
 
         // Send commands
-        //ROS_INFO_STREAM(l_cmd_vel);
+        ROS_INFO_STREAM(l_cmd_vel);
         m_velPub.publish(l_cmd_vel);
     }
 

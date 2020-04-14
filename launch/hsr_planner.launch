@@ -5,7 +5,8 @@
     <rosparam file="$(find hsr_planner)/params/costmap_common_params.yaml" command="load" ns="global_costmap" /> 
     <rosparam file="$(find hsr_planner)/params/costmap_common_params.yaml" command="load" ns="local_costmap" />
     <rosparam file="$(find hsr_planner)/params/local_costmap_params.yaml" command="load" />
-    <rosparam file="$(find hsr_planner)/params/global_costmap_params.yaml" command="load" /> 
+    <rosparam file="$(find hsr_planner)/params/global_costmap_params.yaml" command="load" />
+    <rosparam file="$(find hsr_planner)/params/hsr_dwa_planner.yaml" command="load" />
 </node>
 
 </launch>
