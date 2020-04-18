@@ -26,8 +26,8 @@ Planner::~Planner()
     if (m_localCostmap)
         delete m_localCostmap;
     
-    if (m_global)
-        delete m_global;
+    if (m_globalCostmap)
+        delete m_globalCostmap;
 }
 
 /**
@@ -50,6 +50,10 @@ void Planner::initialize()
     // Initialize costmaps (global and local)
     m_localCostmap = new costmap_2d::Costmap2DROS("local_costmap", m_buffer);
     m_globalCostmap = new costmap_2d::Costmap2DROS("global_costmap", m_buffer);
+
+    // Start costmaps
+    m_localCostmap->start();
+    m_globalCostmap->start();
 }
 
 /**
@@ -118,7 +122,7 @@ void Planner::populatePlannerRequest(hsr_planner::ClutterPlannerService &p_servi
 {
     // // Get global pose
     geometry_msgs::PoseStamped l_global_pose;
-    m_global->getRobotPose(l_global_pose);
+    m_globalCostmap->getRobotPose(l_global_pose);
 
     // Start pose
     geometry_msgs::PoseStamped l_start;
@@ -174,30 +178,31 @@ void Planner::populatePlannerRequest(hsr_planner::ClutterPlannerService &p_servi
 void Planner::checkGlobalPath(const nav_msgs::OccupancyGrid p_globalCostmap)
 {
     // Get global costmap
-    Costmap2D *l_globalCostmap = m_globalCostmap->getCostmap();
+    costmap_2d::Costmap2D *l_globalCostmap = m_globalCostmap->getCostmap();
 
     // Map coordinates
-    unsigned int l_mx;
-    unsigned int l_my;
+    int l_mx;
+    int l_my;
 
     // Check if global path is free
     for (auto poseStamped: m_globalPath)
     {
         // World coordinates
-        double l_wx = poseStamped.pose.position.x
-        double l_wy = poseStamped.pose.position.y
+        double l_wx = poseStamped.pose.position.x;
+        double l_wy = poseStamped.pose.position.y;
 
         // Cast from world to map
-        if (!l_globalCostmap->worldToMap(l_wx, l_wy, l_mx, l_my))
-        {
-            if (m_debug) 
-            {
-                ROS_ERROR("Conversion error: from world coordinates to map");
-            }
-        }
+        l_globalCostmap->worldToMapEnforceBounds(l_wx, l_wy, l_mx, l_my);
 
-        // Get cost
-        ROS_INFO("Cell cost: " << l_globalCostmap.getCost(l_mx, l_my));
+        // Get cost (convert to int from unsigned char)
+        int l_cellCost = (int) l_globalCostmap->getCost(l_mx, l_my);
+
+        // Log cost
+        if (l_cellCost > 113)
+        {
+            std::cout << "Collision detected. Need to replan " << std::endl;
+        }
+            
     }
 }
 
@@ -250,7 +255,7 @@ void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_s
         // Send commands
         if (m_debug)
         {
-            ROS_INFO_STREAM(l_cmd_vel);
+            //ROS_INFO_STREAM(l_cmd_vel);
         }
         m_velPub.publish(l_cmd_vel);
 

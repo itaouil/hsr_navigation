@@ -10,7 +10,7 @@ transform_tolerance: 0.3
 always_send_full_costmap: true
 
 inflation_layer:
-  inflation_radius: 0.1
+  inflation_radius: 0.5
 
 obstacles_layer:
   observation_sources: laser_scan_sensor
