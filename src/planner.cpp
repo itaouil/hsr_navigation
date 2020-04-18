@@ -164,8 +164,6 @@ void Planner::populatePlannerRequest(hsr_planner::ClutterPlannerService &p_servi
     else
     {
         ROS_INFO("Using Global Costmap for planning");
-        ROS_INFO_STREAM(m_updatedMap.header);
-        ROS_INFO_STREAM(m_updatedMap.info);
         p_service.request.grid = m_updatedMap;
     }
 }
@@ -200,10 +198,14 @@ void Planner::checkGlobalPath(const nav_msgs::OccupancyGrid p_globalCostmap)
         // Log cost
         if (l_cellCost > 113)
         {
-            std::cout << "Collision detected. Need to replan " << std::endl;
+            ROS_INFO("Collision on the path. Need to replan ");
+            m_replan = true;
+            break;
         }
-            
     }
+
+    // Update map for replan
+    m_updatedMap = p_globalCostmap;
 }
 
 /**
@@ -268,7 +270,12 @@ void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_s
     }
     else if (m_replan)
     {
-        ROS_INFO("Obstacle found on path. Re-planning now...");
+        ROS_INFO("Quitting DWA control for replanning...");
+
+        // Reset replan flag
+        m_replan = false;
+
+        // Request new plan
         requestClutterPlan(false);
     }
 }
