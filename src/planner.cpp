@@ -38,7 +38,7 @@ void Planner::initialize()
     // Subscriber to global costmap
     m_sub = m_nodeHandle.subscribe<nav_msgs::OccupancyGrid>("/hsr_planner/global_costmap/costmap", 
                                    1000,
-                                   &Planner::setGlobalCostmap,
+                                   &Planner::checkGlobalPath,
                                    this);
 
     // Velocity publisher (DWA)
@@ -171,7 +171,7 @@ void Planner::populatePlannerRequest(hsr_planner::ClutterPlannerService &p_servi
  * global plan is collision free
  * based on the updated global costmap.
  */
-void Planner::checkGlobalPath(const nav_msgs::OccupancyGrid &p_globalCostmap)
+void Planner::checkGlobalPath(const nav_msgs::OccupancyGrid p_globalCostmap)
 {
     return;
 }

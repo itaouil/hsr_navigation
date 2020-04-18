@@ -18,6 +18,7 @@
 #include <tf2_ros/transform_listener.h>
 #include <dwa_local_planner/dwa_planner_ros.h>
 #include <hsr_planner/ClutterPlannerService.h>
+#include <hsr_planner/ClutterPlannerServiceResp.h>
 
 class Planner
 {
@@ -39,7 +40,7 @@ private:
 
     // General
     void initialize();
-    void checkGlobalPath(const nav_msgs::OccupancyGrid &)
+    void checkGlobalPath(const nav_msgs::OccupancyGrid);
     void dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &);
     void populatePlannerRequest(hsr_planner::ClutterPlannerService &, const bool &);
 
