@@ -23,8 +23,8 @@ Planner::Planner(tf2_ros::Buffer &p_buffer, tf2_ros::TransformListener &p_tf):
  */
 Planner::~Planner()
 {
-    if (m_local)
-        delete m_local;
+    if (m_localCostmap)
+        delete m_localCostmap;
     
     if (m_global)
         delete m_global;
@@ -48,8 +48,8 @@ void Planner::initialize()
     m_srvPub = m_nodeHandle.advertise<hsr_planner::ClutterPlannerServiceResp>("/hsr_planner/srvResponse", 1000);
 
     // Initialize costmaps (global and local)
-    m_local = new costmap_2d::Costmap2DROS("local_costmap", m_buffer);
-    m_global = new costmap_2d::Costmap2DROS("global_costmap", m_buffer);
+    m_localCostmap = new costmap_2d::Costmap2DROS("local_costmap", m_buffer);
+    m_globalCostmap = new costmap_2d::Costmap2DROS("global_costmap", m_buffer);
 }
 
 /**
@@ -160,9 +160,9 @@ void Planner::populatePlannerRequest(hsr_planner::ClutterPlannerService &p_servi
     else
     {
         ROS_INFO("Using Global Costmap for planning");
-        ROS_INFO_STREAM(m_globalCostmap.header);
-        ROS_INFO_STREAM(m_globalCostmap.info);
-        p_service.request.grid = m_globalCostmap;
+        ROS_INFO_STREAM(m_updatedMap.header);
+        ROS_INFO_STREAM(m_updatedMap.info);
+        p_service.request.grid = m_updatedMap;
     }
 }
 
@@ -173,7 +173,32 @@ void Planner::populatePlannerRequest(hsr_planner::ClutterPlannerService &p_servi
  */
 void Planner::checkGlobalPath(const nav_msgs::OccupancyGrid &p_globalCostmap)
 {
-    return;
+    // Get global costmap
+    Costmap2D *l_globalCostmap = m_globalCostmap->getCostmap();
+
+    // Map coordinates
+    unsigned int l_mx;
+    unsigned int l_my;
+
+    // Check if global path is free
+    for (auto poseStamped: m_globalPath)
+    {
+        // World coordinates
+        double l_wx = poseStamped.pose.position.x
+        double l_wy = poseStamped.pose.position.y
+
+        // Cast from world to map
+        if (!l_globalCostmap->worldToMap(l_wx, l_wy, l_mx, l_my))
+        {
+            if (m_debug) 
+            {
+                ROS_ERROR("Conversion error: from world coordinates to map");
+            }
+        }
+
+        // Get cost
+        ROS_INFO("Cell cost: " << l_globalCostmap.getCost(l_mx, l_my));
+    }
 }
 
 /**
@@ -187,7 +212,7 @@ void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_s
     if (!m_dp.isInitialized())
     {
         // Initialize dwa local planner
-        m_dp.initialize("hsr_dwa_planner", &m_buffer, m_local);
+        m_dp.initialize("hsr_dwa_planner", &m_buffer, m_localCostmap);
 
         ROS_INFO("DWA has been successfully initialized...");
     }
