@@ -12,6 +12,7 @@
 #include <nav_msgs/Path.h>
 #include <nav_msgs/GetMap.h>
 #include <geometry_msgs/Twist.h>
+#include <costmap_2d/costmap_2d.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <costmap_2d/costmap_2d_ros.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -63,11 +64,11 @@ private:
     tf2_ros::Buffer &m_buffer;
     ros::NodeHandle m_nodeHandle;
     tf2_ros::TransformListener &m_tf;
+    nav_msgs::OccupancyGrid m_updatedMap;
     dwa_local_planner::DWAPlannerROS m_dp;
     nav_msgs::OccupancyGrid m_occupacyGrid;
-    nav_msgs::OccupancyGrid m_globalCostmap;
-    costmap_2d::Costmap2DROS* m_local = nullptr;
-    costmap_2d::Costmap2DROS* m_global = nullptr;
+    costmap_2d::Costmap2DROS* m_localCostmap = nullptr;
+    costmap_2d::Costmap2DROS* m_globalCostmap = nullptr;
     std::vector<geometry_msgs::PoseStamped> m_globalPath;
 };
 
