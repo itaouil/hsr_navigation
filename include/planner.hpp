@@ -39,21 +39,18 @@ private:
 
     // General
     void initialize();
-    void populatePlannerRequest(hsr_planner::ClutterPlannerService &, const bool &);
+    void checkGlobalPath(const nav_msgs::OccupancyGrid &)
     void dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &);
+    void populatePlannerRequest(hsr_planner::ClutterPlannerService &, const bool &);
 
     /**
      * Class members
      */
 
-    // Setters
-    inline void setGlobalCostmap(const nav_msgs::OccupancyGrid p_globalCostmap)
-    {
-        m_globalCostmap = p_globalCostmap;
-    }
-
     // General members
     std::mutex m_mtx;
+    bool m_debug = true;
+    bool m_replan = false;
     std::default_random_engine m_re;
     std::uniform_real_distribution<float> m_x_unif{1, 5.5f};
     std::uniform_real_distribution<float> m_y_unif{-0.23f, 0.9f};
@@ -61,6 +58,7 @@ private:
     // ROS members
     ros::Subscriber m_sub;
     ros::Publisher m_velPub;
+    ros::Publisher m_srvPub;
     tf2_ros::Buffer &m_buffer;
     ros::NodeHandle m_nodeHandle;
     tf2_ros::TransformListener &m_tf;
@@ -69,6 +67,7 @@ private:
     nav_msgs::OccupancyGrid m_globalCostmap;
     costmap_2d::Costmap2DROS* m_local = nullptr;
     costmap_2d::Costmap2DROS* m_global = nullptr;
+    std::vector<geometry_msgs::PoseStamped> m_globalPath;
 };
 
 #endif // PLANNER_HPP_

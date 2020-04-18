@@ -41,16 +41,15 @@ void Planner::initialize()
                                    &Planner::setGlobalCostmap,
                                    this);
 
-    // Create velocity publisher (DWA)
+    // Velocity publisher (DWA)
     m_velPub = m_nodeHandle.advertise<geometry_msgs::Twist>("/hsrb/command_velocity", 1000);
+
+    // Service response publisher
+    m_srvPub = m_nodeHandle.advertise<hsr_planner::ClutterPlannerServiceResp>("/hsr_planner/srvResponse", 1000);
 
     // Initialize costmaps (global and local)
     m_local = new costmap_2d::Costmap2DROS("local_costmap", m_buffer);
     m_global = new costmap_2d::Costmap2DROS("global_costmap", m_buffer);
-
-    // Start costmaps
-    //m_local->start();
-    //m_global->start();
 }
 
 /**
@@ -95,6 +94,12 @@ void Planner::requestClutterPlan(const bool &p_useStaticMap)
     if (l_client.call(l_service))
     {
         ROS_INFO("Planner service called successfully");
+
+        // Publish service response
+        m_srvPub.publish(l_service.response);
+
+        // Store computed path
+        m_globalPath = l_service.response.path;
 
         // Send velocity cmds to the robot
         dwaTrajectoryControl(l_service);
@@ -162,6 +167,16 @@ void Planner::populatePlannerRequest(hsr_planner::ClutterPlannerService &p_servi
 }
 
 /**
+ * Check whether the computed
+ * global plan is collision free
+ * based on the updated global costmap.
+ */
+void Planner::checkGlobalPath(const nav_msgs::OccupancyGrid &p_globalCostmap)
+{
+    return;
+}
+
+/**
  * Compute velocity commands to
  * be sent to the robot in order
  * to reach the goal.
@@ -174,7 +189,7 @@ void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_s
         // Initialize dwa local planner
         m_dp.initialize("hsr_dwa_planner", &m_buffer, m_local);
 
-        ROS_INFO("DWA has been initialized successfully...");
+        ROS_INFO("DWA has been successfully initialized...");
     }
 
     // Set global plan for local planner
@@ -187,53 +202,43 @@ void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_s
         ROS_ERROR("DWA set plan: FAILED");
     }
     
-    // Create twist messag to be
-    // populate by the local planner
+    // Twist msg to be populated
+    // by the local planner
     geometry_msgs::Twist l_cmd_vel;
-
-    // Get robot pose in the map
-    geometry_msgs::PoseStamped l_global_pose;
-    m_global->getRobotPose(l_global_pose);
 
     // Planner status
     bool l_completionStatus = true;
 
     // Keep sending commands
     // until goal is reached
-    while (!m_dp.isGoalReached())
+    while (!m_replan && !m_dp.isGoalReached())
     {
-        // Update costmaps
-        //m_local->updateMap();
-        //m_global->updateMap();
-
-        // If DWA local planner fails
-        // due to obstacles on the path
-        // re-plan.
+        // Compute local velocities
         if (!m_dp.computeVelocityCommands(l_cmd_vel))
         {
-            ROS_ERROR("DWA planning failed: obstacle/s on the path.");
-
-            // Reset completion status
-            l_completionStatus = false;
-
-            // Break from loop
-            break;
+            if (m_debug)
+            {
+                ROS_ERROR("DWA velocities computation failed.");
+            }
         }
 
         // Send commands
-        ROS_INFO_STREAM(l_cmd_vel);
+        if (m_debug)
+        {
+            ROS_INFO_STREAM(l_cmd_vel);
+        }
         m_velPub.publish(l_cmd_vel);
 
         ros::spinOnce();
     }
 
-    if (l_completionStatus)
+    if (m_dp.isGoalReached())
     {
-        ROS_INFO("Goal reached successfully...");
+        ROS_INFO("Goal successfully reached...");
     }
-    else
+    else if (m_replan)
     {
-        ROS_INFO("Obstacle on path encountered... Re-planning.");
+        ROS_INFO("Obstacle found on path. Re-planning now...");
         requestClutterPlan(false);
     }
 }
