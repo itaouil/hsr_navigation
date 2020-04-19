@@ -111,6 +111,32 @@ void Planner::requestClutterPlan(const bool &p_useStaticMap)
     else
     {
         ROS_ERROR("Failed to call service clutter_planner");
+
+        if (m_debug)
+        {
+            // Get global costmap
+            costmap_2d::Costmap2D *l_globalCostmap = m_globalCostmap->getCostmap();
+
+            // Map coordinates
+            int l_mx;
+            int l_my;
+
+            // Robot global pose
+            geometry_msgs::PoseStamped l_global_pose;
+            m_globalCostmap->getRobotPose(l_global_pose);
+
+            // World coordinates
+            double l_wx = l_global_pose.pose.position.x;
+            double l_wy = l_global_pose.pose.position.y;
+
+            // Cast from world to map
+            l_globalCostmap->worldToMapEnforceBounds(l_wx, l_wy, l_mx, l_my);
+
+            // Get cost (convert to int from unsigned char)
+            int l_cellCost = (int) l_globalCostmap->getCost(l_mx, l_my);
+
+            std::cout << "Robot Pose Cost " << l_cellCost << std::endl;
+        }
     }
 }
 
