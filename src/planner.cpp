@@ -196,9 +196,10 @@ void Planner::checkGlobalPath(const nav_msgs::OccupancyGrid p_globalCostmap)
         int l_cellCost = (int) l_globalCostmap->getCost(l_mx, l_my);
 
         // Log cost
-        if (l_cellCost > 113)
+        if (l_cellCost > 187)
         {
             ROS_INFO("Collision on the path. Need to replan ");
+            std::cout << l_cellCost << std::endl;
             m_replan = true;
             break;
         }
