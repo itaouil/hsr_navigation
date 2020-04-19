@@ -41,19 +41,18 @@ void Planner::initialize()
                                    &Planner::checkGlobalPath,
                                    this);
 
-    // Velocity publisher (DWA)
+    // DWA planner velocity publisher
     m_velPub = m_nodeHandle.advertise<geometry_msgs::Twist>("/hsrb/command_velocity", 1000);
 
-    // Service response publisher
-    m_srvPub = m_nodeHandle.advertise<hsr_planner::ClutterPlannerServiceResp>("/hsr_planner/srvResponse", 1000);
+    // Clutter planenr request publisher
+    m_srvPub = m_nodeHandle.advertise<hsr_planner::ClutterPlannerServiceReq>("/hsr_planner/srvReq", 1000);
 
     // Initialize costmaps (global and local)
     m_localCostmap = new costmap_2d::Costmap2DROS("local_costmap", m_buffer);
     m_globalCostmap = new costmap_2d::Costmap2DROS("global_costmap", m_buffer);
 
-    // Start costmaps
-    m_localCostmap->start();
-    m_globalCostmap->start();
+    // Initialize dwa local planner
+    m_dp.initialize("hsr_dwa_planner", &m_buffer, m_localCostmap);
 }
 
 /**
@@ -94,13 +93,13 @@ void Planner::requestClutterPlan(const bool &p_useStaticMap)
     hsr_planner::ClutterPlannerService l_service;
     populatePlannerRequest(l_service, p_useStaticMap);
 
+    // Publish service request
+    m_srvPub.publish(l_service);
+
     // Call service
     if (l_client.call(l_service))
     {
         ROS_INFO("Planner service called successfully");
-
-        // Publish service response
-        m_srvPub.publish(l_service.response);
 
         // Store computed path
         m_globalPath = l_service.response.path;
@@ -242,15 +241,6 @@ void Planner::checkGlobalPath(const nav_msgs::OccupancyGrid p_globalCostmap)
  */
 void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_service)
 {
-    // Check that planner is initialized
-    if (!m_dp.isInitialized())
-    {
-        // Initialize dwa local planner
-        m_dp.initialize("hsr_dwa_planner", &m_buffer, m_localCostmap);
-
-        ROS_INFO("DWA has been successfully initialized...");
-    }
-
     // Set global plan for local planner
     if (m_dp.setPlan(p_service.response.path))
     {

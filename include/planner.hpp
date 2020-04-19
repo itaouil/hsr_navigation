@@ -19,7 +19,7 @@
 #include <tf2_ros/transform_listener.h>
 #include <dwa_local_planner/dwa_planner_ros.h>
 #include <hsr_planner/ClutterPlannerService.h>
-#include <hsr_planner/ClutterPlannerServiceResp.h>
+#include <hsr_planner/ClutterPlannerServiceReq.h>
 
 class Planner
 {
