@@ -94,7 +94,7 @@ void Planner::requestClutterPlan(const bool &p_useStaticMap)
     populatePlannerRequest(l_service, p_useStaticMap);
 
     // Publish service request
-    m_srvPub.publish(l_service);
+    m_srvPub.publish(l_service.request);
 
     // Call service
     if (l_client.call(l_service))
