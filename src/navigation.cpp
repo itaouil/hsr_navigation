@@ -53,7 +53,8 @@ void Navigation::initialize()
     message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image> sync(rgb_sub, 
                                                                                    depth_sub, 
                                                                                    10);
-    sync.registerCallback(boost::bind(&Navigation::perceptionCallback, 
+    sync.registerCallback(boost::bind(&Navigation::perceptionCallback,
+                                      this, 
                                       _1, 
                                       _2));
 
