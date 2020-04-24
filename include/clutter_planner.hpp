@@ -45,8 +45,8 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <tf/transform_datatypes.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <hsr_planner/ObjectMessage.h>
-#include <hsr_planner/ClutterPlannerService.h>
+#include <hsr_navigation/ObjectMessage.h>
+#include <hsr_navigation/ClutterPlannerService.h>
 
 // Parameters
 #include "clutter_planner_params.hpp"
@@ -135,8 +135,8 @@ public:
   explicit ClutterPlanner();
   virtual ~ClutterPlanner();
 
-  bool clutterPlannerSrv(hsr_planner::ClutterPlannerService::Request &,
-                         hsr_planner::ClutterPlannerService::Response &);
+  bool clutterPlannerSrv(hsr_navigation::ClutterPlannerService::Request &,
+                         hsr_navigation::ClutterPlannerService::Response &);
 
   void inflateStaticMap();
 
@@ -144,10 +144,10 @@ public:
 
   void getCellInflationVector();
 
-  void getObjectInflationCells(std::vector<hsr_planner::ObjectMessage> &,
+  void getObjectInflationCells(std::vector<hsr_navigation::ObjectMessage> &,
                                std::vector<std::set<std::pair<unsigned int, unsigned int>>> &);
 
-  void createObjectMap(std::vector<hsr_planner::ObjectMessage> &,
+  void createObjectMap(std::vector<hsr_navigation::ObjectMessage> &,
                        std::vector<std::set<std::pair<unsigned int, unsigned int>>> &);
 
   inline unsigned char computeInflationCost(double distance) const
@@ -192,8 +192,8 @@ public:
   inline double heuristic(const Cell &,
                           const Cell &);
 
-  void createOccSemGrid(const hsr_planner::ClutterPlannerService::Request &,
-                        std::vector<hsr_planner::ObjectMessage> &,
+  void createOccSemGrid(const hsr_navigation::ClutterPlannerService::Request &,
+                        std::vector<hsr_navigation::ObjectMessage> &,
                         std::vector<std::set<std::pair<unsigned int, unsigned int>>> &);
 
   void constraintAStar(Cell &,

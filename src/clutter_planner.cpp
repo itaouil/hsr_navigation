@@ -93,8 +93,8 @@ void ClutterPlanner::publishPlan(const std::vector<geometry_msgs::PoseStamped> &
 /**
  *
  */
-bool ClutterPlanner::clutterPlannerSrv(hsr_planner::ClutterPlannerService::Request &req,
-									   hsr_planner::ClutterPlannerService::Response &res)
+bool ClutterPlanner::clutterPlannerSrv(hsr_navigation::ClutterPlannerService::Request &req,
+									   hsr_navigation::ClutterPlannerService::Response &res)
 {
 	// Read the request message
 	// information. This includes
@@ -168,10 +168,10 @@ bool ClutterPlanner::clutterPlannerSrv(hsr_planner::ClutterPlannerService::Reque
 	inflateStaticMap();
 
 	// Read obstacles found during the path planning
-	std::vector<hsr_planner::ObjectMessage> objects = req.obstacles_in;
+	std::vector<hsr_navigation::ObjectMessage> objects = req.obstacles_in;
 	ROS_INFO("CLUTTERPLANNER ServerCB Objects In: %zu", objects.size());
 
-	std::vector<hsr_planner::ObjectMessage> objectsMsgOnPath;
+	std::vector<hsr_navigation::ObjectMessage> objectsMsgOnPath;
 
 	getObjectInflationCells(objects, m_objectsInflationCells);
 	createObjectMap(objects, m_objectsInflationCells);
@@ -475,8 +475,8 @@ void ClutterPlanner::getConstraintNeighbors(const Cell &current, std::vector<Cel
 	}
 }
 
-void ClutterPlanner::createOccSemGrid(const hsr_planner::ClutterPlannerService::Request &req,
-									  std::vector<hsr_planner::ObjectMessage> &objects,
+void ClutterPlanner::createOccSemGrid(const hsr_navigation::ClutterPlannerService::Request &req,
+									  std::vector<hsr_navigation::ObjectMessage> &objects,
 									  std::vector<std::set<std::pair<unsigned int, unsigned int>>> &objectsInflationCells)
 {
 	//	m_colorImg = cv::Mat(m_height, m_width, CV_8UC3, cv::Scalar(255, 255, 255));
@@ -545,7 +545,7 @@ void ClutterPlanner::createOccSemGrid(const hsr_planner::ClutterPlannerService::
  * Updates the map costs based on
  * which object the cell contains.
  */
-void ClutterPlanner::createObjectMap(std::vector<hsr_planner::ObjectMessage> &objects,
+void ClutterPlanner::createObjectMap(std::vector<hsr_navigation::ObjectMessage> &objects,
 									 std::vector<std::set<std::pair<unsigned int, unsigned int>>> &objectsInflationCells)
 {
 	// Warning
@@ -604,7 +604,7 @@ void ClutterPlanner::createObjectMap(std::vector<hsr_planner::ObjectMessage> &ob
  * of the inflated cells where objects
  * resides.
  */
-void ClutterPlanner::getObjectInflationCells(std::vector<hsr_planner::ObjectMessage> &objects,
+void ClutterPlanner::getObjectInflationCells(std::vector<hsr_navigation::ObjectMessage> &objects,
 											 std::vector<std::set<std::pair<unsigned int, unsigned int>>> &objectsInflationCells)
 {
 	// Loop over objects found on the path

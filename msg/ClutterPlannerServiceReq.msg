@@ -1,4 +1,4 @@
 geometry_msgs/PoseStamped start
 geometry_msgs/PoseStamped goal
 nav_msgs/OccupancyGrid grid
-hsr_planner/ObjectMessage[] obstacles_in
+hsr_navigation/ObjectMessage[] obstacles_in
