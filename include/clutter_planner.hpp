@@ -49,7 +49,7 @@
 #include <hsr_planner/ClutterPlannerService.h>
 
 // Parameters
-#include "planner_parameters.hpp"
+#include "clutter_planner_params.hpp"
 
 enum ObjectClass
 {

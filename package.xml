@@ -2,8 +2,8 @@
 <package format="2">
   <license>BSD</license>
   <version>0.0.0</version>
-  <name>hsr_planner</name>
-  <description>The hsr_planner package</description>
+  <name>hsr_navigation</name>
+  <description>Navigation package for the HSR robot by Toyota.</description>
   <maintainer email="itaouil95@gmail.com">Ilyass Taouil</maintainer>
 
   <!-- The *depend tags are used to specify dependencies -->

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(hsr_planner)
+project(hsr_navigation)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
@@ -83,7 +83,7 @@ catkin_package(
   INCLUDE_DIRS
     config
     include
-  LIBRARIES hsr_planner
+  LIBRARIES hsr_navigation
   CATKIN_DEPENDS 
     roscpp 
     message_runtime
@@ -103,8 +103,8 @@ include_directories(
 )
 
 ## Declare a C++ executable
-add_executable(planner src/planner.cpp)
-target_link_libraries(planner ${catkin_LIBRARIES})
+add_executable(navigation src/navigation.cpp)
+target_link_libraries(navigation ${catkin_LIBRARIES})
 
 add_executable(clutter_planner src/clutter_planner.cpp)
 target_link_libraries(clutter_planner ${catkin_LIBRARIES})

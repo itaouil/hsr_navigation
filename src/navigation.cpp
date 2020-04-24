@@ -1,11 +1,11 @@
 // Header files
-#include "planner.hpp"
+#include "navigation.hpp"
 #include "clutter_planner.hpp"
 
 /**
  * Default constructor.
  */
-Planner::Planner(tf2_ros::Buffer &p_buffer, tf2_ros::TransformListener &p_tf):
+Navigation::Navigation(tf2_ros::Buffer &p_buffer, tf2_ros::TransformListener &p_tf):
     m_buffer(p_buffer), m_tf(p_tf)
 {
     // Initialize members
@@ -21,7 +21,7 @@ Planner::Planner(tf2_ros::Buffer &p_buffer, tf2_ros::TransformListener &p_tf):
 /**
  * Destructor.
  */
-Planner::~Planner()
+Navigation::~Navigation()
 {
     if (m_localCostmap)
         delete m_localCostmap;
@@ -33,19 +33,29 @@ Planner::~Planner()
 /**
  * Initialize members
  */
-void Planner::initialize()
+void Navigation::initialize()
 {
+    // DWA planner velocity publisher
+    m_velPub = m_nh.advertise<geometry_msgs::Twist>(DWA_PUB_TOPIC, 1);
+
+    // Clutter planner request publisher
+    m_srvPub = m_nh.advertise<hsr_navigation::ClutterPlannerServiceReq>(CP_PUB_TOPIC, 1);
+
     // Subscriber to global costmap
-    m_sub = m_nodeHandle.subscribe<nav_msgs::OccupancyGrid>("/hsr_planner/global_costmap/costmap", 
-                                   1000,
-                                   &Planner::checkGlobalPath,
+    m_costSub = m_nh.subscribe<nav_msgs::OccupancyGrid>(GC_SUB_TOPIC, 
+                                   1,
+                                   &Navigation::checkGlobalPath,
                                    this);
 
-    // DWA planner velocity publisher
-    m_velPub = m_nodeHandle.advertise<geometry_msgs::Twist>("/hsrb/command_velocity", 1000);
-
-    // Clutter planenr request publisher
-    m_srvPub = m_nodeHandle.advertise<hsr_planner::ClutterPlannerServiceReq>("/hsr_planner/srvReq", 1000);
+    // Synchronize RGB and Depth subscribers
+    message_filters::Subscriber<sensor_msgs::Image> rgb_sub(m_nh, RGB_SUB_TOPIC, 1);
+    message_filters::Subscriber<sensor_msgs::Image> depth_sub(m_nh, DEPTH_SUB_TOPIC, 1);
+    message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image> sync(rgb_sub, 
+                                                                                   depth_sub, 
+                                                                                   10);
+    sync.registerCallback(boost::bind(&Navigation::perceptionCallback, 
+                                      _1, 
+                                      _2));
 
     // Initialize costmaps (global and local)
     m_localCostmap = new costmap_2d::Costmap2DROS("local_costmap", m_buffer);
@@ -59,11 +69,11 @@ void Planner::initialize()
  * Load static map used
  * as input to the Clutter
  */
-void Planner::loadStaticMap()
+void Navigation::loadStaticMap()
 {
     // Create map service client
     ros::ServiceClient l_map_service_client;
-    l_map_service_client = m_nodeHandle.serviceClient<nav_msgs::GetMap>("static_map");
+    l_map_service_client = m_nh.serviceClient<nav_msgs::GetMap>("static_map");
 
     // Service request
     nav_msgs::GetMap l_srv_map;
@@ -83,14 +93,14 @@ void Planner::loadStaticMap()
 /**
  * Requests a clutter plan service.
  */
-void Planner::requestClutterPlan(const bool &p_useStaticMap)
+void Navigation::requestClutterPlan(const bool &p_useStaticMap)
 {
     // Create clutter planner client
     ros::ServiceClient l_client;
-    l_client = m_nodeHandle.serviceClient<hsr_planner::ClutterPlannerService>("clutter_planner_service");
+    l_client = m_nh.serviceClient<hsr_navigation::ClutterPlannerService>("clutter_planner_service");
 
     // Service request
-    hsr_planner::ClutterPlannerService l_service;
+    hsr_navigation::ClutterPlannerService l_service;
     populatePlannerRequest(l_service, p_useStaticMap);
 
     // Publish service request
@@ -142,7 +152,7 @@ void Planner::requestClutterPlan(const bool &p_useStaticMap)
 /**
  * Populate clutter planner request.
  */
-void Planner::populatePlannerRequest(hsr_planner::ClutterPlannerService &p_service,
+void Navigation::populatePlannerRequest(hsr_navigation::ClutterPlannerService &p_service,
                                      const bool &p_useStaticMap)
 {
     // // Get global pose
@@ -174,7 +184,7 @@ void Planner::populatePlannerRequest(hsr_planner::ClutterPlannerService &p_servi
 	l_goal.pose.orientation.w = 0;
 
     // Objects (no object for the moment)
-    std::vector<hsr_planner::ObjectMessage> l_objects(0);
+    std::vector<hsr_navigation::ObjectMessage> l_objects(0);
 
     // Populate request parameter by reference
 	p_service.request.start = l_start;
@@ -198,7 +208,7 @@ void Planner::populatePlannerRequest(hsr_planner::ClutterPlannerService &p_servi
  * global plan is collision free
  * based on the updated global costmap.
  */
-void Planner::checkGlobalPath(const nav_msgs::OccupancyGrid p_globalCostmap)
+void Navigation::checkGlobalPath(const nav_msgs::OccupancyGrid p_globalCostmap)
 {
     // Get global costmap
     costmap_2d::Costmap2D *l_globalCostmap = m_globalCostmap->getCostmap();
@@ -221,9 +231,9 @@ void Planner::checkGlobalPath(const nav_msgs::OccupancyGrid p_globalCostmap)
         int l_cellCost = (int) l_globalCostmap->getCost(l_mx, l_my);
 
         // Log cost
-        if (l_cellCost > 187)
+        if (l_cellCost > 253)
         {
-            ROS_INFO("Collision on the path. Need to replan ");
+            ROS_INFO("Obstacle detected on the path. Starting perception...");
             std::cout << l_cellCost << std::endl;
             m_replan = true;
             break;
@@ -234,12 +244,19 @@ void Planner::checkGlobalPath(const nav_msgs::OccupancyGrid p_globalCostmap)
     m_updatedMap = p_globalCostmap;
 }
 
+void Navigation::perceptionCallback(const sensor_msgs::ImageConstPtr& p_rgb, 
+                                 const sensor_msgs::ImageConstPtr& p_depth)
+{
+    //TODO: compute colour mask and extract 3D points
+    return;
+}
+
 /**
  * Compute velocity commands to
  * be sent to the robot in order
  * to reach the goal.
  */
-void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_service)
+void Navigation::dwaTrajectoryControl(const hsr_navigation::ClutterPlannerService &p_service)
 {
     // Set global plan for local planner
     if (m_dp.setPlan(p_service.response.path))
@@ -254,9 +271,6 @@ void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_s
     // Twist msg to be populated
     // by the local planner
     geometry_msgs::Twist l_cmd_vel;
-
-    // Planner status
-    bool l_completionStatus = true;
 
     // Keep sending commands
     // until goal is reached
@@ -300,15 +314,15 @@ void Planner::dwaTrajectoryControl(const hsr_planner::ClutterPlannerService &p_s
 int main(int argc, char **argv)
 {
     // Create ROS node
-    ros::init(argc, argv, "planner");
-    ROS_INFO("Created Planner node...");
+    ros::init(argc, argv, "navigation");
+    ROS_INFO("Created navigation node...");
 
     // TF2 objects
     tf2_ros::Buffer l_buffer(ros::Duration(10));
     tf2_ros::TransformListener l_tf(l_buffer);
 
-    // Create Planner instance
-    Planner planner(l_buffer, l_tf);
+    // Create Navigation instance
+    Navigation navigation(l_buffer, l_tf);
 
     // Spin ROS
     ros::spin();
