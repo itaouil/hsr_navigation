@@ -260,8 +260,35 @@ void Navigation::perceptionCallback(const sensor_msgs::ImageConstPtr& p_rgb,
       ROS_ERROR("cv_bridge exception: %s", e.what());
     }
 
+    // ConverT BGR to HSV
+    cv::Mat l_hsv;
+    cv::cvtColor(m_cvPtr->image, l_hsv, COLOR_BGR2HSV);
+
+    // Red color masks
+    cv::Mat l_mask1;
+    cv::Mat l_mask2;
+
+    // Creating masks to detect the upper and lower red color.
+    cv::inRange(l_hsv, Scalar(0, 120, 70), Scalar(10, 255, 255), l_mask1);
+    cv::inRange(l_hsv, Scalar(170, 120, 70), Scalar(180, 255, 255), l_mask2);
+
+    // Generate final mask
+    l_mask1 = l_mask1 + l_mask2;
+
+    cv::Mat l_kernel = cv::Mat::ones(3,3, cv::CV_32F);
+    cv::morphologyEx(l_mask1, l_mask1, cv::MORPH_OPEN, l_kernel);
+    cv::morphologyEx(l_mask1, l_mask1, cv::MORPH_DILATE, l_kernel);
+
+    // creating an inverted mask to segment out the cloth from the frame
+    cv::bitwise_not(l_mask1, l_mask2);
+    cv::Mat l_output;
+
+    // Segmenting the cloth out of the frame using bitwise and with the inverted mask
+    bitwise_and(m_cvPtr->image, m_cvPtr->image, l_output, l_mask2);
+
     // Update GUI Window
     cv::imshow(OPENCV_WINDOW, m_cvPtr->image);
+    cv::imshow(OPENCV_WINDOW, l_output);
     cv::waitKey(3);
 }
 
