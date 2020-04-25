@@ -2,8 +2,6 @@
 #include "navigation.hpp"
 #include "clutter_planner.hpp"
 
-static const std::string OPENCV_WINDOW = "Image window";
-
 /**
  * Default constructor.
  */
@@ -262,20 +260,20 @@ void Navigation::perceptionCallback(const sensor_msgs::ImageConstPtr& p_rgb,
 
     // ConverT BGR to HSV
     cv::Mat l_hsv;
-    cv::cvtColor(m_cvPtr->image, l_hsv, COLOR_BGR2HSV);
+    cv::cvtColor(m_cvPtr->image, l_hsv, cv::COLOR_BGR2HSV);
 
     // Red color masks
     cv::Mat l_mask1;
     cv::Mat l_mask2;
 
     // Creating masks to detect the upper and lower red color.
-    cv::inRange(l_hsv, Scalar(0, 120, 70), Scalar(10, 255, 255), l_mask1);
-    cv::inRange(l_hsv, Scalar(170, 120, 70), Scalar(180, 255, 255), l_mask2);
+    cv::inRange(l_hsv, cv::Scalar(0, 120, 70), cv::Scalar(10, 255, 255), l_mask1);
+    cv::inRange(l_hsv, cv::Scalar(170, 120, 70), cv::Scalar(180, 255, 255), l_mask2);
 
     // Generate final mask
     l_mask1 = l_mask1 + l_mask2;
 
-    cv::Mat l_kernel = cv::Mat::ones(3,3, cv::CV_32F);
+    cv::Mat l_kernel = cv::Mat::ones(3,3, CV_32F);
     cv::morphologyEx(l_mask1, l_mask1, cv::MORPH_OPEN, l_kernel);
     cv::morphologyEx(l_mask1, l_mask1, cv::MORPH_DILATE, l_kernel);
 
@@ -284,11 +282,11 @@ void Navigation::perceptionCallback(const sensor_msgs::ImageConstPtr& p_rgb,
     cv::Mat l_output;
 
     // Segmenting the cloth out of the frame using bitwise and with the inverted mask
-    bitwise_and(m_cvPtr->image, m_cvPtr->image, l_output, l_mask2);
+    bitwise_and(m_cvPtr->image, m_cvPtr->image, l_output, l_mask1);
 
     // Update GUI Window
-    cv::imshow(OPENCV_WINDOW, m_cvPtr->image);
-    cv::imshow(OPENCV_WINDOW, l_output);
+    cv::imshow("Original Image", m_cvPtr->image);
+    cv::imshow("Mask Image", l_output);
     cv::waitKey(3);
 }
 

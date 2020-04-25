@@ -1,7 +1,7 @@
 <launch>
 
 <!-- Launch HSR navigation node --> 
-<node pkg="hsr_navigation" type="planner" respawn="false" name="hsr_navigation" output="screen">
+<node pkg="hsr_navigation" type="navigation" respawn="false" name="hsr_navigation" output="screen">
     <rosparam file="$(find hsr_navigation)/params/costmap_common_params.yaml" command="load" ns="global_costmap" /> 
     <rosparam file="$(find hsr_navigation)/params/costmap_common_params.yaml" command="load" ns="local_costmap" />
     <rosparam file="$(find hsr_navigation)/params/local_costmap_params.yaml" command="load" />

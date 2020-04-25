@@ -10,7 +10,6 @@ add_compile_options(-std=c++11)
 find_package(catkin REQUIRED COMPONENTS
   tf
   roscpp
-  OpenCV
   tf2_ros
   std_msgs
   nav_msgs
@@ -24,7 +23,9 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
 )
 
-find_package(OpenCV REQUIRED)
+#find_package(OpenCV REQUIRED)
+set(OpenCV_LIBS opencv_core opencv_imgproc opencv_calib3d opencv_video opencv_features2d opencv_ml opencv_highgui)
+
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -104,12 +105,11 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${Eigen3_INCLUDE_DIRS}
-  ${OpenCV_INCLUDE_DIRS}
 )
 
 ## Declare a C++ executable
 add_executable(navigation src/navigation.cpp)
-target_link_libraries(navigation ${catkin_LIBRARIES} ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(navigation ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 add_executable(clutter_planner src/clutter_planner.cpp)
 target_link_libraries(clutter_planner ${catkin_LIBRARIES})
