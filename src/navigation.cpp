@@ -23,11 +23,11 @@ Navigation::Navigation(tf2_ros::Buffer &p_buffer, tf2_ros::TransformListener &p_
  */
 Navigation::~Navigation()
 {
-    if (m_localCostmap)
-        delete m_localCostmap;
+    if (m_localCostmapROS)
+        delete m_localCostmapROS;
     
-    if (m_globalCostmap)
-        delete m_globalCostmap;
+    if (m_globalCostmapROS)
+        delete m_globalCostmapROS;
 }
 
 /**
@@ -35,6 +35,13 @@ Navigation::~Navigation()
  */
 void Navigation::initialize()
 {
+    // Initialize costmaps (global and local)
+    m_localCostmapROS = new costmap_2d::Costmap2DROS("local_costmap", m_buffer);
+    m_globalCostmapROS = new costmap_2d::Costmap2DROS("global_costmap", m_buffer);
+
+    // Initialize dwa local planner
+    m_dp.initialize("hsr_dwa_planner", &m_buffer, m_localCostmapROS);
+
     // DWA planner velocity publisher
     m_velPub = m_nh.advertise<geometry_msgs::Twist>(DWA_PUB_TOPIC, 1);
 
@@ -47,23 +54,21 @@ void Navigation::initialize()
                                    &Navigation::checkGlobalPath,
                                    this);
 
-    // Synchronize RGB and Depth subscribers
-    message_filters::Subscriber<sensor_msgs::Image> rgb_sub(m_nh, RGB_SUB_TOPIC, 1);
-    message_filters::Subscriber<sensor_msgs::Image> depth_sub(m_nh, DEPTH_SUB_TOPIC, 1);
-    message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image> sync(rgb_sub, 
-                                                                                   depth_sub, 
-                                                                                   10);
+    // Synchronize RGB and Depth
+    message_filters::Subscriber<sensor_msgs::Image> rgbSub(m_nh, RGB_SUB_TOPIC, 1);
+    message_filters::Subscriber<sensor_msgs::Image> depthSub(m_nh, DEPTH_SUB_TOPIC, 1);
+    message_filters::Subscriber<sensor_msgs::CameraInfo> camInfo(m_nh, MODEL_SUB_TOPIC, 1);
+    message_filters::TimeSynchronizer<sensor_msgs::Image, 
+                                      sensor_msgs::Image, 
+                                      sensor_msgs::CamerInfo> sync(rgbSub, 
+                                                                   depthSub,
+                                                                   camInfo,
+                                                                   10);
     sync.registerCallback(boost::bind(&Navigation::perceptionCallback,
-                                      this, 
-                                      _1, 
-                                      _2));
-
-    // Initialize costmaps (global and local)
-    m_localCostmap = new costmap_2d::Costmap2DROS("local_costmap", m_buffer);
-    m_globalCostmap = new costmap_2d::Costmap2DROS("global_costmap", m_buffer);
-
-    // Initialize dwa local planner
-    m_dp.initialize("hsr_dwa_planner", &m_buffer, m_localCostmap);
+                                      this,
+                                      _1,
+                                      _2,
+                                      -3));
 }
 
 /**
@@ -124,26 +129,23 @@ void Navigation::requestClutterPlan(const bool &p_useStaticMap)
 
         if (m_debug)
         {
-            // Get global costmap
-            costmap_2d::Costmap2D *l_globalCostmap = m_globalCostmap->getCostmap();
-
             // Map coordinates
             int l_mx;
             int l_my;
 
             // Robot global pose
             geometry_msgs::PoseStamped l_global_pose;
-            m_globalCostmap->getRobotPose(l_global_pose);
+            m_globalCostmapROS->getRobotPose(l_global_pose);
 
             // World coordinates
             double l_wx = l_global_pose.pose.position.x;
             double l_wy = l_global_pose.pose.position.y;
 
             // Cast from world to map
-            l_globalCostmap->worldToMapEnforceBounds(l_wx, l_wy, l_mx, l_my);
+            m_globalCostmap->worldToMapEnforceBounds(l_wx, l_wy, l_mx, l_my);
 
             // Get cost (convert to int from unsigned char)
-            int l_cellCost = (int) l_globalCostmap->getCost(l_mx, l_my);
+            int l_cellCost = (int) m_globalCostmap->getCost(l_mx, l_my);
 
             std::cout << "Robot Pose Cost " << l_cellCost << std::endl;
         }
@@ -154,11 +156,11 @@ void Navigation::requestClutterPlan(const bool &p_useStaticMap)
  * Populate clutter planner request.
  */
 void Navigation::populatePlannerRequest(hsr_navigation::ClutterPlannerService &p_service,
-                                     const bool &p_useStaticMap)
+                                        const bool &p_useStaticMap)
 {
     // // Get global pose
     geometry_msgs::PoseStamped l_global_pose;
-    m_globalCostmap->getRobotPose(l_global_pose);
+    m_globalCostmapROS->getRobotPose(l_global_pose);
 
     // Start pose
     geometry_msgs::PoseStamped l_start;
@@ -211,83 +213,191 @@ void Navigation::populatePlannerRequest(hsr_navigation::ClutterPlannerService &p
  */
 void Navigation::checkGlobalPath(const nav_msgs::OccupancyGrid p_globalCostmap)
 {
-    // Get global costmap
-    costmap_2d::Costmap2D *l_globalCostmap = m_globalCostmap->getCostmap();
+    // Update global costmap
+    m_globalCostmap = m_globalCostmapROS->getCostmap();
 
-    // Map coordinates
-    int l_mx;
-    int l_my;
-
-    // Check if global path is free
-    for (auto poseStamped: m_globalPath)
+    // Only check for obstacle if
+    // action was not commanded by
+    // new clutter planner plan
+    if (!m_action)
     {
-        // World coordinates
-        double l_wx = poseStamped.pose.position.x;
-        double l_wy = poseStamped.pose.position.y;
+        // Map coordinates
+        int l_mx;
+        int l_my;
 
-        // Cast from world to map
-        l_globalCostmap->worldToMapEnforceBounds(l_wx, l_wy, l_mx, l_my);
-
-        // Get cost (convert to int from unsigned char)
-        int l_cellCost = (int) l_globalCostmap->getCost(l_mx, l_my);
-
-        // Log cost
-        if (l_cellCost > 253)
+        // Check if global path is free
+        for (auto poseStamped: m_globalPath)
         {
-            ROS_INFO("Obstacle detected on the path. Starting perception...");
-            std::cout << l_cellCost << std::endl;
-            m_replan = true;
-            break;
-        }
-    }
+            // World coordinates
+            double l_wx = poseStamped.pose.position.x;
+            double l_wy = poseStamped.pose.position.y;
 
-    // Update map for replan
-    m_updatedMap = p_globalCostmap;
+            // Cast from world to map
+            m_globalCostmap->worldToMapEnforceBounds(l_wx, l_wy, l_mx, l_my);
+
+            // Get cost (convert to int from unsigned char)
+            int l_cellCost = (int) m_globalCostmap->getCost(l_mx, l_my);
+
+            // Log cost
+            if (l_cellCost > 253)
+            {
+                ROS_INFO("Obstacle detected on the path.");
+                m_replan = true;
+                break;
+            }
+        }
+
+        // Update map for replan
+        m_updatedMap = p_globalCostmap;
+    }
 }
 
 void Navigation::perceptionCallback(const sensor_msgs::ImageConstPtr& p_rgb, 
-                                    const sensor_msgs::ImageConstPtr& p_depth)
+                                    const sensor_msgs::ImageConstPtr& p_depth
+                                    const sensor_msgs::CameraInfoConstPtr& p_camInfo)
 {
-    // Convert ROS image to OpenCV Mat
-    try
+    // Initialise camera model
+    if (!m_modelInitialised)
     {
-      m_cvPtr = cv_bridge::toCvCopy(p_rgb, sensor_msgs::image_encodings::BGR8);
-    }
-    catch (cv_bridge::Exception& e)
-    {
-      ROS_ERROR("cv_bridge exception: %s", e.what());
+        m_phcm.fromCameraInfo(p_camInfo);
+        m_modelInitialised = true;
     }
 
-    // ConverT BGR to HSV
-    cv::Mat l_hsv;
-    cv::cvtColor(m_cvPtr->image, l_hsv, cv::COLOR_BGR2HSV);
+    // Perform computations only
+    // if obstacle was detected
+    // with laser scans
+    if (m_replan)
+    {
+        // Convert ROS image to OpenCV Mat
+        try
+        {
+            m_rgbPtr = cv_bridge::toCvCopy(p_rgb, sensor_msgs::image_encodings::BGR8);
+            m_depthPtr = cv_bridge::toCvCopy(p_depth, sensor_msgs::image_encodings::TYPE_32FC1);
+        }
+        catch (cv_bridge::Exception& e)
+        {
+            ROS_ERROR("cv_bridge exception: %s", e.what());
+        }
 
-    // Red color masks
-    cv::Mat l_mask1;
-    cv::Mat l_mask2;
+        // Convert BGR to HSV
+        cv::Mat l_hsv;
+        cv::cvtColor(m_rgbPtr->image, l_hsv, cv::COLOR_BGR2HSV);
 
-    // Creating masks to detect the upper and lower red color.
-    cv::inRange(l_hsv, cv::Scalar(0, 120, 70), cv::Scalar(10, 255, 255), l_mask1);
-    cv::inRange(l_hsv, cv::Scalar(170, 120, 70), cv::Scalar(180, 255, 255), l_mask2);
+        // Red color masks
+        cv::Mat l_mask1;
+        cv::Mat l_mask2;
+        cv::inRange(l_hsv, cv::Scalar(0, 120, 70), cv::Scalar(10, 255, 255), l_mask1);
+        cv::inRange(l_hsv, cv::Scalar(170, 120, 70), cv::Scalar(180, 255, 255), l_mask2);
 
-    // Generate final mask
-    l_mask1 = l_mask1 + l_mask2;
+        // Generate final mask
+        l_mask = l_mask1 + l_mask2;
 
-    cv::Mat l_kernel = cv::Mat::ones(3,3, CV_32F);
-    cv::morphologyEx(l_mask1, l_mask1, cv::MORPH_OPEN, l_kernel);
-    cv::morphologyEx(l_mask1, l_mask1, cv::MORPH_DILATE, l_kernel);
+        // Get locations of red pixels 
+        std::vector<cv::Point2d> l_locations;
+        cv::findNonZero(l_mask1, l_locations);
 
-    // creating an inverted mask to segment out the cloth from the frame
-    cv::bitwise_not(l_mask1, l_mask2);
-    cv::Mat l_output;
+        // Populate object message
+        hsr_navigation::ObjectMessage l_objMsg;
+        populateObjectMessage(l_objMsg, l_locations, m_depthPtr);
+    }
+}
 
-    // Segmenting the cloth out of the frame using bitwise and with the inverted mask
-    bitwise_and(m_cvPtr->image, m_cvPtr->image, l_output, l_mask1);
+/**
+ * Create ObjectMessage instance
+ * to be sent to the clutter planner
+ * for re-planning.
+ */
+void Navigation::populateObjectMessage(hsr_navigation::ObjectMessage &p_objMsg,
+                                       const std::vector<cv::Point2d> &p_locations,
+                                       const cv_bridge::CvImagePtr &p_depthImage)
+{
+    // Convert 2d pixels in 3d points
+    std::vector<geometry_msgs::PointStamped> l_3dPoints;
+    for (auto l_point: p_locations)
+    {   
+        // Access depth value
+        const double l_depth = p_depthImage->image.at<float>(l_point.y, l_point.x);
 
-    // Update GUI Window
-    cv::imshow("Original Image", m_cvPtr->image);
-    cv::imshow("Mask Image", l_output);
-    cv::waitKey(3);
+        // Check if depth is valide and not NaN
+        if (!isnan(l_depth))
+        {
+            std::cout<< "Depth value is: " << l_depth << std::endl;
+            
+            // Ray point with correct depth
+            cv::Point3d l_3dPoint = m_phcm.projectPixelTo3dRay(l_point);
+            l_3dPoint.z = l_depth;
+
+            // Create point stamped object
+            geometry_msgs::PointStamped l_pointStamped;
+            l_pointStamped.header.stamp = ros::Time::now();
+            l_pointStamped.header.frame_id = FRAME_ID;
+            l_pointStamped.point.x = l_3dPoint.x;
+            l_pointStamped.point.y = l_3dPoint.y;
+            l_pointStamped.point.z = l_3dPoint.z;
+
+            // Populate vector
+            l_3dPoints.push_back(l_pointStamped);
+        }
+        else
+        {
+            std::cout<< "Depth value is NaN..." << std::endl;
+        }
+    }
+
+    // RGB-D frame to map frame
+    std::vector<hsr_navigation::CellMessage> l_cellMessages;
+    for (auto l_stampedIn: l_3dPoints)
+    {
+        try
+        {
+            // Map coordinates
+            int l_mx;
+            int l_my;
+
+            // RGBD to map
+            geometry_msgs::PointStamped l_stampedOut;
+            m_tf.transformPoint("map", l_stampedIn, l_stampedOut);
+
+            // world to map conversion
+            l_wx = l_stampedOut.point.x;
+            l_wy = l_stampedOut.point.y;
+            m_globalCostmap->worldToMapEnforceBounds(l_wx, l_wy, l_mx, l_my);
+
+            // Populate cell message vector
+            hsr_navigation::CellMessage l_cellMessage;
+            l_cellMessage.mx = l_mx;
+            l_cellMessage.my = l_my;
+
+            // Populate vector
+            l_cellMessages.push_back(l_cellMessage);
+        }
+        catch (tf::TransformException &e)
+        {
+            ROS_ERROR("%s", e.what());
+            ros::Duration(1.0).sleep();
+            continue;
+        }
+    }
+
+    // Compute mean 2d point
+    cv::Mat l_mean_;
+    cv::reduce(p_locations, l_mean_, 01, CV_REDUCE_AVG);
+    cv::Point2f l_mean(l_mean_.at<float>(0,0), l_mean_.at<float>(0,1));
+
+    // Compute mean 2d point map space
+    int l_mx;
+    int l_my;
+    m_globalCostmap->worldToMapEnforceBounds(l_mean.x, l_mean.y, l_mx, l_my);
+
+    // Populage object message
+    p_objMsg.uid = 1
+    p_objMsg.object_class = 1;
+    p_objMsg.center_cell.mx = l_mx;
+    p_objMsg.center_cell.my = l_my;
+    p_objMsg.center_wx = (int) l_mean.x;
+    p_objMsg.center_wy = (int) l_mean.y;
+    p_objMsg.cell_vector = l_cellMessages;
+
 }
 
 /**
@@ -336,17 +446,11 @@ void Navigation::dwaTrajectoryControl(const hsr_navigation::ClutterPlannerServic
 
     if (m_dp.isGoalReached())
     {
-        ROS_INFO("Goal successfully reached...");
+        ROS_INFO("GOAL REACHED :)...");
     }
-    else if (m_replan)
+    else
     {
-        ROS_INFO("Quitting DWA control for replanning...");
-
-        // Reset replan flag
-        m_replan = false;
-
-        // Request new plan
-        requestClutterPlan(false);
+        ROS_INFO("STOPPING DWA FOR REPLANNING...");
     }
 }
 
