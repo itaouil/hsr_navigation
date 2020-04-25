@@ -248,8 +248,19 @@ void Navigation::checkGlobalPath(const nav_msgs::OccupancyGrid p_globalCostmap)
 void Navigation::perceptionCallback(const sensor_msgs::ImageConstPtr& p_rgb, 
                                  const sensor_msgs::ImageConstPtr& p_depth)
 {
-    //TODO: compute colour mask and extract 3D points
-    return;
+    // Convert ROS image to OpenCV Mat
+    try
+    {
+      m_cvPtr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+    }
+    catch (cv_bridge::Exception& e)
+    {
+      ROS_ERROR("cv_bridge exception: %s", e.what());
+    }
+
+    // Update GUI Window
+    cv::imshow(OPENCV_WINDOW, cv_ptr->image);
+    cv::waitKey(3);
 }
 
 /**

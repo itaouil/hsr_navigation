@@ -7,6 +7,11 @@
 #include <iostream>
 #include <boost/thread/thread.hpp>
 
+// OpenCV imports
+#include <cv_bridge/cv_bridge.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
 // ROS imports
 #include "ros/ros.h"
 #include <nav_msgs/Path.h>
@@ -66,6 +71,9 @@ private:
     std::default_random_engine m_re;
     std::uniform_real_distribution<float> m_x_unif{1, 5.5f};
     std::uniform_real_distribution<float> m_y_unif{-0.23f, 0.9f};
+
+    // ROS/OpenCV members
+    cv_bridge::CvImagePtr m_cvPtr;
 
     // ROS members
     ros::NodeHandle m_nh;
