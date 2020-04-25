@@ -2,6 +2,8 @@
 #include "navigation.hpp"
 #include "clutter_planner.hpp"
 
+static const std::string OPENCV_WINDOW = "Image window";
+
 /**
  * Default constructor.
  */
@@ -246,12 +248,12 @@ void Navigation::checkGlobalPath(const nav_msgs::OccupancyGrid p_globalCostmap)
 }
 
 void Navigation::perceptionCallback(const sensor_msgs::ImageConstPtr& p_rgb, 
-                                 const sensor_msgs::ImageConstPtr& p_depth)
+                                    const sensor_msgs::ImageConstPtr& p_depth)
 {
     // Convert ROS image to OpenCV Mat
     try
     {
-      m_cvPtr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+      m_cvPtr = cv_bridge::toCvCopy(p_rgb, sensor_msgs::image_encodings::BGR8);
     }
     catch (cv_bridge::Exception& e)
     {
@@ -259,7 +261,7 @@ void Navigation::perceptionCallback(const sensor_msgs::ImageConstPtr& p_rgb,
     }
 
     // Update GUI Window
-    cv::imshow(OPENCV_WINDOW, cv_ptr->image);
+    cv::imshow(OPENCV_WINDOW, m_cvPtr->image);
     cv::waitKey(3);
 }
 
