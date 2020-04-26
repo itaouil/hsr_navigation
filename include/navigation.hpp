@@ -69,10 +69,8 @@ private:
     // General
     void initialize();
     void dwaTrajectoryControl(const hsr_navigation::ClutterPlannerService &);
-    void populatePlannerRequest(hsr_navigation::ClutterPlannerService &, const bool &);
-    void populateObjectMessage(hsr_navigation::ObjectMessage&,
-                               const std::vector<cv::Point2d>&,
-                               const cv_bridge::CvImagePtr&);
+    void populatePlannerRequest(hsr_navigation::ClutterPlannerService &);
+    void updateObjectMessage(const cv_bridge::CvImagePtr&, const std::vector<cv::Point2d>&);
 
     /**
      * Class members
@@ -104,9 +102,10 @@ private:
     dwa_local_planner::DWAPlannerROS m_dp;
     nav_msgs::OccupancyGrid m_occupacyGrid;
     costmap_2d::Costmap2D *m_globalCostmap = nullptr;
+    std::vector<geometry_msgs::PoseStamped> m_globalPath;
     costmap_2d::Costmap2DROS* m_localCostmapROS = nullptr;
     costmap_2d::Costmap2DROS* m_globalCostmapROS = nullptr;
-    std::vector<geometry_msgs::PoseStamped> m_globalPath;
+    std::vector<hsr_navigation::ObjectMessage> m_objects{0};
 };
 
 #endif // NAVIGATION_HPP_

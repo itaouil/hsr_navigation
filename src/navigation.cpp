@@ -15,7 +15,7 @@ Navigation::Navigation(tf2_ros::Buffer &p_buffer, tf2_ros::TransformListener &p_
     loadStaticMap();
 
     // Request clutter planning
-    requestClutterPlan(true);
+    requestClutterPlan();
 }
 
 /**
@@ -68,7 +68,7 @@ void Navigation::initialize()
                                       this,
                                       _1,
                                       _2,
-                                      -3));
+                                      _3));
 }
 
 /**
@@ -99,7 +99,7 @@ void Navigation::loadStaticMap()
 /**
  * Requests a clutter plan service.
  */
-void Navigation::requestClutterPlan(const bool &p_useStaticMap)
+void Navigation::requestClutterPlan()
 {
     // Create clutter planner client
     ros::ServiceClient l_client;
@@ -107,7 +107,7 @@ void Navigation::requestClutterPlan(const bool &p_useStaticMap)
 
     // Service request
     hsr_navigation::ClutterPlannerService l_service;
-    populatePlannerRequest(l_service, p_useStaticMap);
+    populatePlannerRequest(l_service);
 
     // Publish service request
     m_srvPub.publish(l_service.request);
@@ -115,7 +115,7 @@ void Navigation::requestClutterPlan(const bool &p_useStaticMap)
     // Call service
     if (l_client.call(l_service))
     {
-        ROS_INFO("Planner service called successfully");
+        ROS_INFO("Clutter planner service called successfully");
 
         // Store computed path
         m_globalPath = l_service.response.path;
@@ -125,40 +125,16 @@ void Navigation::requestClutterPlan(const bool &p_useStaticMap)
     }
     else
     {
-        ROS_ERROR("Failed to call service clutter_planner");
-
-        if (m_debug)
-        {
-            // Map coordinates
-            int l_mx;
-            int l_my;
-
-            // Robot global pose
-            geometry_msgs::PoseStamped l_global_pose;
-            m_globalCostmapROS->getRobotPose(l_global_pose);
-
-            // World coordinates
-            double l_wx = l_global_pose.pose.position.x;
-            double l_wy = l_global_pose.pose.position.y;
-
-            // Cast from world to map
-            m_globalCostmap->worldToMapEnforceBounds(l_wx, l_wy, l_mx, l_my);
-
-            // Get cost (convert to int from unsigned char)
-            int l_cellCost = (int) m_globalCostmap->getCost(l_mx, l_my);
-
-            std::cout << "Robot Pose Cost " << l_cellCost << std::endl;
-        }
+        ROS_ERROR("Failed to call clutter_planner service...");
     }
 }
 
 /**
  * Populate clutter planner request.
  */
-void Navigation::populatePlannerRequest(hsr_navigation::ClutterPlannerService &p_service,
-                                        const bool &p_useStaticMap)
+void Navigation::populatePlannerRequest(hsr_navigation::ClutterPlannerService &p_service)
 {
-    // // Get global pose
+    // Get global pose
     geometry_msgs::PoseStamped l_global_pose;
     m_globalCostmapROS->getRobotPose(l_global_pose);
 
@@ -186,24 +162,11 @@ void Navigation::populatePlannerRequest(hsr_navigation::ClutterPlannerService &p
     l_goal.pose.orientation.z = 0;
 	l_goal.pose.orientation.w = 0;
 
-    // Objects (no object for the moment)
-    std::vector<hsr_navigation::ObjectMessage> l_objects(0);
-
     // Populate request parameter by reference
 	p_service.request.start = l_start;
     p_service.request.goal = l_goal;
-	p_service.request.obstacles_in = l_objects;
-
-    if (p_useStaticMap) 
-    {
-        ROS_INFO("Using Static Map for planning");
-        p_service.request.grid = m_occupacyGrid;
-    }
-    else
-    {
-        ROS_INFO("Using Global Costmap for planning");
-        p_service.request.grid = m_updatedMap;
-    }
+	p_service.request.obstacles_in = m_objects;
+    p_service.request.grid = m_occupacyGrid;
 }
 
 /**
@@ -298,7 +261,13 @@ void Navigation::perceptionCallback(const sensor_msgs::ImageConstPtr& p_rgb,
 
         // Populate object message
         hsr_navigation::ObjectMessage l_objMsg;
-        populateObjectMessage(l_objMsg, l_locations, m_depthPtr);
+        updateObjectMessage(l_objMsg, l_locations, m_depthPtr);
+
+        // Reset flag
+        m_replan = false;
+
+        // Call clutter planner service
+        requestClutterPlan();
     }
 }
 
@@ -307,18 +276,17 @@ void Navigation::perceptionCallback(const sensor_msgs::ImageConstPtr& p_rgb,
  * to be sent to the clutter planner
  * for re-planning.
  */
-void Navigation::populateObjectMessage(hsr_navigation::ObjectMessage &p_objMsg,
-                                       const std::vector<cv::Point2d> &p_locations,
-                                       const cv_bridge::CvImagePtr &p_depthImage)
+void Navigation::updateObjectMessage(const cv_bridge::CvImagePtr &p_depthImage,
+                                     const std::vector<cv::Point2d> &p_locations)
 {
     // Convert 2d pixels in 3d points
     std::vector<geometry_msgs::PointStamped> l_3dPoints;
     for (auto l_point: p_locations)
-    {   
+    {
         // Access depth value
         const double l_depth = p_depthImage->image.at<float>(l_point.y, l_point.x);
 
-        // Check if depth is valide and not NaN
+        // Check if depth is valid and not NaN
         if (!isnan(l_depth))
         {
             std::cout<< "Depth value is: " << l_depth << std::endl;
@@ -359,9 +327,10 @@ void Navigation::populateObjectMessage(hsr_navigation::ObjectMessage &p_objMsg,
             m_tf.transformPoint("map", l_stampedIn, l_stampedOut);
 
             // world to map conversion
-            l_wx = l_stampedOut.point.x;
-            l_wy = l_stampedOut.point.y;
-            m_globalCostmap->worldToMapEnforceBounds(l_wx, l_wy, l_mx, l_my);
+            m_globalCostmap->worldToMapEnforceBounds(l_stampedOut.point.x, 
+                                                     l_stampedOut.point.y, 
+                                                     l_mx, 
+                                                     l_my);
 
             // Populate cell message vector
             hsr_navigation::CellMessage l_cellMessage;
@@ -389,15 +358,18 @@ void Navigation::populateObjectMessage(hsr_navigation::ObjectMessage &p_objMsg,
     int l_my;
     m_globalCostmap->worldToMapEnforceBounds(l_mean.x, l_mean.y, l_mx, l_my);
 
-    // Populage object message
-    p_objMsg.uid = 1
-    p_objMsg.object_class = 1;
-    p_objMsg.center_cell.mx = l_mx;
-    p_objMsg.center_cell.my = l_my;
-    p_objMsg.center_wx = (int) l_mean.x;
-    p_objMsg.center_wy = (int) l_mean.y;
-    p_objMsg.cell_vector = l_cellMessages;
+    // Create object message
+    hsr_navigation::ObjectMessage l_objMsg;
+    l_objMsg.uid = 1
+    l_objMsg.object_class = 1;
+    l_objMsg.center_cell.mx = l_mx;
+    l_objMsg.center_cell.my = l_my;
+    l_objMsg.center_wx = l_mean.x;
+    l_objMsg.center_wy = l_mean.y;
+    l_objMsg.cell_vector = l_cellMessages;
 
+    // Update object message vector
+    m_objects.push_back(l_objMsg);
 }
 
 /**
@@ -407,6 +379,15 @@ void Navigation::populateObjectMessage(hsr_navigation::ObjectMessage &p_objMsg,
  */
 void Navigation::dwaTrajectoryControl(const hsr_navigation::ClutterPlannerService &p_service)
 {
+    // Check if plan consists of
+    // manipulating the environment
+    // or not
+    if (!p_service.response.obstacles_out.empty())
+    {
+        //TODO: set intermediate point
+        //TODO: call manipulation action
+    }
+
     // Set global plan for local planner
     if (m_dp.setPlan(p_service.response.path))
     {
@@ -446,7 +427,7 @@ void Navigation::dwaTrajectoryControl(const hsr_navigation::ClutterPlannerServic
 
     if (m_dp.isGoalReached())
     {
-        ROS_INFO("GOAL REACHED :)...");
+        ROS_INFO("GOAL REACHED :)");
     }
     else
     {
