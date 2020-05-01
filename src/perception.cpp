@@ -90,8 +90,8 @@ void Perception::setRGBD(const sensor_msgs::ImageConstPtr& p_rgb,
  * the logic to create the obstacle
  * message for the new plan
  */
-std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(tf2_ros::TransformListener &p_tf, 
-                                                                    costmap_2d::Costmap2D *p_gcm)
+std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::Costmap2D *p_gcm,
+                                                                    tf2_ros::TransformListener &p_tf)
 {
     // Object messag holder
     std::vector<hsr_navigation::ObjectMessage> l_objects{0};
@@ -127,8 +127,7 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(tf2_ros::Tra
 
 /**
  * Create ObjectMessage instance
- * to be sent to the clutter planner
- * for re-planning.
+ * to be used for re-planning.
  */
 void Navigation::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
                                        tf2_ros::TransformListener &p_tf,

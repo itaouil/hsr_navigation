@@ -26,8 +26,8 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef CLUTTERPLANNER_HPP__
-#define CLUTTERPLANNER_HPP__
+#ifndef PLANNER_HPP__
+#define PLANNER_HPP__
 
 // General imports
 #include <list>
@@ -49,7 +49,7 @@
 #include <hsr_navigation/ClutterPlannerService.h>
 
 // Parameters
-#include "clutter_planner_params.hpp"
+#include "parameters.hpp"
 
 enum ObjectClass
 {

@@ -6,7 +6,6 @@
 #include <random>
 #include <math.h>
 #include <iostream>
-#include <boost/thread/thread.hpp>
 
 // ROS msg/srv
 #include <nav_msgs/Path.h>
@@ -14,8 +13,8 @@
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <hsr_navigation/ClutterPlannerService.h>
-#include <hsr_navigation/ClutterPlannerServiceReq.h>
+#include <hsr_navigation/PlannerService.h>
+#include <hsr_navigation/PlannerServiceReq.h>
 
 // ROS general
 #include "ros/ros.h"
@@ -28,6 +27,7 @@
 #include "parameters.hpp"
 
 // Custom classes
+#include "control.hpp"
 #include "perception.hpp"
 
 class Navigation
@@ -45,11 +45,10 @@ private:
      */
 
     void initialize();
+    void requestPlan();
     void loadStaticMap();
-    void requestClutterPlan(const bool &);
     void checkGlobalPath(const nav_msgs::OccupancyGrid);
-    void populatePlannerRequest(hsr_navigation::ClutterPlannerService &);
-    void dwaTrajectoryControl(const hsr_navigation::ClutterPlannerService &);
+    void populatePlannerRequest(hsr_navigation::PlannerService &);
 
     /**
      * Class members
@@ -57,12 +56,8 @@ private:
 
     // General members
     std::mutex m_mtx;
-    bool m_replan = false;
-    bool m_action = false;
-    std::default_random_engine m_re;
+    Control *m_control = nullptr;
     Perception *m_perception = nullptr;
-    std::uniform_real_distribution<float> m_x_unif{1, 5.5f};
-    std::uniform_real_distribution<float> m_y_unif{-0.23f, 0.9f};
 
     // ROS members
     ros::NodeHandle m_nh;

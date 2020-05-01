@@ -1,6 +1,6 @@
 // Header files
 #include "navigation.hpp"
-#include "clutter_planner.hpp"
+#include "planner.hpp"
 
 /**
  * Default constructor.
@@ -15,7 +15,7 @@ Navigation::Navigation(tf2_ros::Buffer &p_buffer, tf2_ros::TransformListener &p_
     loadStaticMap();
 
     // Request clutter planning
-    requestClutterPlan();
+    requestPlan();
 }
 
 /**
@@ -35,14 +35,11 @@ Navigation::~Navigation()
  */
 void Navigation::initialize()
 {
-    // Perception instance
-    m_perception = new Perception();
-
     // DWA planner velocity publisher
     m_velPub = m_nh.advertise<geometry_msgs::Twist>(DWA_VELOCITIES, 1);
 
     // Clutter planner request publisher
-    m_srvPub = m_nh.advertise<hsr_navigation::ClutterPlannerServiceReq>(PLANNER_REQ, 1);
+    m_srvPub = m_nh.advertise<hsr_navigation::PlannerServiceReq>(PLANNER_REQ, 1);
 
     // Subscriber to global costmap
     m_costSub = m_nh.subscribe<nav_msgs::OccupancyGrid>(GLOBAL_COSTMAP, 
@@ -54,8 +51,11 @@ void Navigation::initialize()
     m_localCostmapROS = new costmap_2d::Costmap2DROS("local_costmap", m_buffer);
     m_globalCostmapROS = new costmap_2d::Costmap2DROS("global_costmap", m_buffer);
 
-    // Initialize dwa local planner
-    m_dp.initialize("hsr_dwa_planner", &m_buffer, m_localCostmapROS);
+    // Perception instance
+    m_perception = new Perception();
+
+    // Control instance
+    m_control = new Control(m_buffer);
 }
 
 /**
@@ -93,14 +93,14 @@ void Navigation::loadStaticMap()
 /**
  * Requests a clutter plan service.
  */
-void Navigation::requestClutterPlan()
+void Navigation::requestPlan()
 {
     // Create service client
     ros::ServiceClient l_client;
-    l_client = m_nh.serviceClient<hsr_navigation::ClutterPlannerService>("clutter_planner_service");
+    l_client = m_nh.serviceClient<hsr_navigation::PlannerService>("planner_service");
 
     // Populate request
-    hsr_navigation::ClutterPlannerService l_service;
+    hsr_navigation::PlannerService l_service;
     populatePlannerRequest(l_service);
 
     // Publish request
@@ -132,7 +132,7 @@ void Navigation::requestClutterPlan()
 /**
  * Populate clutter planner request.
  */
-void Navigation::populatePlannerRequest(hsr_navigation::ClutterPlannerService &p_service)
+void Navigation::populatePlannerRequest(hsr_navigation::PlannerService &p_service)
 {
     // Get global pose
     geometry_msgs::PoseStamped l_global_pose;
@@ -152,8 +152,6 @@ void Navigation::populatePlannerRequest(hsr_navigation::ClutterPlannerService &p
     // Goal pose
     geometry_msgs::PoseStamped l_goal;
     l_goal.header.frame_id = "map";
-    // l_goal.pose.position.x = m_x_unif(m_re);
-	// l_goal.pose.position.y = m_y_unif(m_re);
     l_goal.pose.position.x = 6.17;
 	l_goal.pose.position.y = 2.36;
     l_goal.pose.position.z = 0;
@@ -182,7 +180,7 @@ void Navigation::checkGlobalPath(const nav_msgs::OccupancyGrid p_globalCostmap)
     // Only check for obstacle if
     // action was not commanded by
     // new clutter planner plan
-    if (!m_action)
+    if (!m_control->actionInCourse())
     {
         // Map coordinates
         int l_mx;
@@ -204,77 +202,17 @@ void Navigation::checkGlobalPath(const nav_msgs::OccupancyGrid p_globalCostmap)
             // Log cost
             if (l_cellCost > 253)
             {
-                ROS_INFO("Obstacle detected on the path.");
-                m_replan = true;
+                if (DEBUG)
+                {
+                    ROS_INFO("Obstacle detected on the path.");
+                }
+
                 break;
             }
         }
 
         // Update map for replan
         m_updatedMap = p_globalCostmap;
-    }
-}
-
-/**
- * Compute velocity commands to
- * be sent to the robot in order
- * to reach the goal.
- */
-void Navigation::dwaTrajectoryControl(const hsr_navigation::ClutterPlannerService &p_service)
-{
-    // Check if plan consists of
-    // manipulating the environment
-    // or not
-    if (!p_service.response.obstacles_out.empty())
-    {
-        //TODO: set intermediate point
-        //TODO: call manipulation action
-    }
-
-    // Set global plan for local planner
-    if (m_dp.setPlan(p_service.response.path))
-    {
-        ROS_INFO("DWA set plan: SUCCESS");
-    }
-    else
-    {
-        ROS_ERROR("DWA set plan: FAILED");
-    }
-    
-    // Twist msg to be populated
-    // by the local planner
-    geometry_msgs::Twist l_cmd_vel;
-
-    // Keep sending commands
-    // until goal is reached
-    while (!m_replan && !m_dp.isGoalReached())
-    {
-        // Compute local velocities
-        if (!m_dp.computeVelocityCommands(l_cmd_vel))
-        {
-            if (DEBUG)
-            {
-                ROS_ERROR("DWA velocities computation failed.");
-            }
-        }
-
-        // Send commands
-        if (DEBUG)
-        {
-            //ROS_INFO_STREAM(l_cmd_vel);
-        }
-        m_velPub.publish(l_cmd_vel);
-
-        ros::spinOnce();
-    }
-
-    if (m_dp.isGoalReached())
-    {
-        ROS_INFO("GOAL REACHED :)");
-    }
-    else
-    {
-        ROS_INFO("STOPPING DWA FOR REPLANNING...");
     }
 }
 

@@ -111,5 +111,5 @@ include_directories(
 add_executable(navigation src/navigation.cpp)
 target_link_libraries(navigation ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
-add_executable(clutter_planner src/clutter_planner.cpp)
-target_link_libraries(clutter_planner ${catkin_LIBRARIES})
+add_executable(planner src/planner.cpp)
+target_link_libraries(planner ${catkin_LIBRARIES})

@@ -27,7 +27,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Class header
-#include "clutter_planner.hpp"
+#include "planner.hpp"
 
 /**
  * Constructor.
@@ -35,7 +35,7 @@
  * Initalizes members, and
  * creates two custom publishers.
  */
-ClutterPlanner::ClutterPlanner()
+Planner::Planner()
 {
 	// Initialize members
 	m_enterCost = ENTERCOST;
@@ -54,7 +54,7 @@ ClutterPlanner::ClutterPlanner()
 /**
  * Virtual destructor.
  */
-ClutterPlanner::~ClutterPlanner()
+Planner::~Planner()
 {
 }
 
@@ -62,7 +62,7 @@ ClutterPlanner::~ClutterPlanner()
  * The function publishes a path
  * as a nav_msgs/Path using a publisher.
  */
-void ClutterPlanner::publishPlan(const std::vector<geometry_msgs::PoseStamped> &path)
+void Planner::publishPlan(const std::vector<geometry_msgs::PoseStamped> &path)
 {
 	// Create nav_msgs/Path message
 	// and resize it to be the same
@@ -93,8 +93,8 @@ void ClutterPlanner::publishPlan(const std::vector<geometry_msgs::PoseStamped> &
 /**
  *
  */
-bool ClutterPlanner::clutterPlannerSrv(hsr_navigation::ClutterPlannerService::Request &req,
-									   hsr_navigation::ClutterPlannerService::Response &res)
+bool Planner::PlannerSrv(hsr_navigation::PlannerService::Request &req,
+									   hsr_navigation::PlannerService::Response &res)
 {
 	// Read the request message
 	// information. This includes
@@ -169,7 +169,7 @@ bool ClutterPlanner::clutterPlannerSrv(hsr_navigation::ClutterPlannerService::Re
 
 	// Read obstacles found during the path planning
 	std::vector<hsr_navigation::ObjectMessage> objects = req.obstacles_in;
-	ROS_INFO("CLUTTERPLANNER ServerCB Objects In: %zu", objects.size());
+	ROS_INFO("Planner ServerCB Objects In: %zu", objects.size());
 
 	std::vector<hsr_navigation::ObjectMessage> objectsMsgOnPath;
 
@@ -190,7 +190,7 @@ bool ClutterPlanner::clutterPlannerSrv(hsr_navigation::ClutterPlannerService::Re
 		for (int i = 0; i < plan.size() - 1; i++)
 		{
 			pointToNext(plan, i);
-			//			ROS_INFO("IN CLUTTERPLANNER PATH %f; %f;", plan[i].pose.position.x,
+			//			ROS_INFO("IN Planner PATH %f; %f;", plan[i].pose.position.x,
 			//					plan[i].pose.position.y);
 		}
 		//		std::ofstream myfile;
@@ -236,7 +236,7 @@ bool ClutterPlanner::clutterPlannerSrv(hsr_navigation::ClutterPlannerService::Re
 	return !plan.empty();
 }
 
-void ClutterPlanner::pointToNext(std::vector<geometry_msgs::PoseStamped> &path, int &index)
+void Planner::pointToNext(std::vector<geometry_msgs::PoseStamped> &path, int &index)
 {
 	double x0 = path[index].pose.position.x, y0 = path[index].pose.position.y, x1 = path[index + 1].pose.position.x, y1 = path[index + 1].pose.position.y;
 
@@ -244,7 +244,7 @@ void ClutterPlanner::pointToNext(std::vector<geometry_msgs::PoseStamped> &path, 
 	path[index].pose.orientation = tf::createQuaternionMsgFromYaw(angle);
 }
 
-void ClutterPlanner::constraintAStar(Cell &start, 
+void Planner::constraintAStar(Cell &start, 
 									 Cell &goal,
 									 std::unordered_map<Cell, Cell> &came_from, 
 									 std::unordered_map<Cell, double> &cost_so_far,
@@ -344,7 +344,7 @@ void ClutterPlanner::constraintAStar(Cell &start,
 	}
 }
 
-void ClutterPlanner::getConstraintNeighbors(const Cell &current, std::vector<Cell> &neighbors)
+void Planner::getConstraintNeighbors(const Cell &current, std::vector<Cell> &neighbors)
 {
 
 	unsigned int state;
@@ -475,7 +475,7 @@ void ClutterPlanner::getConstraintNeighbors(const Cell &current, std::vector<Cel
 	}
 }
 
-void ClutterPlanner::createOccSemGrid(const hsr_navigation::ClutterPlannerService::Request &req,
+void Planner::createOccSemGrid(const hsr_navigation::PlannerService::Request &req,
 									  std::vector<hsr_navigation::ObjectMessage> &objects,
 									  std::vector<std::set<std::pair<unsigned int, unsigned int>>> &objectsInflationCells)
 {
@@ -545,7 +545,7 @@ void ClutterPlanner::createOccSemGrid(const hsr_navigation::ClutterPlannerServic
  * Updates the map costs based on
  * which object the cell contains.
  */
-void ClutterPlanner::createObjectMap(std::vector<hsr_navigation::ObjectMessage> &objects,
+void Planner::createObjectMap(std::vector<hsr_navigation::ObjectMessage> &objects,
 									 std::vector<std::set<std::pair<unsigned int, unsigned int>>> &objectsInflationCells)
 {
 	// Warning
@@ -604,7 +604,7 @@ void ClutterPlanner::createObjectMap(std::vector<hsr_navigation::ObjectMessage> 
  * of the inflated cells where objects
  * resides.
  */
-void ClutterPlanner::getObjectInflationCells(std::vector<hsr_navigation::ObjectMessage> &objects,
+void Planner::getObjectInflationCells(std::vector<hsr_navigation::ObjectMessage> &objects,
 											 std::vector<std::set<std::pair<unsigned int, unsigned int>>> &objectsInflationCells)
 {
 	// Loop over objects found on the path
@@ -640,7 +640,7 @@ void ClutterPlanner::getObjectInflationCells(std::vector<hsr_navigation::ObjectM
  * Compute inflation costs for
  * the static map.
  */
-void ClutterPlanner::inflateStaticMap()
+void Planner::inflateStaticMap()
 {
 	for (int i = 0; i < m_height; ++i)
 	{
@@ -673,7 +673,7 @@ void ClutterPlanner::inflateStaticMap()
  * The function computes the new cost
  * of the cells after the inflation.
  */
-void ClutterPlanner::getCellInflationVector()
+void Planner::getCellInflationVector()
 {
 	// Clear inflation vectors
 	m_cellInflationCost.clear();
@@ -713,7 +713,7 @@ void ClutterPlanner::getCellInflationVector()
 	}
 }
 
-bool ClutterPlanner::makePlan(geometry_msgs::PoseStamped &start,
+bool Planner::makePlan(geometry_msgs::PoseStamped &start,
 							  geometry_msgs::PoseStamped &goal,
 							  std::vector<geometry_msgs::PoseStamped> &plan)
 {
@@ -775,7 +775,7 @@ bool ClutterPlanner::makePlan(geometry_msgs::PoseStamped &start,
 	return !plan.empty();
 }
 
-void ClutterPlanner::reconstructPath(const Cell &start, const Cell &goal,
+void Planner::reconstructPath(const Cell &start, const Cell &goal,
 									 std::unordered_map<Cell, Cell> &came_from, std::vector<Cell> &path)
 {
 	Cell current = goal;
@@ -789,14 +789,14 @@ void ClutterPlanner::reconstructPath(const Cell &start, const Cell &goal,
 	std::reverse(path.begin(), path.end());
 }
 
-inline double ClutterPlanner::heuristic(const Cell &cell1, const Cell &cell2)
+inline double Planner::heuristic(const Cell &cell1, const Cell &cell2)
 {
 	double a = fabs((double)cell1.mx_ - (double)cell2.mx_);
 	double b = fabs((double)cell1.my_ - (double)cell2.my_);
 	return sqrt(a * a + b * b);
 }
 
-double ClutterPlanner::cost_multplier(const Cell &current, const Cell &next) const
+double Planner::cost_multplier(const Cell &current, const Cell &next) const
 {
 	if (current.mx_ == next.mx_ || current.my_ == next.my_)
 		return 1.0;
@@ -808,13 +808,13 @@ double ClutterPlanner::cost_multplier(const Cell &current, const Cell &next) con
 		return M_SQRT2; //sqrt(2)
 }
 
-void ClutterPlanner::mapToWorld(unsigned int &mx, unsigned int &my, double &wx, double &wy)
+void Planner::mapToWorld(unsigned int &mx, unsigned int &my, double &wx, double &wy)
 {
 	wx = m_originX + (mx + 0.5) * m_resolution;
 	wy = m_originY + (my + 0.5) * m_resolution;
 }
 
-bool ClutterPlanner::worldToMap(double &wx, double &wy, unsigned int &mx, unsigned int &my)
+bool Planner::worldToMap(double &wx, double &wy, unsigned int &mx, unsigned int &my)
 {
 	if (wx < m_originX || wy < m_originY)
 		return false;
@@ -828,7 +828,7 @@ bool ClutterPlanner::worldToMap(double &wx, double &wy, unsigned int &mx, unsign
 	return false;
 }
 
-void ClutterPlanner::cellPathToOutput(std::vector<Cell> &path,
+void Planner::cellPathToOutput(std::vector<Cell> &path,
 									  std::vector<geometry_msgs::PoseStamped> &plan)
 {
 	ros::Time plan_time = ros::Time::now();
@@ -856,17 +856,17 @@ void ClutterPlanner::cellPathToOutput(std::vector<Cell> &path,
 
 int main(int argc, char **argv)
 {
-	ros::init(argc, argv, "clutter_planner");
+	ros::init(argc, argv, "planner");
 	ros::NodeHandle l_nh;
 
 	// Class object
-	ClutterPlanner l_cp;
+	Planner l_pl;
 
 	// Create ROS service
 	ros::ServiceServer l_service;
-	l_service = l_nh.advertiseService("clutter_planner_service",
-									  &ClutterPlanner::clutterPlannerSrv,
-									  &l_cp);
+	l_service = l_nh.advertiseService("planner_service",
+									  &Planner::PlannerSrv,
+									  &l_pl);
 	
 	ROS_INFO("Clutter Planner Service: RUNNING...");
 	ros::spin();

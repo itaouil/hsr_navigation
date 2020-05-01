@@ -6,6 +6,15 @@
 // General parameters
 const bool DEBUG(true);
 
+// Planner parameters
+const bool BACKUPPLAN(false);
+const float ROBOTRADIUS(0.215);
+const unsigned int OBJMOVCOST(2);
+const float INFLATIONRADIUS(0.8);
+const unsigned int MOVINGCOST(11);
+const unsigned int ENTERCOST(100);
+const unsigned int CHANGEOBJECTCOST(250);
+
 // Navigation parameters
 const std::string PLANNER_REQ("/hsr_navigation/srvReq");
 const std::string DWA_VELOCITIES("/hsrb/command_velocity");
