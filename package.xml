@@ -40,10 +40,11 @@
   <build_depend>costmap_2d</build_depend>
   <build_depend>sensor_msgs</build_depend>
   <build_depend>geometry_msgs</build_depend>
+  <build_depend>image_geometry</build_depend>
   <build_depend>eigen_conversions</build_depend>
   <build_depend>dwa_local_planner</build_depend>
   <build_depend>message_generation</build_depend>
-
+  
   <!-- Build Export Dependencies -->
   <build_export_depend>roscpp</build_export_depend>
   <build_export_depend>tf2_ros</build_export_depend>
@@ -61,6 +62,7 @@
   <exec_depend>costmap_2d</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>image_geometry</exec_depend>
   <exec_depend>message_runtime</exec_depend>
   <exec_depend>eigen_conversions</exec_depend>
   <exec_depend>dwa_local_planner</exec_depend>

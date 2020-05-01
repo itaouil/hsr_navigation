@@ -46,7 +46,7 @@
 #include <tf/transform_datatypes.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <hsr_navigation/ObjectMessage.h>
-#include <hsr_navigation/ClutterPlannerService.h>
+#include <hsr_navigation/PlannerService.h>
 
 // Parameters
 #include "parameters.hpp"
@@ -129,14 +129,14 @@ public:
   }
 };
 
-class ClutterPlanner
+class Planner
 {
 public:
-  explicit ClutterPlanner();
-  virtual ~ClutterPlanner();
+  explicit Planner();
+  virtual ~Planner();
 
-  bool clutterPlannerSrv(hsr_navigation::ClutterPlannerService::Request &,
-                         hsr_navigation::ClutterPlannerService::Response &);
+  bool PlannerSrv(hsr_navigation::PlannerService::Request &,
+                  hsr_navigation::PlannerService::Response &);
 
   void inflateStaticMap();
 
@@ -192,7 +192,7 @@ public:
   inline double heuristic(const Cell &,
                           const Cell &);
 
-  void createOccSemGrid(const hsr_navigation::ClutterPlannerService::Request &,
+  void createOccSemGrid(const hsr_navigation::PlannerService::Request &,
                         std::vector<hsr_navigation::ObjectMessage> &,
                         std::vector<std::set<std::pair<unsigned int, unsigned int>>> &);
 
@@ -256,4 +256,4 @@ public:
 };
 }
 
-#endif /* CLUTTERPLANNER_HPP_ */
+#endif /* Planner_HPP_ */

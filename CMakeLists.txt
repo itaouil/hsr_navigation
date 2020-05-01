@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   geometry_msgs
   actionlib_msgs
+  image_geometry
   eigen_conversions
   dwa_local_planner
   message_generation

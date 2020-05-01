@@ -9,6 +9,8 @@
 // ROS msg/srv
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/OccupancyGrid.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <hsr_navigation/PlannerService.h>
 
 // ROS general
 #include "ros/ros.h"
@@ -55,6 +57,7 @@ private:
     bool m_newPlan = false;
 
     // ROS members
+    ros::NodeHandle m_nh;
     ros::Publisher m_velPub;
     tf2_ros::Buffer &m_buffer;
     dwa_local_planner::DWAPlannerROS m_dp;
