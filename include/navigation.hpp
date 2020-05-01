@@ -8,24 +8,12 @@
 #include <iostream>
 #include <boost/thread/thread.hpp>
 
-// OpenCV imports
-#include <cv_bridge/cv_bridge.h>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
-
 // ROS msg/srv
 #include <nav_msgs/Path.h>
-#include <std_msgs/Header.h>
 #include <nav_msgs/GetMap.h>
-#include <sensor_msgs/Image.h>
-#include <geometry_msgs/Point.h>
 #include <geometry_msgs/Twist.h>
-#include <sensor_msgs/CameraInfo.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/PointStamped.h>
-#include <hsr_navigation/CellMessage.h>
-#include <hsr_navigation/ObjectMessage.h>
 #include <hsr_navigation/ClutterPlannerService.h>
 #include <hsr_navigation/ClutterPlannerServiceReq.h>
 
@@ -33,14 +21,14 @@
 #include "ros/ros.h"
 #include <costmap_2d/costmap_2d.h>
 #include <costmap_2d/costmap_2d_ros.h>
-#include <message_filters/subscriber.h>
 #include <tf2_ros/transform_listener.h>
-#include <message_filters/time_synchronizer.h>
 #include <dwa_local_planner/dwa_planner_ros.h>
-#include <image_geometry/PinholeCameraModel.h>
 
 // Config file with paramters
-#include "navigation_params.hpp"
+#include "parameters.hpp"
+
+// Custom classes
+#include "perception.hpp"
 
 class Navigation
 {
@@ -56,21 +44,12 @@ private:
      * Class methods
      */
 
-    // ROS services
+    void initialize();
     void loadStaticMap();
     void requestClutterPlan(const bool &);
-
-    // ROS callbacks
     void checkGlobalPath(const nav_msgs::OccupancyGrid);
-    void perceptionCallback(const sensor_msgs::ImageConstPtr&, 
-                            const sensor_msgs::ImageConstPtr&, 
-                            const sensor_msgs::CameraInfoConstPtr&);
-
-    // General
-    void initialize();
-    void dwaTrajectoryControl(const hsr_navigation::ClutterPlannerService &);
     void populatePlannerRequest(hsr_navigation::ClutterPlannerService &);
-    void updateObjectMessage(const cv_bridge::CvImagePtr&, const std::vector<cv::Point2d>&);
+    void dwaTrajectoryControl(const hsr_navigation::ClutterPlannerService &);
 
     /**
      * Class members
@@ -78,18 +57,12 @@ private:
 
     // General members
     std::mutex m_mtx;
-    bool m_debug = true;
     bool m_replan = false;
     bool m_action = false;
-    bool m_modelInitialised = false;
     std::default_random_engine m_re;
+    Perception *m_perception = nullptr;
     std::uniform_real_distribution<float> m_x_unif{1, 5.5f};
     std::uniform_real_distribution<float> m_y_unif{-0.23f, 0.9f};
-
-    // OpenCV members
-    cv_bridge::CvImagePtr m_rgbPtr;
-    cv_bridge::CvImagePtr m_depthPtr;
-    image_geometry::PinholeCameraModel m_phcm;
 
     // ROS members
     ros::NodeHandle m_nh;
@@ -105,7 +78,6 @@ private:
     std::vector<geometry_msgs::PoseStamped> m_globalPath;
     costmap_2d::Costmap2DROS* m_localCostmapROS = nullptr;
     costmap_2d::Costmap2DROS* m_globalCostmapROS = nullptr;
-    std::vector<hsr_navigation::ObjectMessage> m_objects{0};
 };
 
 #endif // NAVIGATION_HPP_
