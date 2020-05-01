@@ -119,17 +119,17 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
             ROS_INFO("Red pixels detected.");
         }
 
-        populateObjectMessage(l_objects);
+        populateObjectMessage(p_gcm, p_tf, l_locations, l_objects);
     }
     
-    return l_objects
+    return l_objects;
 }
 
 /**
  * Create ObjectMessage instance
  * to be used for re-planning.
  */
-void Navigation::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
+void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
                                        tf2_ros::TransformListener &p_tf,
                                        const std::vector<cv::Point2d> &p_locations,
                                        std::vector<hsr_navigation::ObjectMessage> &p_objs)
@@ -179,10 +179,10 @@ void Navigation::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
 
             // RGBD to map
             geometry_msgs::PointStamped l_3dPointMapFrame;
-            m_tf.transformPoint("map", l_3dPointRGBFrame, l_3dPointMapFrame);
+            p_tf.transformPoint("map", l_3dPointRGBFrame, l_3dPointMapFrame);
 
             // world to map conversion
-            m_globalCostmap->worldToMapEnforceBounds(l_3dPointMapFrame.point.x, 
+            p_gcm->worldToMapEnforceBounds(l_3dPointMapFrame.point.x, 
                                                      l_3dPointMapFrame.point.y, 
                                                      l_mx, 
                                                      l_my);
@@ -195,7 +195,7 @@ void Navigation::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
             // Populate vector
             l_cellMessages.push_back(l_cellMessage);
         }
-        catch (tf::TransformException &e)
+        catch (tf2::TransformException &e)
         {
             ROS_ERROR("%s", e.what());
             ros::Duration(1.0).sleep();
@@ -211,11 +211,11 @@ void Navigation::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
     // Compute mean 2d point map space
     int l_mx;
     int l_my;
-    m_globalCostmap->worldToMapEnforceBounds(l_mean.x, l_mean.y, l_mx, l_my);
+    p_gcm->worldToMapEnforceBounds(l_mean.x, l_mean.y, l_mx, l_my);
 
     // Create object message
     hsr_navigation::ObjectMessage l_obj;
-    l_obj.uid = 1
+    l_obj.uid = 1;
     l_obj.object_class = 1;
     l_obj.center_cell.mx = l_mx;
     l_obj.center_cell.my = l_my;

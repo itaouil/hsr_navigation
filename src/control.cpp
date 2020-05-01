@@ -42,7 +42,7 @@ void Control::handlePlan(const hsr_navigation::PlannerService &p_service)
     }
     else
     {
-        actionControl();
+        //actionControl();
     }
 }
 

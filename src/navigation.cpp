@@ -118,7 +118,7 @@ void Navigation::requestPlan()
         }
 
         // Send velocity cmds to the robot
-        dwaTrajectoryControl(l_service);
+        m_control->handlePlan(l_service);
     }
     else
     {

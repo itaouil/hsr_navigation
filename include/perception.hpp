@@ -27,7 +27,7 @@
 #include <message_filters/subscriber.h>
 #include <tf2_ros/transform_listener.h>
 #include <message_filters/time_synchronizer.h>
-#include <image_geometry/PinholeCameraModel.h>
+#include <image_geometry/pinhole_camera_model.h>
 
 // Perception parameters
 #include "parameters.hpp"

@@ -44,8 +44,8 @@ private:
 
     void initialize();
     void loadStaticMap();
-    void actionControl(const hsr_navigation::PlannerService&);
     void dwaControl(const std::vector<geometry_msgs::PoseStamped>&);
+    void actionControl(const std::vector<geometry_msgs::PoseStamped>&);
 
     /**
      * Private members
