@@ -52,11 +52,9 @@ private:
 
     void setRGBD(const sensor_msgs::ImageConstPtr&, const sensor_msgs::ImageConstPtr&);
 
-    std::vector<hsr_navigation::ObjectMessage> getObstacles(costmap_2d::Costmap2D*,
-                                                            tf2_ros::TransformListener&);
+    std::vector<hsr_navigation::ObjectMessage> getObstacles(costmap_2d::Costmap2D*);
 
     void populateObjectMessage(costmap_2d::Costmap2D*,
-                               tf2_ros::TransformListener&,
                                const std::vector<cv::Point2d>&,
                                std::vector<hsr_navigation::ObjectMessage>&);
 

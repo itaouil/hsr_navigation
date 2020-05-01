@@ -90,8 +90,7 @@ void Perception::setRGBD(const sensor_msgs::ImageConstPtr& p_rgb,
  * the logic to create the obstacle
  * message for the new plan
  */
-std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::Costmap2D *p_gcm,
-                                                                    tf2_ros::TransformListener &p_tf)
+std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::Costmap2D *p_gcm)
 {
     // Object messag holder
     std::vector<hsr_navigation::ObjectMessage> l_objects{0};
@@ -119,7 +118,7 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
             ROS_INFO("Red pixels detected.");
         }
 
-        populateObjectMessage(p_gcm, p_tf, l_locations, l_objects);
+        populateObjectMessage(p_gcm, l_locations, l_objects);
     }
     
     return l_objects;
@@ -130,10 +129,13 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
  * to be used for re-planning.
  */
 void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
-                                       tf2_ros::TransformListener &p_tf,
                                        const std::vector<cv::Point2d> &p_locations,
                                        std::vector<hsr_navigation::ObjectMessage> &p_objs)
 {
+    // Objects for transformations
+    tf2_ros::Buffer l_tfBuffer;
+    tf2_ros::TransformListener l_tf2Listener(l_tfBuffer);
+
     // Convert 2d pixels in 3d points
     std::vector<geometry_msgs::PointStamped> l_3dPoints;
     for (auto l_point: p_locations)
@@ -169,7 +171,7 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
 
     // RGB-D to map frame
     std::vector<hsr_navigation::CellMessage> l_cellMessages;
-    for (auto l_3dPointRGBFrame: l_3dPoints)
+    for (auto l_3dPointRGBDFrame: l_3dPoints)
     {
         try
         {
@@ -178,8 +180,13 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
             int l_my;
 
             // RGBD to map
+            geometry_msgs::TransformStamped rgbdToMap;
             geometry_msgs::PointStamped l_3dPointMapFrame;
-            p_tf.transformPoint("map", l_3dPointRGBFrame, l_3dPointMapFrame);
+            rgbdToMap = tfBuffer.lookupTransform(FRAME_ID, 
+                                                 "map",
+                                                 ros::Time(0),
+                                                 ros::Duration(1.0));
+            tf2::doTransform(l_3dPointRGBDFrame, l_3dPointMapFrame, rgbdToMap);
 
             // world to map conversion
             p_gcm->worldToMapEnforceBounds(l_3dPointMapFrame.point.x, 
@@ -225,7 +232,7 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
 
     if (DEBUG)
     {
-        ROS_INFO(l_obj);
+        ROS_INFO("Obj message created in perception");
     }
 
     // Update object message vector

@@ -55,7 +55,7 @@ void Navigation::initialize()
     m_perception = new Perception();
 
     // Control instance
-    m_control = new Control(m_buffer);
+    m_control = new Control(m_buffer, m_localCostmapROS, m_globalCostmapROS);
 }
 
 /**
@@ -163,7 +163,7 @@ void Navigation::populatePlannerRequest(hsr_navigation::PlannerService &p_servic
     // Populate request parameter by reference
 	p_service.request.start = l_start;
     p_service.request.goal = l_goal;
-	p_service.request.obstacles_in = m_perception->getObstacles(m_tf, m_globalCostmap);
+	p_service.request.obstacles_in = m_perception->getObstacles(m_globalCostmap);
     p_service.request.grid = m_occupacyGrid;
 }
 
