@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   pluginlib
   costmap_2d
+  sensor_msgs
   geometry_msgs
   actionlib_msgs
   eigen_conversions
@@ -56,14 +57,14 @@ add_message_files(
   FILES
     CellMessage.msg
     ObjectMessage.msg
-    ClutterPlannerServiceReq.msg
-    ClutterPlannerServiceResp.msg
+    PlannerServiceReq.msg
+    PlannerServiceResp.msg
 )
 
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
-  ClutterPlannerService.srv
+  PlannerService.srv
 )
 
 ## Generate added messages and services with any dependencies listed here
@@ -108,8 +109,14 @@ include_directories(
 )
 
 ## Declare a C++ executable
-add_executable(navigation src/navigation.cpp)
-target_link_libraries(navigation ${catkin_LIBRARIES} ${OpenCV_LIBS})
+add_executable(control src/control.cpp)
+target_link_libraries(control ${catkin_LIBRARIES})
 
 add_executable(planner src/planner.cpp)
 target_link_libraries(planner ${catkin_LIBRARIES})
+
+add_executable(navigation src/navigation.cpp)
+target_link_libraries(navigation ${catkin_LIBRARIES})
+
+add_executable(perception src/perception.cpp)
+target_link_libraries(perception ${catkin_LIBRARIES} ${OpenCV_LIBS})
