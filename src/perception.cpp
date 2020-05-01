@@ -180,13 +180,13 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
             int l_my;
 
             // RGBD to map
-            geometry_msgs::TransformStamped rgbdToMap;
+            geometry_msgs::TransformStamped l_rgbdToMap;
             geometry_msgs::PointStamped l_3dPointMapFrame;
-            rgbdToMap = tfBuffer.lookupTransform(FRAME_ID, 
+            l_rgbdToMap = l_tfBuffer.lookupTransform(FRAME_ID, 
                                                  "map",
                                                  ros::Time(0),
                                                  ros::Duration(1.0));
-            tf2::doTransform(l_3dPointRGBDFrame, l_3dPointMapFrame, rgbdToMap);
+            tf2::doTransform(l_3dPointRGBDFrame, l_3dPointMapFrame, l_rgbdToMap);
 
             // world to map conversion
             p_gcm->worldToMapEnforceBounds(l_3dPointMapFrame.point.x, 

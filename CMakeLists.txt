@@ -110,17 +110,17 @@ include_directories(
 )
 
 ## Declare custom C++ libraries
-add_library(control src/control.cpp)
-add_library(perception src/perception.cpp)
+#add_library(control src/control.cpp ${catkin_LIBRARIES})
+#add_library(perception src/perception.cpp ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 ## Declare a C++ executable
 #add_executable(control src/control.cpp)
 #target_link_libraries(control ${catkin_LIBRARIES})
 
 add_executable(planner src/planner.cpp)
-target_link_libraries(planner ${catkin_LIBRARIES} control perception)
+target_link_libraries(planner ${catkin_LIBRARIES})
 
-add_executable(navigation src/navigation.cpp)
+add_executable(navigation src/navigation.cpp src/control.cpp src/perception.cpp)
 target_link_libraries(navigation ${catkin_LIBRARIES})
 
 #add_executable(perception src/perception.cpp)

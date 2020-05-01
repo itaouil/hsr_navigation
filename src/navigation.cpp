@@ -1,6 +1,6 @@
 // Header files
-#include "navigation.hpp"
 #include "planner.hpp"
+#include "navigation.hpp"
 
 /**
  * Default constructor.

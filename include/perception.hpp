@@ -26,7 +26,9 @@
 #include <costmap_2d/costmap_2d.h>
 #include <message_filters/subscriber.h>
 #include <tf2_ros/transform_listener.h>
+#include <geometry_msgs/TransformStamped.h>
 #include <message_filters/time_synchronizer.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <image_geometry/pinhole_camera_model.h>
 
 // Perception parameters
@@ -41,6 +43,11 @@ public:
     // Destructor (virtual)
     virtual ~Perception();
 
+    /**
+     * Class methods
+     */
+    std::vector<hsr_navigation::ObjectMessage> getObstacles(costmap_2d::Costmap2D*);
+
 private:
     /**
      * Class methods
@@ -51,8 +58,6 @@ private:
     void setCameraInfo(const sensor_msgs::CameraInfoConstPtr& p_camInfo);
 
     void setRGBD(const sensor_msgs::ImageConstPtr&, const sensor_msgs::ImageConstPtr&);
-
-    std::vector<hsr_navigation::ObjectMessage> getObstacles(costmap_2d::Costmap2D*);
 
     void populateObjectMessage(costmap_2d::Costmap2D*,
                                const std::vector<cv::Point2d>&,
