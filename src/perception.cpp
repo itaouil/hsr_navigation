@@ -46,11 +46,6 @@ void Perception::initialize()
  */
 void Perception::setCameraInfo(sensor_msgs::CameraInfo p_camInfo)
 {
-    if (DEBUG)
-    {
-        ROS_INFO("camera info flowing");
-    }
-
     // Initialise camera model
     if (!m_modelInitialized)
     {
@@ -102,11 +97,19 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
 {
     if (DEBUG)
     {
-        ROS_DEBUG("Perception: getObstacles called form Navigation");
+        ROS_DEBUG("Perception: getObstacles called from Navigation");
     }
 
     // Object messag holder
     std::vector<hsr_navigation::ObjectMessage> l_objects{0};
+
+    // If perception not yet
+    // initialized return empty
+    // array
+    if (!m_initialized)
+    {
+        return l_objects;
+    }
 
     // Convert the RGB image
     // to an HSV color space
@@ -281,6 +284,7 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
     if (DEBUG)
     {
         ROS_INFO("Perception: computed object message.");
+        ROS_INFO_STREAM(l_obj);
     }
 
     // Update object message vector

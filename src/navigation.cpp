@@ -63,15 +63,6 @@ void Navigation::initialize()
     // Control instance
     m_control.reset(new Control(m_buffer, m_localCostmapROS, m_globalCostmapROS));
 
-    // Wait for members initialization
-//    ROS_INFO("Navigation: waiting for stack initialization...");
-//    while (!m_perception->initialized() || !m_control->initialized())
-//    {
-//        ros::spinOnce();
-//        std::cout << "Perception: " << m_perception->initialized() << std::endl;
-//        std::cout << "Control: " << m_control->initialized() << std::endl;
-//    }
-
     // Log
     ROS_INFO("Navigation: Initialized Correctly.");
 }
@@ -191,11 +182,7 @@ void Navigation::populatePlannerRequest(hsr_navigation::PlannerService &p_servic
     // Populate request parameter by reference
 	p_service.request.start = l_start;
     p_service.request.goal = l_goal;
-    if (DEBUG)
-    {
-        ROS_INFO("Navigation: before calling getObstacles.");
-    }
-	//p_service.request.obstacles_in = 
+	p_service.request.obstacles_in = m_perception->getObstacles(m_globalCostmap);
     p_service.request.grid = m_occupacyGrid;
 
     // Log
