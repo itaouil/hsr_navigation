@@ -42,7 +42,7 @@ void Control::handlePlan(const hsr_navigation::PlannerService &p_service)
     }
     else
     {
-        //actionControl();
+        actionControl(p_service.response.path);
     }
 }
 
@@ -120,13 +120,68 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
     // logic
     m_action = true;
 
-    //TODO: compute intermediate point path
+    // Find intermediate point path
+    // Map coordinates
+    int l_mx;
+    int l_my;
 
-    //TODO: reach intermediate point
+    // Index of obstructed cell
+    unsigned int idx = 0;
 
-    //TODO: start action (push/manipulation)
+    // Find first obstructed cell
+    for (auto poseStamped: p_path)
+    {
+        // World coordinates
+        double l_wx = poseStamped.pose.position.x;
+        double l_wy = poseStamped.pose.position.y;
 
-    //TODO: resume original path
+        // Cast from world to map
+        m_globalCostmap->worldToMapEnforceBounds(l_wx, l_wy, l_mx, l_my);
+
+        // Get cost (convert to int from unsigned char)
+        int l_cellCost = (int) m_globalCostmap->getCost(l_mx, l_my);
+
+        // Log cost
+        if (l_cellCost > 253)
+        {
+            if (DEBUG)
+            {
+                ROS_INFO("CONTROL: Obstructed cell found at idx: " << idx);
+            }
+
+            // Increase counter
+            idx += 1;
+
+            break;
+        }
+
+        // Increase counter
+        idx += 1;
+    }
+
+    // Extract intermediate path
+    std::vector<geometry_msgs::PoseStamped> l_intermediatePath(p_path.begin(), 
+                                                               p_path.begin() + idx - 2);
+
+    // Send robot to intermediate path
+    dwaControl(l_intermediatePath);
+
+    if (DEBUG)
+    {
+        ROS_INFO("CONTROL: Intermediate path reached.");
+    }
+
+    // Resume orignal plan
+    dwaControl(p_path);
+}
+
+/**
+ * Grasp action to remove
+ * obstacle from the path
+ */
+void Control::grasp()
+{
+    //TODO: implement grasping action
 }
 
 /**

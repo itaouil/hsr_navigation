@@ -33,6 +33,7 @@ public:
     /**
      * Public methods
      */
+    void grasp();
     void setNewPlan();
     bool actionInCourse();
     void handlePlan(const hsr_navigation::PlannerService&);
