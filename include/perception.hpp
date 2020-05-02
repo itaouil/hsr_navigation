@@ -37,6 +37,7 @@
 
 // Abbreviation
 typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> MySyncPolicy;
+typedef message_filters::Synchronizer<MySyncPolicy> Sync;
 
 class Perception
 {
@@ -88,7 +89,7 @@ private:
     ros::Subscriber m_camInfo;
     message_filters::Subscriber<sensor_msgs::Image> m_rgbSub;
     message_filters::Subscriber<sensor_msgs::Image> m_depthSub;
-    boost::shared_ptr<message_filters::Synchronizer<MySyncPolicy>> m_sync;
+    boost::shared_ptr<Sync> m_sync;
 };
 
 #endif // PERCEPTION_HPP_

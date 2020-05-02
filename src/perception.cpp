@@ -37,7 +37,7 @@ void Perception::initialize()
     // Synchronize rgb and depth data
     m_rgbSub.subscribe(m_nh, RGB_DATA, 1);
     m_depthSub.subscribe(m_nh, DEPTH_DATA, 1);
-    m_sync.reset(new Sync(MySyncPolicy(10), m_rgbSub, m_depthSub));
+    m_sync.reset(new Sync(MySyncPolicy(5), m_rgbSub, m_depthSub));
     m_sync->registerCallback(boost::bind(&Perception::setRGBD, this, _1, _2));
 }
 
@@ -75,7 +75,7 @@ void Perception::setRGBD(const sensor_msgs::ImageConstPtr& p_rgb,
 
             if (DEBUG)
             {
-                ROS_INFO("RGB-D data set correctly.");
+                //ROS_INFO("RGB-D data set correctly.");
             }
         }
         catch (cv_bridge::Exception& e)
@@ -97,7 +97,7 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
 {
     if (DEBUG)
     {
-        ROS_DEBUG("Perception: getObstacles called from Navigation");
+        ROS_INFO("Perception: getObstacles called from Navigation");
     }
 
     // Object messag holder
