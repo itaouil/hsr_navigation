@@ -33,8 +33,8 @@ public:
     /**
      * Public methods
      */
-    void grasp();
     void setNewPlan();
+    bool initialized();
     bool actionInCourse();
     void handlePlan(const hsr_navigation::PlannerService&);
 
@@ -42,7 +42,7 @@ private:
     /**
      * Private methods
      */
-
+    void grasp();
     void initialize();
     void loadStaticMap();
     void dwaControl(const std::vector<geometry_msgs::PoseStamped>&);
@@ -56,6 +56,7 @@ private:
     std::mutex m_mtx;
     bool m_action = false;
     bool m_newPlan = false;
+    bool m_initialized = false;
 
     // ROS members
     ros::NodeHandle m_nh;

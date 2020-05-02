@@ -46,6 +46,7 @@ public:
     /**
      * Class methods
      */
+    bool initialized();
     std::vector<hsr_navigation::ObjectMessage> getObstacles(costmap_2d::Costmap2D*);
 
 private:
@@ -70,6 +71,7 @@ private:
     // General members
     std::mutex m_mtx;
     bool m_debug = true;
+    bool m_initialized = false;
     bool m_modelInitialized = false;
 
     // OpenCV members

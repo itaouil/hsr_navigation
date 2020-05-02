@@ -29,19 +29,16 @@ void Perception::initialize()
                                                        this);
 
     // Synchronize rgb and depth data
-    //message_filters::Subscriber<sensor_msgs::Image> rgbSub(m_nh, RGB_DATA, 1);
-    //message_filters::Subscriber<sensor_msgs::Image> depthSub(m_nh, DEPTH_DATA, 1);
-    //message_filters::TimeSynchronizer<sensor_msgs::Image, 
-    //                                 sensor_msgs::Image> sync(rgbSub, 
-    //                                                          depthSub,
-    //                                                          10);
-    //sync.registerCallback(boost::bind(&Perception::setRGBD,
-    //                                 this,
-    //                                 _1,
-    //                                 _2));
-
-    // Log
-    ROS_INFO("Perception: Initialized Correctly.");
+    message_filters::Subscriber<sensor_msgs::Image> rgbSub(m_nh, RGB_DATA, 1);
+    message_filters::Subscriber<sensor_msgs::Image> depthSub(m_nh, DEPTH_DATA, 1);
+    message_filters::TimeSynchronizer<sensor_msgs::Image, 
+                                    sensor_msgs::Image> sync(rgbSub, 
+                                                             depthSub,
+                                                             10);
+    sync.registerCallback(boost::bind(&Perception::setRGBD,
+                                    this,
+                                    _1,
+                                    _2));
 }
 
 /**
@@ -85,6 +82,9 @@ void Perception::setRGBD(const sensor_msgs::ImageConstPtr& p_rgb,
         {
             ROS_ERROR("cv_bridge exception: %s", e.what());
         }
+
+        // Confirm initialization
+        m_initialized = true;
     }    
 }
 
@@ -280,4 +280,13 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
 
     // Update object message vector
     p_objs.push_back(l_obj);
+}
+
+/**
+ * Confirms that the perception
+ * was initialized correctly
+ */
+Perception::initialized()
+{
+    return m_initialized;
 }

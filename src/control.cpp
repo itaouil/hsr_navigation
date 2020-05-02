@@ -29,8 +29,8 @@ void Control::initialize()
     // Initialize dwa local planner
     m_dp.initialize("hsr_dwa_planner", &m_buffer, m_localCostmapROS);
 
-    // Log
-    ROS_INFO("Control: Initialized Correctly.");
+    // Confirm initialization
+    m_initialized = true;
 }
 
 /**
@@ -41,10 +41,20 @@ void Control::handlePlan(const hsr_navigation::PlannerService &p_service)
 {
     if (p_service.response.obstacles_out.empty())
     {
+        if (DEBUG)
+        {
+            ROS_DEBUG("Control: path is empty.")
+        }
+
         dwaControl(p_service.response.path);
     }
     else
     {
+        if (DEBUG)
+        {
+            ROS_DEBUG("Control: path is obstructed.")
+        }
+
         actionControl(p_service.response.path);
     }
 }
@@ -61,14 +71,14 @@ void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
     {
         if (DEBUG)
         {
-            ROS_INFO("DWA set plan: SUCCESS");
+            ROS_DEBUG("Control: DWA set plan succeeded.");
         }
     }
     else
     {
         if (DEBUG)
         {
-            ROS_ERROR("DWA set plan: FAILED");
+            ROS_ERROR("Control: DWA set plan failed.");
         }
     }
     
@@ -83,7 +93,7 @@ void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
         {
             if (DEBUG)
             {
-                ROS_ERROR("DWA velocities computation failed.");
+                ROS_ERROR("Control: DWA velocities computation failed.");
             }
         }
 
@@ -101,14 +111,14 @@ void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
     {
         if (DEBUG)
         {
-            ROS_INFO("GOAL REACHED :)");
+            ROS_INFO("Control: Goal reached :)");
         }
     }
     else
     {
         if (DEBUG)
         {
-            ROS_INFO("STOPPING DWA FOR REPLANNING...");
+            ROS_INFO("Control: stopping control for replanning");
         }
     }
 }
@@ -118,6 +128,11 @@ void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
  */
 void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
 {
+    if (DEBUG)
+    {
+        ROS_DEBUG("Control: action control started.");
+    }
+
     // Set action flag to avoid
     // replanning by navigation
     // logic
@@ -152,7 +167,7 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
         {
             if (DEBUG)
             {
-                ROS_INFO_STREAM("CONTROL: Obstructed cell found at idx: " << idx);
+                ROS_DEBUG("Control: Obstructed cell found at idx: ", idx);
             }
 
             // Increase counter
@@ -174,7 +189,7 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
 
     if (DEBUG)
     {
-        ROS_INFO("CONTROL: Intermediate path reached.");
+        ROS_INFO("Control: Intermediate path reached.");
     }
 
     // Resume orignal plan
@@ -207,4 +222,13 @@ void Control::setNewPlan()
 bool Control::actionInCourse()
 {
     return m_action;
+}
+
+/**
+ * Confirms that control was
+ * initialized successfully
+ */
+bool Control::initialized()
+{
+    return m_initialized;
 }

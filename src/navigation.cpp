@@ -63,9 +63,11 @@ void Navigation::initialize()
     // Control instance
     m_control.reset(new Control(m_buffer, m_localCostmapROS, m_globalCostmapROS));
 
-    // Sensor warmup
-    ROS_INFO("Navigation: 5 seconds sleep for sensor warmup.");
-    ros::Duration(5).sleep();
+    // Wait for members initialization
+    while (!m_perception->initialized() || !m_control.initialized())
+    {
+        ROS_INFO("Navigation: waiting for stack initialization...");
+    }
 
     // Log
     ROS_INFO("Navigation: Initialized Correctly.");
