@@ -120,6 +120,9 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
     // logic
     m_action = true;
 
+    // Costmap2D
+    l_globalCostmap = m_globalCostmapROS->getCostmap();
+
     // Find intermediate point path
     // Map coordinates
     int l_mx;
@@ -136,17 +139,17 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
         double l_wy = poseStamped.pose.position.y;
 
         // Cast from world to map
-        m_globalCostmap->worldToMapEnforceBounds(l_wx, l_wy, l_mx, l_my);
+        l_globalCostmap->worldToMapEnforceBounds(l_wx, l_wy, l_mx, l_my);
 
         // Get cost (convert to int from unsigned char)
-        int l_cellCost = (int) m_globalCostmap->getCost(l_mx, l_my);
+        int l_cellCost = (int) l_globalCostmap->getCost(l_mx, l_my);
 
         // Log cost
         if (l_cellCost > 253)
         {
             if (DEBUG)
             {
-                ROS_INFO("CONTROL: Obstructed cell found at idx: " << idx);
+                ROS_INFO_STREAM("CONTROL: Obstructed cell found at idx: " << idx);
             }
 
             // Increase counter
