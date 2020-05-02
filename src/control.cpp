@@ -121,7 +121,7 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
     m_action = true;
 
     // Costmap2D
-    l_globalCostmap = m_globalCostmapROS->getCostmap();
+    costmap_2d::Costmap2D *l_globalCostmap = m_globalCostmapROS->getCostmap();
 
     // Find intermediate point path
     // Map coordinates

@@ -23,28 +23,28 @@ Perception::~Perception()
 void Perception::initialize()
 {
     // Camera info subscriber
-    m_camInfo = m_nh.subscribe<sensor_msgs::CameraInfo>(CAMERA_INFO, 
-                                                        1,
-                                                        &Perception::setCameraInfo,
-                                                        this);
+    //m_camInfo = m_nh.subscribe<sensor_msgs::CameraInfo>(CAMERA_INFO, 
+    //                                                    1,
+    //                                                    &Perception::setCameraInfo,
+    //                                                    this);
 
     // Synchronize rgb and depth data
-    message_filters::Subscriber<sensor_msgs::Image> rgbSub(m_nh, RGB_DATA, 1);
-    message_filters::Subscriber<sensor_msgs::Image> depthSub(m_nh, DEPTH_DATA, 1);
-    message_filters::TimeSynchronizer<sensor_msgs::Image, 
-                                      sensor_msgs::Image> sync(rgbSub, 
-                                                               depthSub,
-                                                               10);
-    sync.registerCallback(boost::bind(&Perception::setRGBD,
-                                      this,
-                                      _1,
-                                      _2));
+    //message_filters::Subscriber<sensor_msgs::Image> rgbSub(m_nh, RGB_DATA, 1);
+    //message_filters::Subscriber<sensor_msgs::Image> depthSub(m_nh, DEPTH_DATA, 1);
+    //message_filters::TimeSynchronizer<sensor_msgs::Image, 
+    //                                  sensor_msgs::Image> sync(rgbSub, 
+    //                                                           depthSub,
+    //                                                           10);
+    //sync.registerCallback(boost::bind(&Perception::setRGBD,
+    //                                  this,
+    //                                  _1,
+    //                                  _2));
 }
 
 /**
  * Sets the camera model.
  */
-void Perception::setCameraInfo(const sensor_msgs::CameraInfoConstPtr& p_camInfo)
+void Perception::setCameraInfo(sensor_msgs::CameraInfo p_camInfo)
 {
     // Initialise camera model
     if (!m_modelInitialized)

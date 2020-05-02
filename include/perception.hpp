@@ -55,7 +55,7 @@ private:
 
     void initialize();
 
-    void setCameraInfo(const sensor_msgs::CameraInfoConstPtr& p_camInfo);
+    void setCameraInfo(sensor_msgs::CameraInfo);
 
     void setRGBD(const sensor_msgs::ImageConstPtr&, const sensor_msgs::ImageConstPtr&);
 
