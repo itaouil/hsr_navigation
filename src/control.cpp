@@ -28,6 +28,9 @@ void Control::initialize()
 
     // Initialize dwa local planner
     m_dp.initialize("hsr_dwa_planner", &m_buffer, m_localCostmapROS);
+
+    // Log
+    ROS_INFO("Control: Initialized Correctly.");
 }
 
 /**

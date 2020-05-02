@@ -23,22 +23,25 @@ Perception::~Perception()
 void Perception::initialize()
 {
     // Camera info subscriber
-    //m_camInfo = m_nh.subscribe<sensor_msgs::CameraInfo>(CAMERA_INFO, 
-    //                                                    1,
-    //                                                    &Perception::setCameraInfo,
-    //                                                    this);
+    m_camInfo = m_nh.subscribe<sensor_msgs::CameraInfo>(CAMERA_INFO, 
+                                                       1,
+                                                       &Perception::setCameraInfo,
+                                                       this);
 
     // Synchronize rgb and depth data
-    //message_filters::Subscriber<sensor_msgs::Image> rgbSub(m_nh, RGB_DATA, 1);
-    //message_filters::Subscriber<sensor_msgs::Image> depthSub(m_nh, DEPTH_DATA, 1);
-    //message_filters::TimeSynchronizer<sensor_msgs::Image, 
-    //                                  sensor_msgs::Image> sync(rgbSub, 
-    //                                                           depthSub,
-    //                                                           10);
-    //sync.registerCallback(boost::bind(&Perception::setRGBD,
-    //                                  this,
-    //                                  _1,
-    //                                  _2));
+    message_filters::Subscriber<sensor_msgs::Image> rgbSub(m_nh, RGB_DATA, 1);
+    message_filters::Subscriber<sensor_msgs::Image> depthSub(m_nh, DEPTH_DATA, 1);
+    message_filters::TimeSynchronizer<sensor_msgs::Image, 
+                                     sensor_msgs::Image> sync(rgbSub, 
+                                                              depthSub,
+                                                              10);
+    sync.registerCallback(boost::bind(&Perception::setRGBD,
+                                     this,
+                                     _1,
+                                     _2));
+
+    // Log
+    ROS_INFO("Perception: Initialized Correctly.");
 }
 
 /**
@@ -92,6 +95,11 @@ void Perception::setRGBD(const sensor_msgs::ImageConstPtr& p_rgb,
  */
 std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::Costmap2D *p_gcm)
 {
+    if (DEBUG)
+    {
+        ROS_DEBUG("Perception: getObstacles called form Navigation");
+    }
+
     // Object messag holder
     std::vector<hsr_navigation::ObjectMessage> l_objects{0};
 
@@ -100,6 +108,11 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
     cv::Mat l_hsv;
     cv::cvtColor(m_rgbPtr->image, l_hsv, cv::COLOR_BGR2HSV);
 
+    if (DEBUG)
+    {
+        ROS_DEBUG("Perception: converted BGR to HSV");
+    }
+
     // Define red color mask
     cv::Mat l_mask1;
     cv::Mat l_mask2;
@@ -107,20 +120,35 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
     cv::inRange(l_hsv, cv::Scalar(170, 120, 70), cv::Scalar(180, 255, 255), l_mask2);
     cv::Mat l_mask = l_mask1 + l_mask2;
 
+    if (DEBUG)
+    {
+        ROS_DEBUG("Perception: created final mask");
+    }
+
     // Get red pixel location in the matrix
     std::vector<cv::Point2d> l_locations;
     cv::findNonZero(l_mask1, l_locations);
+
+    if (DEBUG)
+    {
+        ROS_DEBUG("Perception: found pixel locations");
+    }
 
     if (l_locations.size())
     {
         if (DEBUG)
         {
-            ROS_INFO("Red pixels detected.");
+            ROS_DEBUG("Red pixels detected.");
         }
 
         populateObjectMessage(p_gcm, l_locations, l_objects);
     }
     
+    if (DEBUG)
+    {
+        ROS_INFO("Perception: Obstacles computed correctly");
+    }
+
     return l_objects;
 }
 
@@ -132,6 +160,11 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
                                        const std::vector<cv::Point2d> &p_locations,
                                        std::vector<hsr_navigation::ObjectMessage> &p_objs)
 {
+    if (DEBUG)
+    {
+        ROS_INFO("Perception: populate object message called.");
+    }
+
     // Objects for transformations
     tf2_ros::Buffer l_tfBuffer;
     tf2_ros::TransformListener l_tf2Listener(l_tfBuffer);
@@ -167,6 +200,11 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
         {
             std::cout<< "Depth value is NaN..." << std::endl;
         }
+    }
+
+    if (DEBUG)
+    {
+        ROS_INFO("Perception: computed 3D points.");
     }
 
     // RGB-D to map frame
@@ -210,6 +248,11 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
         }
     }
 
+    if (DEBUG)
+    {
+        ROS_INFO("Perception: computed cell messages.");
+    }
+
     // Compute mean 2d point
     cv::Mat l_mean_;
     cv::reduce(p_locations, l_mean_, 01, CV_REDUCE_AVG);
@@ -232,7 +275,7 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
 
     if (DEBUG)
     {
-        ROS_INFO("Obj message created in perception");
+        ROS_INFO("Perception: computed object message.");
     }
 
     // Update object message vector

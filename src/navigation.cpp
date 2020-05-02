@@ -56,6 +56,9 @@ void Navigation::initialize()
 
     // Control instance
     m_control = new Control(m_buffer, m_localCostmapROS, m_globalCostmapROS);
+
+    // Log
+    ROS_INFO("Navigation: Initialized Correctly.");
 }
 
 /**
@@ -165,6 +168,12 @@ void Navigation::populatePlannerRequest(hsr_navigation::PlannerService &p_servic
     p_service.request.goal = l_goal;
 	p_service.request.obstacles_in = m_perception->getObstacles(m_globalCostmap);
     p_service.request.grid = m_occupacyGrid;
+
+    // Log
+    if (DEBUG)
+    {
+        ROS_INFO("Planner request populated successfully");
+    }
 }
 
 /**
