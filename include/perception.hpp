@@ -30,6 +30,7 @@
 #include <message_filters/time_synchronizer.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <image_geometry/pinhole_camera_model.h>
+#include <message_filters/sync_policies/approximate_time.h>
 
 // Perception parameters
 #include "parameters.hpp"
@@ -82,6 +83,11 @@ private:
     // ROS members
     ros::NodeHandle m_nh;
     ros::Subscriber m_camInfo;
+    message_filters::Subscriber<sensor_msgs::Image> m_rgbSub;
+    message_filters::Subscriber<sensor_msgs::Image> m_depthSub;
+    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> MySyncPolicy;
+    typedef message_filters::Synchronizer<MySyncPolicy> Sync;
+    boost::shared_ptr<Sync> m_sync;
 };
 
 #endif // PERCEPTION_HPP_

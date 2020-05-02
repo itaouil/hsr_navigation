@@ -1,6 +1,12 @@
 // Header files
 #include "perception.hpp"
 
+// Namespaces
+using namespace sensor_msgs;
+using namespace message_filters;
+
+typedef sync_policies::ApproximateTime<Image, Image> MySyncPolicy;
+
 /**
  * Default constructor.
  */
@@ -29,16 +35,10 @@ void Perception::initialize()
                                                        this);
 
     // Synchronize rgb and depth data
-    message_filters::Subscriber<sensor_msgs::Image> rgbSub(m_nh, RGB_DATA, 1);
-    message_filters::Subscriber<sensor_msgs::Image> depthSub(m_nh, DEPTH_DATA, 1);
-    message_filters::TimeSynchronizer<sensor_msgs::Image, 
-                                    sensor_msgs::Image> sync(rgbSub, 
-                                                             depthSub,
-                                                             10);
-    sync.registerCallback(boost::bind(&Perception::setRGBD,
-                                    this,
-                                    _1,
-                                    _2));
+    m_rgbSub.subscribe(m_nh, RGB_DATA, 1);
+    m_depthSub.subscribe(m_nh, DEPTH_DATA, 1);
+    m_sync.reset(new Sync(MySyncPolicy(10), m_rgbSub, m_depthSub));
+    m_sync->registerCallback(boost::bind(&Perception::setRGBD, this, _1, _2));
 }
 
 /**
@@ -46,6 +46,11 @@ void Perception::initialize()
  */
 void Perception::setCameraInfo(sensor_msgs::CameraInfo p_camInfo)
 {
+    if (DEBUG)
+    {
+        ROS_INFO("camera info flowing");
+    }
+
     // Initialise camera model
     if (!m_modelInitialized)
     {
@@ -286,7 +291,7 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
  * Confirms that the perception
  * was initialized correctly
  */
-Perception::initialized()
+bool Perception::initialized()
 {
     return m_initialized;
 }

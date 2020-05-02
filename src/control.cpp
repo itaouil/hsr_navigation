@@ -43,7 +43,7 @@ void Control::handlePlan(const hsr_navigation::PlannerService &p_service)
     {
         if (DEBUG)
         {
-            ROS_DEBUG("Control: path is empty.")
+            ROS_DEBUG("Control: path is empty.");
         }
 
         dwaControl(p_service.response.path);
@@ -52,7 +52,7 @@ void Control::handlePlan(const hsr_navigation::PlannerService &p_service)
     {
         if (DEBUG)
         {
-            ROS_DEBUG("Control: path is obstructed.")
+            ROS_DEBUG("Control: path is obstructed.");
         }
 
         actionControl(p_service.response.path);
@@ -167,7 +167,7 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
         {
             if (DEBUG)
             {
-                ROS_DEBUG("Control: Obstructed cell found at idx: ", idx);
+                ROS_INFO_STREAM("Control: Obstructed cell found at idx: " << idx);
             }
 
             // Increase counter

@@ -64,10 +64,13 @@ void Navigation::initialize()
     m_control.reset(new Control(m_buffer, m_localCostmapROS, m_globalCostmapROS));
 
     // Wait for members initialization
-    while (!m_perception->initialized() || !m_control.initialized())
-    {
-        ROS_INFO("Navigation: waiting for stack initialization...");
-    }
+//    ROS_INFO("Navigation: waiting for stack initialization...");
+//    while (!m_perception->initialized() || !m_control->initialized())
+//    {
+//        ros::spinOnce();
+//        std::cout << "Perception: " << m_perception->initialized() << std::endl;
+//        std::cout << "Control: " << m_control->initialized() << std::endl;
+//    }
 
     // Log
     ROS_INFO("Navigation: Initialized Correctly.");
