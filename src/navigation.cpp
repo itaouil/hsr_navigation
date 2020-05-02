@@ -28,6 +28,12 @@ Navigation::~Navigation()
     
     if (m_globalCostmapROS)
         delete m_globalCostmapROS;
+
+    if (m_control)
+        m_control.reset();
+
+    if (m_perception)
+        m_perception.reset();
 }
 
 /**
@@ -52,10 +58,14 @@ void Navigation::initialize()
     m_globalCostmapROS = new costmap_2d::Costmap2DROS("global_costmap", m_buffer);
 
     // Perception instance
-    m_perception = new Perception();
+    m_perception.reset(new Perception());
 
     // Control instance
-    m_control = new Control(m_buffer, m_localCostmapROS, m_globalCostmapROS);
+    m_control.reset(new Control(m_buffer, m_localCostmapROS, m_globalCostmapROS));
+
+    // Sensor warmup
+    ROS_INFO("Navigation: 5 seconds sleep for sensor warmup.");
+    ros::Duration(5).sleep();
 
     // Log
     ROS_INFO("Navigation: Initialized Correctly.");
@@ -98,6 +108,11 @@ void Navigation::loadStaticMap()
  */
 void Navigation::requestPlan()
 {
+    if (DEBUG)
+    {
+        ROS_INFO("Navigation: requestPlan called.");
+    }
+
     // Create service client
     ros::ServiceClient l_client;
     l_client = m_nh.serviceClient<hsr_navigation::PlannerService>("planner_service");
@@ -137,6 +152,11 @@ void Navigation::requestPlan()
  */
 void Navigation::populatePlannerRequest(hsr_navigation::PlannerService &p_service)
 {
+    if (DEBUG)
+    {
+        ROS_INFO("Navigation: populating planner request.");
+    }
+
     // Get global pose
     geometry_msgs::PoseStamped l_global_pose;
     m_globalCostmapROS->getRobotPose(l_global_pose);
@@ -166,7 +186,11 @@ void Navigation::populatePlannerRequest(hsr_navigation::PlannerService &p_servic
     // Populate request parameter by reference
 	p_service.request.start = l_start;
     p_service.request.goal = l_goal;
-	p_service.request.obstacles_in = m_perception->getObstacles(m_globalCostmap);
+    if (DEBUG)
+    {
+        ROS_INFO("Navigation: before calling getObstacles.");
+    }
+	//p_service.request.obstacles_in = 
     p_service.request.grid = m_occupacyGrid;
 
     // Log
@@ -174,6 +198,8 @@ void Navigation::populatePlannerRequest(hsr_navigation::PlannerService &p_servic
     {
         ROS_INFO("Planner request populated successfully");
     }
+
+    //m_perception->getObstacles(m_globalCostmap);
 }
 
 /**

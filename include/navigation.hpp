@@ -6,6 +6,7 @@
 #include <random>
 #include <math.h>
 #include <iostream>
+#include <boost/thread/thread.hpp>
 
 // ROS msg/srv
 #include <nav_msgs/Path.h>
@@ -56,8 +57,8 @@ private:
 
     // General members
     std::mutex m_mtx;
-    Control *m_control = nullptr;
-    Perception *m_perception = nullptr;
+    boost::shared_ptr<Control> m_control;
+    boost::shared_ptr<Perception> m_perception;
 
     // ROS members
     ros::NodeHandle m_nh;
