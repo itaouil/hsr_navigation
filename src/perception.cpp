@@ -118,7 +118,7 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
 
     if (DEBUG)
     {
-        ROS_DEBUG("Perception: converted BGR to HSV");
+        ROS_INFO("Perception: converted BGR to HSV");
     }
 
     // Define red color mask
@@ -130,7 +130,7 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
 
     if (DEBUG)
     {
-        ROS_DEBUG("Perception: created final mask");
+        ROS_INFO("Perception: created final mask");
     }
 
     // Get red pixel location in the matrix
@@ -139,14 +139,14 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
 
     if (DEBUG)
     {
-        ROS_DEBUG("Perception: found pixel locations");
+        ROS_INFO("Perception: found pixel locations");
     }
 
     if (l_locations.size())
     {
         if (DEBUG)
         {
-            ROS_DEBUG("Red pixels detected.");
+            ROS_INFO("Red pixels detected.");
         }
 
         populateObjectMessage(p_gcm, l_locations, l_objects);

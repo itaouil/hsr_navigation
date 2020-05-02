@@ -190,8 +190,6 @@ void Navigation::populatePlannerRequest(hsr_navigation::PlannerService &p_servic
     {
         ROS_INFO("Planner request populated successfully");
     }
-
-    //m_perception->getObstacles(m_globalCostmap);
 }
 
 /**
@@ -201,6 +199,9 @@ void Navigation::populatePlannerRequest(hsr_navigation::PlannerService &p_servic
  */
 void Navigation::checkGlobalPath(const nav_msgs::OccupancyGrid p_globalCostmap)
 {
+    // Replan flag
+    bool replan = false;
+
     // Update global costmap
     m_globalCostmap = m_globalCostmapROS->getCostmap();
 
@@ -234,12 +235,25 @@ void Navigation::checkGlobalPath(const nav_msgs::OccupancyGrid p_globalCostmap)
                     ROS_INFO("Obstacle detected on the path.");
                 }
 
+                // Set replan flag
+                replan = true;
+
                 break;
             }
         }
 
         // Update map for replan
         m_updatedMap = p_globalCostmap;
+
+        // Handle replan
+        if (replan)
+        {
+            // Stop control
+            m_control->setNewPlan();
+
+            // Replan
+            requestPlan();
+        }
     }
 }
 

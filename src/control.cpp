@@ -43,7 +43,7 @@ void Control::handlePlan(const hsr_navigation::PlannerService &p_service)
     {
         if (DEBUG)
         {
-            ROS_DEBUG("Control: path is empty.");
+            ROS_INFO("Control: path is empty -- starting simple DWA control.");
         }
 
         dwaControl(p_service.response.path);
@@ -52,7 +52,8 @@ void Control::handlePlan(const hsr_navigation::PlannerService &p_service)
     {
         if (DEBUG)
         {
-            ROS_DEBUG("Control: path is obstructed.");
+            ROS_INFO("Control: path is obstructed -- starting action control.");
+            ROS_INFO_STREAM(p_service.response.obstacles_out);
         }
 
         actionControl(p_service.response.path);
@@ -71,7 +72,7 @@ void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
     {
         if (DEBUG)
         {
-            ROS_DEBUG("Control: DWA set plan succeeded.");
+            ROS_INFO("Control: DWA set plan succeeded.");
         }
     }
     else
@@ -121,6 +122,9 @@ void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
             ROS_INFO("Control: stopping control for replanning");
         }
     }
+
+    // Reset replan flag
+    m_newPlan = false;
 }
 
 /**
@@ -130,7 +134,7 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
 {
     if (DEBUG)
     {
-        ROS_DEBUG("Control: action control started.");
+        ROS_INFO("Control: action control started.");
     }
 
     // Set action flag to avoid
@@ -194,6 +198,9 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
 
     // Resume orignal plan
     dwaControl(p_path);
+
+    // Reset action flag
+    m_action = false;
 }
 
 /**
