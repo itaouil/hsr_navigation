@@ -215,8 +215,13 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
         ROS_INFO("Perception: computed 3D points.");
     }
 
-    // RGB-D to map frame
+    // Overal mean centre point
+    float l_meanX = 0.0;
+    float l_meanY = 0.0;
+    
     std::vector<hsr_navigation::CellMessage> l_cellMessages;
+
+    // RGB-D to map frame
     for (auto l_3dPointRGBDFrame: l_3dPoints)
     {
         try
@@ -225,20 +230,19 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
             int l_mx;
             int l_my;
 
-            // RGBD to map
-            geometry_msgs::TransformStamped l_rgbdToMap;
+            // RGB-D to map transformation
             geometry_msgs::PointStamped l_3dPointMapFrame;
-            l_rgbdToMap = l_tfBuffer.lookupTransform(FRAME_ID, 
-                                                 "map",
-                                                 ros::Time(0),
-                                                 ros::Duration(1.0));
-            tf2::doTransform(l_3dPointRGBDFrame, l_3dPointMapFrame, l_rgbdToMap);
+            transformPoint(FRAME_ID, l_3dPointMapFrame, l_3dPointRGBDFrame);
+
+            // Aggregate means
+            l_meanX += l_3dPointMapFrame.point.x;
+            l_meanY += l_3dPointMapFrame.point.y;
 
             // world to map conversion
             p_gcm->worldToMapEnforceBounds(l_3dPointMapFrame.point.x, 
-                                                     l_3dPointMapFrame.point.y, 
-                                                     l_mx, 
-                                                     l_my);
+                                           l_3dPointMapFrame.point.y, 
+                                           l_mx, 
+                                           l_my);
 
             // Populate cell message vector
             hsr_navigation::CellMessage l_cellMessage;
@@ -261,15 +265,15 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
         ROS_INFO("Perception: computed cell messages.");
     }
 
-    // Compute mean 2d point
-    cv::Mat l_mean_;
-    cv::reduce(p_locations, l_mean_, 01, CV_REDUCE_AVG);
-    cv::Point2f l_mean(l_mean_.at<float>(0,0), l_mean_.at<float>(0,1));
+    // Compute final mean point
+    l_meanX /= l_cellMessages.size();
+    l_meanY /= l_cellMessages.size();
 
-    // Compute mean 2d point map space
-    int l_mx;
-    int l_my;
-    p_gcm->worldToMapEnforceBounds(l_mean.x, l_mean.y, l_mx, l_my);
+    // Get map coordinates of the mean
+    p_gcm->worldToMapEnforceBounds(l_meanX, 
+                                   l_meanY, 
+                                   l_mx, 
+                                   l_my);
 
     // Create object message
     hsr_navigation::ObjectMessage l_obj;
@@ -277,7 +281,7 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
     l_obj.object_class = 1;
     l_obj.center_cell.mx = l_mx;
     l_obj.center_cell.my = l_my;
-    l_obj.center_wx = l_mean.x;
+    l_obj.center_wx = l_mean / 
     l_obj.center_wy = l_mean.y;
     l_obj.cell_vector = l_cellMessages;
 
@@ -298,4 +302,26 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
 bool Perception::initialized()
 {
     return m_initialized;
+}
+
+/**
+ * Transforms a point from a
+ * given frame ID to map frame
+ * using transform matrices
+ */
+void Perception::transformPoint(const std::string &p_frameID,
+                                geometry_msgs::PointStamped &p_output
+                                const geometry_msgs::PointStamped &p_input)
+{
+    // Create transformer
+    geometry_msgs::TransformStamped l_transformer;
+
+    // Set transformer
+    l_transformer = l_tfBuffer.lookupTransform(p_frameID, 
+                                               "map",
+                                               ros::Time(0),
+                                               ros::Duration(1.0));
+
+    // Perform transformation
+    tf2::doTransform(p_input, p_output, l_transformer);
 }

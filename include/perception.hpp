@@ -64,6 +64,10 @@ private:
     void setCameraInfo(sensor_msgs::CameraInfo);
 
     void setRGBD(const sensor_msgs::ImageConstPtr&, const sensor_msgs::ImageConstPtr&);
+    
+    void transformPoint(const std::string&, 
+                        geometry_msgs::PointStamped&, 
+                        const geometry_msgs::PointStamped&);
 
     void populateObjectMessage(costmap_2d::Costmap2D*,
                                const std::vector<cv::Point2d>&,
