@@ -225,11 +225,7 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
     for (auto l_3dPointRGBDFrame: l_3dPoints)
     {
         try
-        {
-            // Map coordinates
-            int l_mx;
-            int l_my;
-
+        {            
             // RGB-D to map transformation
             geometry_msgs::PointStamped l_3dPointMapFrame;
             transformPoint(FRAME_ID, l_3dPointMapFrame, l_3dPointRGBDFrame);
@@ -238,7 +234,9 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
             l_meanX += l_3dPointMapFrame.point.x;
             l_meanY += l_3dPointMapFrame.point.y;
 
-            // world to map conversion
+            // World coord. to map coord. conversion
+            int l_mx;
+            int l_my;
             p_gcm->worldToMapEnforceBounds(l_3dPointMapFrame.point.x, 
                                            l_3dPointMapFrame.point.y, 
                                            l_mx, 
@@ -270,6 +268,8 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
     l_meanY /= l_cellMessages.size();
 
     // Get map coordinates of the mean
+    int l_mx;
+    int l_my;
     p_gcm->worldToMapEnforceBounds(l_meanX, 
                                    l_meanY, 
                                    l_mx, 
@@ -281,8 +281,8 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
     l_obj.object_class = 1;
     l_obj.center_cell.mx = l_mx;
     l_obj.center_cell.my = l_my;
-    l_obj.center_wx = l_mean / 
-    l_obj.center_wy = l_mean.y;
+    l_obj.center_wx = l_meanX;
+    l_obj.center_wy = l_meanY;
     l_obj.cell_vector = l_cellMessages;
 
     if (DEBUG)
@@ -310,7 +310,7 @@ bool Perception::initialized()
  * using transform matrices
  */
 void Perception::transformPoint(const std::string &p_frameID,
-                                geometry_msgs::PointStamped &p_output
+                                geometry_msgs::PointStamped &p_output,
                                 const geometry_msgs::PointStamped &p_input)
 {
     // Create transformer
