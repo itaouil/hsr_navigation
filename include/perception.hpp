@@ -66,7 +66,7 @@ private:
     void setRGBD(const sensor_msgs::ImageConstPtr&, const sensor_msgs::ImageConstPtr&);
 
     void populateObjectMessage(costmap_2d::Costmap2D*,
-                               const std::vector<cv::Point2d>&,
+                               const std::vector<cv::Point>&,
                                std::vector<hsr_navigation::ObjectMessage>&);
 
     /**

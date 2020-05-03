@@ -3,9 +3,9 @@ raytrace_range: 3.0
 
 robot_radius: 0.215
 
-publish_frequency: 5
+publish_frequency: 1
 
-transform_tolerance: 0.8
+transform_tolerance: 1.0
 
 always_send_full_costmap: true
 

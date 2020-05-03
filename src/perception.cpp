@@ -134,8 +134,8 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
     }
 
     // Get red pixel location in the matrix
-    std::vector<cv::Point2d> l_locations;
-    cv::findNonZero(l_mask1, l_locations);
+    std::vector<cv::Point> l_locations;
+    cv::findNonZero(l_mask, l_locations);
 
     if (DEBUG)
     {
@@ -165,7 +165,7 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
  * to be used for re-planning.
  */
 void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
-                                       const std::vector<cv::Point2d> &p_locations,
+                                       const std::vector<cv::Point> &p_locations,
                                        std::vector<hsr_navigation::ObjectMessage> &p_objs)
 {
     if (DEBUG)
