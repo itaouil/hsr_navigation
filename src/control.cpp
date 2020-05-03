@@ -53,7 +53,7 @@ void Control::handlePlan(const hsr_navigation::PlannerService &p_service)
         if (DEBUG)
         {
             ROS_INFO("Control: path is obstructed -- starting action control.");
-            ROS_INFO_STREAM(p_service.response.obstacles_out);
+            ROS_INFO_STREAM(p_service.response);
         }
 
         actionControl(p_service.response.path);
