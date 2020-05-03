@@ -173,10 +173,6 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
         ROS_INFO("Perception: populate object message called.");
     }
 
-    // Objects for transformations
-    tf2_ros::Buffer l_tfBuffer;
-    tf2_ros::TransformListener l_tf2Listener(l_tfBuffer);
-
     // Convert 2d pixels in 3d points
     std::vector<geometry_msgs::PointStamped> l_3dPoints;
     for (auto l_point: p_locations)
@@ -313,6 +309,10 @@ void Perception::transformPoint(const std::string &p_frameID,
                                 geometry_msgs::PointStamped &p_output,
                                 const geometry_msgs::PointStamped &p_input)
 {
+    // Objects for transformations
+    tf2_ros::Buffer l_tfBuffer;
+    tf2_ros::TransformListener l_tf2Listener(l_tfBuffer);
+    
     // Create transformer
     geometry_msgs::TransformStamped l_transformer;
 
