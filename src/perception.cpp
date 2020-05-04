@@ -173,6 +173,11 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
         ROS_INFO("Perception: populate object message called.");
     }
 
+    // Listener and buffer for
+    // chain transformations
+    tf2_ros::Buffer l_tfBuffer;
+    tf2_ros::TransformListener l_tf2Listener(l_tfBuffer);
+
     // Convert 2d pixels in 3d points
     std::vector<geometry_msgs::PointStamped> l_3dPoints;
     for (auto l_point: p_locations)
@@ -224,7 +229,7 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
         {            
             // RGB-D to map transformation
             geometry_msgs::PointStamped l_3dPointMapFrame;
-            transformPoint(FRAME_ID, l_3dPointMapFrame, l_3dPointRGBDFrame);
+            transformPoint(l_tfBuffer, FRAME_ID, l_3dPointMapFrame, l_3dPointRGBDFrame);
 
             // Aggregate means
             l_meanX += l_3dPointMapFrame.point.x;
@@ -305,22 +310,19 @@ bool Perception::initialized()
  * given frame ID to map frame
  * using transform matrices
  */
-void Perception::transformPoint(const std::string &p_frameID,
+void Perception::transformPoint(tf2_ros::Buffer &p_buffer,
+                                const std::string &p_frameID,
                                 geometry_msgs::PointStamped &p_output,
                                 const geometry_msgs::PointStamped &p_input)
 {
-    // Objects for transformations
-    tf2_ros::Buffer l_tfBuffer;
-    tf2_ros::TransformListener l_tf2Listener(l_tfBuffer);
-    
     // Create transformer
     geometry_msgs::TransformStamped l_transformer;
 
     // Set transformer
-    l_transformer = l_tfBuffer.lookupTransform(p_frameID, 
-                                               "map",
-                                               ros::Time(0),
-                                               ros::Duration(1.0));
+    l_transformer = p_buffer.lookupTransform(p_frameID, 
+                                             "map",
+                                             ros::Time(0),
+                                             ros::Duration(1.0));
 
     // Perform transformation
     tf2::doTransform(p_input, p_output, l_transformer);
