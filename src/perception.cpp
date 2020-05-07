@@ -128,6 +128,9 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
     cv::inRange(l_hsv, cv::Scalar(170, 120, 70), cv::Scalar(180, 255, 255), l_mask2);
     cv::Mat l_mask = l_mask1 + l_mask2;
 
+    //cv::imshow("Mask", l_mask1);
+    //cv::waitKey(0);
+
     if (DEBUG)
     {
         ROS_INFO("Perception: created final mask");
@@ -183,23 +186,28 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
     for (auto l_point: p_locations)
     {
         // Access depth value
-        const double l_depth = m_depthPtr->image.at<float>(l_point.y, l_point.x);
+        double l_depth = m_depthPtr->image.at<float>(l_point.y, l_point.x);
+
+        
 
         // Check if depth is valid
         if (!isnan(l_depth))
-        {
-            std::cout<< "Depth value is: " << l_depth << std::endl;
-            
-            // Ray point with correct depth
-            cv::Point3d l_3dPoint = m_phcm.projectPixelTo3dRay(l_point);
+        {   
+            // Convert depth to meters
+            l_depth *= 0.001;
+
+            // Compute cartesian coordinates
+            cv::Point3d l_3dPoint;
+            l_3dPoint.x = ((l_point.x - m_phcm.cx()) * (l_depth)) / m_phcm.fx();
+            l_3dPoint.y = ((l_point.y - m_phcm.cy()) * (l_depth)) / m_phcm.fy();
             l_3dPoint.z = l_depth;
 
             // Create point stamped object
             geometry_msgs::PointStamped l_pointStamped;
             l_pointStamped.header.stamp = ros::Time::now();
             l_pointStamped.header.frame_id = FRAME_ID;
-            l_pointStamped.point.x = l_3dPoint.x;
-            l_pointStamped.point.y = l_3dPoint.y;
+            l_pointStamped.point.x = l_3dPoint.y;
+            l_pointStamped.point.y = l_3dPoint.x;
             l_pointStamped.point.z = l_3dPoint.z;
 
             // Populate vector
@@ -217,8 +225,8 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
     }
 
     // Overal mean centre point
-    float l_meanX = 0.0;
-    float l_meanY = 0.0;
+    double l_meanX = 0.0;
+    double l_meanY = 0.0;
     
     std::vector<hsr_navigation::CellMessage> l_cellMessages;
 
@@ -243,6 +251,9 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
                                            l_mx, 
                                            l_my);
 
+            std::cout<< "3D point X: " << l_3dPointMapFrame.point.x << std::endl;
+            std::cout<< "3D point Y: " << l_3dPointMapFrame.point.y << std::endl;
+
             // Populate cell message vector
             hsr_navigation::CellMessage l_cellMessage;
             l_cellMessage.mx = l_mx;
@@ -263,6 +274,10 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
     {
         ROS_INFO("Perception: computed cell messages.");
     }
+
+    std::cout<< "Mean wx: " << l_meanX << std::endl;
+    std::cout<< "Mean wy: " << l_meanY << std::endl;
+    std::cout<< "Size: " << l_cellMessages.size() << std::endl;
 
     // Compute final mean point
     l_meanX /= l_cellMessages.size();
@@ -289,7 +304,10 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
     if (DEBUG)
     {
         ROS_INFO("Perception: computed object message.");
-        ROS_INFO_STREAM(l_obj);
+        std::cout<< "Mean mx: " << l_mx << std::endl;
+        std::cout<< "Mean my: " << l_my << std::endl;
+        std::cout<< "Mean wx: " << l_meanX << std::endl;
+        std::cout<< "Mean wy: " << l_meanY << std::endl;
     }
 
     // Update object message vector

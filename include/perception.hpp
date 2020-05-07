@@ -65,12 +65,12 @@ private:
 
     void setRGBD(const sensor_msgs::ImageConstPtr&, const sensor_msgs::ImageConstPtr&);
     
-    void transformPoint(const std::string&, 
+    void transformPoint(tf2_ros::Buffer&,
+                        const std::string&, 
                         geometry_msgs::PointStamped&, 
                         const geometry_msgs::PointStamped&);
 
-    void populateObjectMessage(tf2_ros::Buffer&,
-                               costmap_2d::Costmap2D*,
+    void populateObjectMessage(costmap_2d::Costmap2D*,
                                const std::vector<cv::Point>&,
                                std::vector<hsr_navigation::ObjectMessage>&);
 

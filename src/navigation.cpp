@@ -233,6 +233,10 @@ void Navigation::checkGlobalPath(const nav_msgs::OccupancyGrid p_globalCostmap)
                 if (DEBUG)
                 {
                     ROS_INFO("Obstacle detected on the path.");
+                    std::cout << "GCM wx: " << l_wx << std::endl;
+                    std::cout << "GCM wy: " << l_wy << std::endl;
+                    std::cout << "GCM x: " << l_mx << std::endl;
+                    std::cout << "GCM y: " << l_my << std::endl;
                 }
 
                 // Set replan flag
