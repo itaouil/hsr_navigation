@@ -188,8 +188,6 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
         // Access depth value
         double l_depth = m_depthPtr->image.at<float>(l_point.y, l_point.x);
 
-        
-
         // Check if depth is valid
         if (!isnan(l_depth))
         {   
@@ -197,17 +195,19 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
             l_depth *= 0.001;
 
             // Compute cartesian coordinates
-            cv::Point3d l_3dPoint;
-            l_3dPoint.x = ((l_point.x - m_phcm.cx()) * (l_depth)) / m_phcm.fx();
-            l_3dPoint.y = ((l_point.y - m_phcm.cy()) * (l_depth)) / m_phcm.fy();
-            l_3dPoint.z = l_depth;
+            //cv::Point3d l_3dPoint;
+            //l_3dPoint.x = ((l_point.x - m_phcm.cx()) * (l_depth)) / m_phcm.fx();
+            //l_3dPoint.y = ((l_point.y - m_phcm.cy()) * (l_depth)) / m_phcm.fy();
+            //l_3dPoint.z = l_depth;
+            cv::Point3d l_3dPoint = m_phcm.projectPixelTo3dRay(l_point);
+            l_3dPoint *= l_depth;
 
             // Create point stamped object
             geometry_msgs::PointStamped l_pointStamped;
             l_pointStamped.header.stamp = ros::Time::now();
             l_pointStamped.header.frame_id = FRAME_ID;
-            l_pointStamped.point.x = l_3dPoint.y;
-            l_pointStamped.point.y = l_3dPoint.x;
+            l_pointStamped.point.x = l_3dPoint.x;
+            l_pointStamped.point.y = l_3dPoint.y;
             l_pointStamped.point.z = l_3dPoint.z;
 
             // Populate vector
@@ -337,8 +337,8 @@ void Perception::transformPoint(tf2_ros::Buffer &p_buffer,
     geometry_msgs::TransformStamped l_transformer;
 
     // Set transformer
-    l_transformer = p_buffer.lookupTransform(p_frameID, 
-                                             "map",
+    l_transformer = p_buffer.lookupTransform("map", 
+                                             p_frameID,
                                              ros::Time(0),
                                              ros::Duration(1.0));
 
