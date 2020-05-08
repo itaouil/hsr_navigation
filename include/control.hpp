@@ -58,10 +58,10 @@ private:
 
     // General members
     bool m_push = false;
-    double m_previousX = 0
-    double m_previousY = 0
+    double m_previousX = 0;
+    double m_previousY = 0;
     bool m_action = false;
-    bool m_firstRun = true
+    bool m_firstRun = true;
     bool m_newPlan = false;
     double m_totalDistance = 0;
     bool m_initialized = false;
