@@ -55,7 +55,7 @@ void Navigation::initialize()
     m_globalCostmapROS = new costmap_2d::Costmap2DROS("global_costmap", m_buffer);
 
     // Perception instance
-    m_perception.reset(new Perception(m_buffer, m_tf);
+    m_perception.reset(new Perception(m_buffer, m_tf));
 
     // Control instance
     m_control.reset(new Control(m_buffer, m_localCostmapROS, m_globalCostmapROS));
