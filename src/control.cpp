@@ -183,8 +183,8 @@ void Control::push()
     }
 
     // Pause costmaps
-    m_localCostmapROS.pause();
-    m_globalCostmapROS.pause();
+    m_localCostmapROS->pause();
+    m_globalCostmapROS->pause();
 
     // Allow odometry computations
     m_push = true;
@@ -207,7 +207,6 @@ void Control::push()
 
     // Back up from obstacle
     // Populate velocity command
-    geometry_msgs::Twist l_cmd_vel;
     l_cmd_vel.linear.x = -0.2;
 
     // Push until distance is
@@ -223,8 +222,8 @@ void Control::push()
     }
 
     // Restart costmaps
-    m_localCostmapROS.start();
-    m_globalCostmapROS.start();
+    m_localCostmapROS->start();
+    m_globalCostmapROS->start();
 
     // Clear variables
     m_push = false;
