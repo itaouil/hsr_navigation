@@ -70,7 +70,7 @@ void Control::handlePlan(const hsr_navigation::PlannerService &p_service)
  * the goal without the need to
  * perform any sort of action.
  */
-void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
+bool Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
 {
     // Set global plan for local planner
     if (m_dp.setPlan(p_path))
@@ -113,12 +113,17 @@ void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
         ros::spinOnce();
     }
 
+    // Reset replan flag
+    m_newPlan = false;
+
     if (m_dp.isGoalReached())
     {
         if (DEBUG)
         {
             ROS_INFO("Control: Goal reached :)");
         }
+
+        return true;
     }
     else
     {
@@ -126,10 +131,9 @@ void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
         {
             ROS_INFO_STREAM("Control: stopping control for replanning " << m_newPlan);
         }
-    }
 
-    // Reset replan flag
-    m_newPlan = false;
+        return false;
+    }
 }
 
 /**
@@ -158,18 +162,19 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
     std::cout << "Path: " << p_path.size() << std::endl;
     std::cout << "Intermediate: " << l_intermediatePath.size() << std::endl;
 
-    dwaControl(l_intermediatePath);
-
-    if (DEBUG)
+    if (dwaControl(l_intermediatePath))
     {
-        ROS_INFO("Control: Intermediate path reached.");
+        if (DEBUG)
+        {
+            ROS_INFO("Control: Intermediate path reached.");
+        }
+
+        // Push action
+        push();
     }
 
-    // Push action
-    //push();
-
     // Reset action flag
-    //m_action = false;
+    m_action = false;
 }
 
 /**
@@ -194,6 +199,7 @@ void Control::push()
     while (m_totalDistance < DISTANCE)
     {
         // Apply linear velocity
+        ROS_INFO("Control: applying push velocity.");
         m_velPub.publish(l_cmd_vel);
     }
 

@@ -48,7 +48,7 @@ private:
     void initialize();
     void loadStaticMap();
     void checkOdometry(const nav_msgs::Odometry);
-    void dwaControl(const std::vector<geometry_msgs::PoseStamped>&);
+    bool dwaControl(const std::vector<geometry_msgs::PoseStamped>&);
     void actionControl(const std::vector<geometry_msgs::PoseStamped>&);
     unsigned int getIndex(const std::vector<geometry_msgs::PoseStamped> &);
 
