@@ -152,7 +152,7 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
 
     // Extract intermediate path
     std::vector<geometry_msgs::PoseStamped> l_intermediatePath(p_path.begin(), 
-                                                               p_path.begin() + idx - 2);
+                                                               p_path.begin() + l_idx - 2);
 
     // Send robot to intermediate path
     dwaControl(l_intermediatePath);
@@ -302,8 +302,8 @@ void Control::checkOdometry(const nav_msgs::Odometry p_data)
         }
 
         // Get current pose
-        double l_x = p_data.pose.pose.position.x
-        double l_y = p_data.pose.pose.position.y
+        double l_x = p_data.pose.pose.position.x;
+        double l_y = p_data.pose.pose.position.y;
 
         // Add increment to total distance
         m_totalDistance += sqrt(pow(l_x - m_previousX, 2) + pow(l_y - m_previousY, 2));
