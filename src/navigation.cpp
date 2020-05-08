@@ -168,8 +168,8 @@ void Navigation::populatePlannerRequest(hsr_navigation::PlannerService &p_servic
     // Goal pose
     geometry_msgs::PoseStamped l_goal;
     l_goal.header.frame_id = "map";
-    l_goal.pose.position.x = 6.17;
-	l_goal.pose.position.y = 2.36;
+    l_goal.pose.position.x = 2.09;
+	l_goal.pose.position.y = 3.75;
     l_goal.pose.position.z = 0;
     l_goal.pose.orientation.x = 0;
     l_goal.pose.orientation.y = 0;
@@ -207,6 +207,11 @@ void Navigation::checkGlobalPath(const nav_msgs::OccupancyGrid p_globalCostmap)
     // new clutter planner plan
     if (!m_control->actionInCourse())
     {
+        if (DEBUG)
+        {
+            ROS_INFO("action is fase so I am checking...");
+        }
+
         // Map coordinates
         int l_mx;
         int l_my;

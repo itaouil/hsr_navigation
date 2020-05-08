@@ -124,7 +124,7 @@ void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
     {
         if (DEBUG)
         {
-            ROS_INFO("Control: stopping control for replanning");
+            ROS_INFO_STREAM("Control: stopping control for replanning " << m_newPlan);
         }
     }
 
@@ -152,9 +152,12 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
 
     // Extract intermediate path
     std::vector<geometry_msgs::PoseStamped> l_intermediatePath(p_path.begin(), 
-                                                               p_path.begin() + l_idx - 2);
+                                                               p_path.begin() + l_idx - 4);
 
     // Send robot to intermediate path
+    std::cout << "Path: " << p_path.size() << std::endl;
+    std::cout << "Intermediate: " << l_intermediatePath.size() << std::endl;
+
     dwaControl(l_intermediatePath);
 
     if (DEBUG)
@@ -163,10 +166,10 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
     }
 
     // Push action
-    push();
+    //push();
 
     // Reset action flag
-    m_action = false;
+    //m_action = false;
 }
 
 /**
@@ -174,6 +177,11 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
  */
 void Control::push()
 {
+    if (DEBUG)
+    {
+        ROS_INFO("Control: starting pushing action.");
+    }
+
     // Allow odometry computations
     m_push = true;
 
@@ -268,6 +276,8 @@ unsigned int Control::getIndex(const std::vector<geometry_msgs::PoseStamped> &p_
             if (DEBUG)
             {
                 ROS_INFO_STREAM("Control: Obstructed cell found at idx: " << l_idx);
+                ROS_INFO_STREAM("Control: l_wx: " << l_wx);
+                ROS_INFO_STREAM("Control: l_wy: " << l_wy);
             }
 
             break;
