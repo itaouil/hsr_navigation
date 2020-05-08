@@ -182,6 +182,10 @@ void Control::push()
         ROS_INFO("Control: starting pushing action.");
     }
 
+    // Pause costmaps
+    m_localCostmapROS.pause();
+    m_globalCostmapROS.pause();
+
     // Allow odometry computations
     m_push = true;
 
@@ -200,6 +204,27 @@ void Control::push()
         // Keep spinning
         ros::spinOnce();   
     }
+
+    // Back up from obstacle
+    // Populate velocity command
+    geometry_msgs::Twist l_cmd_vel;
+    l_cmd_vel.linear.x = -0.2;
+
+    // Push until distance is
+    // above a certain threshold
+    while (m_totalDistance < 1)
+    {
+        // Apply linear velocity
+        ROS_INFO("Control: backing up.");
+        m_velPub.publish(l_cmd_vel);
+
+        // Keep spinning
+        ros::spinOnce();   
+    }
+
+    // Restart costmaps
+    m_localCostmapROS.start();
+    m_globalCostmapROS.start();
 
     // Clear variables
     m_push = false;
