@@ -41,9 +41,6 @@ Navigation::~Navigation()
  */
 void Navigation::initialize()
 {
-    // DWA planner velocity publisher
-    m_velPub = m_nh.advertise<geometry_msgs::Twist>(DWA_VELOCITIES, 1);
-
     // Clutter planner request publisher
     m_srvPub = m_nh.advertise<hsr_navigation::PlannerServiceReq>(PLANNER_REQ, 1);
 

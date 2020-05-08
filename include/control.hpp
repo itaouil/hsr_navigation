@@ -7,6 +7,7 @@
 #include <iostream>
 
 // ROS msg/srv
+#include <nav_msgs/Odometry.h>
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -42,25 +43,33 @@ private:
     /**
      * Private methods
      */
+    void push();
     void grasp();
     void initialize();
     void loadStaticMap();
+    void checkOdometry(const nav_msgs::Odometry);
     void dwaControl(const std::vector<geometry_msgs::PoseStamped>&);
     void actionControl(const std::vector<geometry_msgs::PoseStamped>&);
+    unsigned int getIndex(const std::vector<geometry_msgs::PoseStamped> &);
 
     /**
      * Private members
      */
 
     // General members
-    std::mutex m_mtx;
+    bool m_push = false;
+    double m_previousX = 0
+    double m_previousY = 0
     bool m_action = false;
+    bool m_firstRun = true
     bool m_newPlan = false;
+    double m_totalDistance = 0;
     bool m_initialized = false;
 
     // ROS members
     ros::NodeHandle m_nh;
     ros::Publisher m_velPub;
+    ros::Subscriber m_odomSub;
     tf2_ros::Buffer &m_buffer;
     dwa_local_planner::DWAPlannerROS m_dp;
     costmap_2d::Costmap2DROS* m_localCostmapROS = nullptr;

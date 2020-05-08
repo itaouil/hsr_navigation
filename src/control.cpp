@@ -26,6 +26,12 @@ void Control::initialize()
     // DWA planner velocity publisher
     m_velPub = m_nh.advertise<geometry_msgs::Twist>(DWA_VELOCITIES, 1);
 
+    // Subscriber to global costmap
+    m_odomSub = m_nh.subscribe<nav_msgs::Odometry>(ODOMETRY, 
+                                                   1,
+                                                   &Control::checkOdometry,
+                                                   this);
+
     // Initialize dwa local planner
     m_dp.initialize("hsr_dwa_planner", &m_buffer, m_localCostmapROS);
 
@@ -53,7 +59,6 @@ void Control::handlePlan(const hsr_navigation::PlannerService &p_service)
         if (DEBUG)
         {
             ROS_INFO("Control: path is obstructed -- starting action control.");
-            ROS_INFO_STREAM(p_service.response);
         }
 
         actionControl(p_service.response.path);
@@ -142,47 +147,8 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
     // logic
     m_action = true;
 
-    // Costmap2D
-    costmap_2d::Costmap2D *l_globalCostmap = m_globalCostmapROS->getCostmap();
-
-    // Find intermediate point path
-    // Map coordinates
-    int l_mx;
-    int l_my;
-
-    // Index of obstructed cell
-    unsigned int idx = 0;
-
-    // Find first obstructed cell
-    for (auto poseStamped: p_path)
-    {
-        // World coordinates
-        double l_wx = poseStamped.pose.position.x;
-        double l_wy = poseStamped.pose.position.y;
-
-        // Cast from world to map
-        l_globalCostmap->worldToMapEnforceBounds(l_wx, l_wy, l_mx, l_my);
-
-        // Get cost (convert to int from unsigned char)
-        int l_cellCost = (int) l_globalCostmap->getCost(l_mx, l_my);
-
-        // Log cost
-        if (l_cellCost > 253)
-        {
-            if (DEBUG)
-            {
-                ROS_INFO_STREAM("Control: Obstructed cell found at idx: " << idx);
-            }
-
-            // Increase counter
-            idx += 1;
-
-            break;
-        }
-
-        // Increase counter
-        idx += 1;
-    }
+    // Get intermiate pose index
+    unsigned int l_idx = getIndex(p_path);
 
     // Extract intermediate path
     std::vector<geometry_msgs::PoseStamped> l_intermediatePath(p_path.begin(), 
@@ -196,11 +162,39 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
         ROS_INFO("Control: Intermediate path reached.");
     }
 
-    // Resume orignal plan
-    dwaControl(p_path);
+    // Push action
+    push();
 
     // Reset action flag
     m_action = false;
+}
+
+/**
+ * Push action to remove obstacle
+ */
+void Control::push()
+{
+    // Allow odometry computations
+    m_push = true;
+
+    // Populate velocity command
+    geometry_msgs::Twist l_cmd_vel;
+    l_cmd_vel.linear.x = 0.2;
+
+    // Push until distance is
+    // above a certain threshold
+    while (m_totalDistance < DISTANCE)
+    {
+        // Apply linear velocity
+        m_velPub.publish(l_cmd_vel);
+    }
+
+    // Clear variables
+    m_push = false;
+    m_previousX = 0;
+    m_previousY = 0;
+    m_firstRun = true;
+    m_totalDistance = 0;
 }
 
 /**
@@ -238,4 +232,86 @@ bool Control::actionInCourse()
 bool Control::initialized()
 {
     return m_initialized;
+}
+
+/**
+ * Get intermediat path index
+ */
+unsigned int Control::getIndex(const std::vector<geometry_msgs::PoseStamped> &p_path)
+{
+    // Costmap2D
+    costmap_2d::Costmap2D *l_globalCostmap = m_globalCostmapROS->getCostmap();
+
+    // Temporary holders
+    int l_mx;
+    int l_my;
+
+    // Index of obstructed cell
+    unsigned int l_idx = 0;
+
+    // Find first obstructed cell
+    for (auto poseStamped: p_path)
+    {
+        // World coordinates
+        double l_wx = poseStamped.pose.position.x;
+        double l_wy = poseStamped.pose.position.y;
+
+        // Cast from world to map
+        l_globalCostmap->worldToMapEnforceBounds(l_wx, l_wy, l_mx, l_my);
+
+        // Get cost (convert to int from unsigned char)
+        int l_cellCost = (int) l_globalCostmap->getCost(l_mx, l_my);
+
+        // Log cost
+        if (l_cellCost > 253)
+        {
+            if (DEBUG)
+            {
+                ROS_INFO_STREAM("Control: Obstructed cell found at idx: " << l_idx);
+            }
+
+            break;
+        }
+        else
+        {
+            // Increase counter
+            l_idx += 1;
+        }   
+    }
+
+    return l_idx;
+}
+
+/**
+ * Compute travelled distance
+ * by robot during pushing action
+ */
+void Control::checkOdometry(const nav_msgs::Odometry p_data)
+{
+    // Only compute travelled
+    // distance if control is
+    // in push action mode
+    if (m_push)
+    {
+        // Store initial pose
+        if(m_firstRun)
+        {
+            m_previousX = p_data.pose.pose.position.x;
+            m_previousY = p_data.pose.pose.position.y;
+            m_firstRun = false;
+        }
+
+        // Get current pose
+        double l_x = p_data.pose.pose.position.x
+        double l_y = p_data.pose.pose.position.y
+
+        // Add increment to total distance
+        m_totalDistance += sqrt(pow(l_x - m_previousX, 2) + pow(l_y - m_previousY, 2));
+        
+        std::cout << "Total distance travelled so far is: " << m_totalDistance << std::endl;
+
+        // Update previous point
+        m_previousX = p_data.pose.pose.position.x;
+        m_previousY = p_data.pose.pose.position.y;
+    }
 }

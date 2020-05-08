@@ -194,11 +194,8 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
             // Convert depth to meters
             l_depth *= 0.001;
 
-            // Compute cartesian coordinates
-            //cv::Point3d l_3dPoint;
-            //l_3dPoint.x = ((l_point.x - m_phcm.cx()) * (l_depth)) / m_phcm.fx();
-            //l_3dPoint.y = ((l_point.y - m_phcm.cy()) * (l_depth)) / m_phcm.fy();
-            //l_3dPoint.z = l_depth;
+            // Compute world coordinates for
+            // every pixel location in 2D
             cv::Point3d l_3dPoint = m_phcm.projectPixelTo3dRay(l_point);
             l_3dPoint *= l_depth;
 
@@ -251,9 +248,6 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
                                            l_mx, 
                                            l_my);
 
-            std::cout<< "3D point X: " << l_3dPointMapFrame.point.x << std::endl;
-            std::cout<< "3D point Y: " << l_3dPointMapFrame.point.y << std::endl;
-
             // Populate cell message vector
             hsr_navigation::CellMessage l_cellMessage;
             l_cellMessage.mx = l_mx;
@@ -274,10 +268,6 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
     {
         ROS_INFO("Perception: computed cell messages.");
     }
-
-    std::cout<< "Mean wx: " << l_meanX << std::endl;
-    std::cout<< "Mean wy: " << l_meanY << std::endl;
-    std::cout<< "Size: " << l_cellMessages.size() << std::endl;
 
     // Compute final mean point
     l_meanX /= l_cellMessages.size();

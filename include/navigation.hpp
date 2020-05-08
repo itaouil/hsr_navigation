@@ -62,7 +62,6 @@ private:
 
     // ROS members
     ros::NodeHandle m_nh;
-    ros::Publisher m_velPub;
     ros::Publisher m_srvPub;
     ros::Subscriber m_costSub;
     tf2_ros::Buffer &m_buffer;
