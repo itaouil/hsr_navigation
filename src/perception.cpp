@@ -10,7 +10,8 @@ typedef sync_policies::ApproximateTime<Image, Image> MySyncPolicy;
 /**
  * Default constructor.
  */
-Perception::Perception()
+Perception::Perception(tf2_ros::Buffer &p_buffer, tf2_ros::TransformListener &p_tf):
+    m_buffer(p_buffer), m_tf(p_tf)
 {
     // Initialize members
     initialize();
@@ -176,11 +177,6 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
         ROS_INFO("Perception: populate object message called.");
     }
 
-    // Listener and buffer for
-    // chain transformations
-    tf2_ros::Buffer l_tfBuffer;
-    tf2_ros::TransformListener l_tf2Listener(l_tfBuffer);
-
     // Convert 2d pixels in 3d points
     std::vector<geometry_msgs::PointStamped> l_3dPoints;
     for (auto l_point: p_locations)
@@ -234,7 +230,7 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
         {            
             // RGB-D to map transformation
             geometry_msgs::PointStamped l_3dPointMapFrame;
-            transformPoint(l_tfBuffer, FRAME_ID, l_3dPointMapFrame, l_3dPointRGBDFrame);
+            transformPoint(FRAME_ID, l_3dPointMapFrame, l_3dPointRGBDFrame);
 
             // Aggregate means
             l_meanX += l_3dPointMapFrame.point.x;
@@ -318,8 +314,7 @@ bool Perception::initialized()
  * given frame ID to map frame
  * using transform matrices
  */
-void Perception::transformPoint(tf2_ros::Buffer &p_buffer,
-                                const std::string &p_frameID,
+void Perception::transformPoint(const std::string &p_frameID,
                                 geometry_msgs::PointStamped &p_output,
                                 const geometry_msgs::PointStamped &p_input)
 {
@@ -327,7 +322,7 @@ void Perception::transformPoint(tf2_ros::Buffer &p_buffer,
     geometry_msgs::TransformStamped l_transformer;
 
     // Set transformer
-    l_transformer = p_buffer.lookupTransform("map", 
+    l_transformer = m_buffer.lookupTransform("map", 
                                              p_frameID,
                                              ros::Time(0),
                                              ros::Duration(1.0));

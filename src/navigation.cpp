@@ -23,17 +23,17 @@ Navigation::Navigation(tf2_ros::Buffer &p_buffer, tf2_ros::TransformListener &p_
  */
 Navigation::~Navigation()
 {
-    if (m_localCostmapROS)
-        delete m_localCostmapROS;
-    
-    if (m_globalCostmapROS)
-        delete m_globalCostmapROS;
-
     if (m_control)
         m_control.reset();
 
     if (m_perception)
         m_perception.reset();
+
+    if (m_localCostmapROS)
+        delete m_localCostmapROS;
+    
+    if (m_globalCostmapROS)
+        delete m_globalCostmapROS;
 }
 
 /**
@@ -55,7 +55,7 @@ void Navigation::initialize()
     m_globalCostmapROS = new costmap_2d::Costmap2DROS("global_costmap", m_buffer);
 
     // Perception instance
-    m_perception.reset(new Perception());
+    m_perception.reset(new Perception(m_buffer, m_tf);
 
     // Control instance
     m_control.reset(new Control(m_buffer, m_localCostmapROS, m_globalCostmapROS));

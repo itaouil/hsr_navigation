@@ -43,7 +43,7 @@ class Perception
 {
 public:
     // Contructor (explicit)
-    explicit Perception();
+    explicit Perception(tf2_ros::Buffer&, tf2_ros::TransformListener&);
 
     // Destructor (virtual)
     virtual ~Perception();
@@ -65,8 +65,7 @@ private:
 
     void setRGBD(const sensor_msgs::ImageConstPtr&, const sensor_msgs::ImageConstPtr&);
     
-    void transformPoint(tf2_ros::Buffer&,
-                        const std::string&, 
+    void transformPoint(const std::string&, 
                         geometry_msgs::PointStamped&, 
                         const geometry_msgs::PointStamped&);
 
@@ -92,9 +91,11 @@ private:
     // ROS members
     ros::NodeHandle m_nh;
     ros::Subscriber m_camInfo;
+    tf2_ros::Buffer &m_buffer;
+    boost::shared_ptr<Sync> m_sync;
+    tf2_ros::TransformListener &m_tf;
     message_filters::Subscriber<sensor_msgs::Image> m_rgbSub;
     message_filters::Subscriber<sensor_msgs::Image> m_depthSub;
-    boost::shared_ptr<Sync> m_sync;
 };
 
 #endif // PERCEPTION_HPP_
