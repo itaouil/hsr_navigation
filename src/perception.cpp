@@ -53,7 +53,7 @@ void Perception::setCameraInfo(sensor_msgs::CameraInfo p_camInfo)
         m_phcm.fromCameraInfo(p_camInfo);
         m_modelInitialized = true;
 
-        if (DEBUG)
+        if (DEBUGPERCEPTION)
         {
             ROS_INFO("Camera model set correctly.");
         }
@@ -74,7 +74,7 @@ void Perception::setRGBD(const sensor_msgs::ImageConstPtr& p_rgb,
             m_rgbPtr = cv_bridge::toCvCopy(p_rgb, sensor_msgs::image_encodings::BGR8);
             m_depthPtr = cv_bridge::toCvCopy(p_depth, sensor_msgs::image_encodings::TYPE_32FC1);
 
-            if (DEBUG)
+            if (DEBUGPERCEPTION)
             {
                 //ROS_INFO("RGB-D data set correctly.");
             }
@@ -96,7 +96,7 @@ void Perception::setRGBD(const sensor_msgs::ImageConstPtr& p_rgb,
  */
 std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::Costmap2D *p_gcm)
 {
-    if (DEBUG)
+    if (DEBUGPERCEPTION)
     {
         ROS_INFO("Perception: getObstacles called from Navigation");
     }
@@ -117,7 +117,7 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
     cv::Mat l_hsv;
     cv::cvtColor(m_rgbPtr->image, l_hsv, cv::COLOR_BGR2HSV);
 
-    if (DEBUG)
+    if (DEBUGPERCEPTION)
     {
         ROS_INFO("Perception: converted BGR to HSV");
     }
@@ -132,7 +132,7 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
     //cv::imshow("Mask", l_mask1);
     //cv::waitKey(0);
 
-    if (DEBUG)
+    if (DEBUGPERCEPTION)
     {
         ROS_INFO("Perception: created final mask");
     }
@@ -141,14 +141,14 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
     std::vector<cv::Point> l_locations;
     cv::findNonZero(l_mask, l_locations);
 
-    if (DEBUG)
+    if (DEBUGPERCEPTION)
     {
         ROS_INFO("Perception: found pixel locations");
     }
 
     if (l_locations.size())
     {
-        if (DEBUG)
+        if (DEBUGPERCEPTION)
         {
             ROS_INFO("Red pixels detected.");
         }
@@ -156,7 +156,7 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
         populateObjectMessage(p_gcm, l_locations, l_objects);
     }
     
-    if (DEBUG)
+    if (DEBUGPERCEPTION)
     {
         ROS_INFO("Perception: Obstacles computed correctly");
     }
@@ -172,7 +172,7 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
                                        const std::vector<cv::Point> &p_locations,
                                        std::vector<hsr_navigation::ObjectMessage> &p_objs)
 {
-    if (DEBUG)
+    if (DEBUGPERCEPTION)
     {
         ROS_INFO("Perception: populate object message called.");
     }
@@ -212,7 +212,7 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
         }
     }
 
-    if (DEBUG)
+    if (DEBUGPERCEPTION)
     {
         ROS_INFO("Perception: computed 3D points.");
     }
@@ -260,7 +260,7 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
         }
     }
 
-    if (DEBUG)
+    if (DEBUGPERCEPTION)
     {
         ROS_INFO("Perception: computed cell messages.");
     }
@@ -287,7 +287,7 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
     l_obj.center_wy = l_meanY;
     l_obj.cell_vector = l_cellMessages;
 
-    if (DEBUG)
+    if (DEBUGPERCEPTION)
     {
         ROS_INFO("Perception: computed object message.");
         std::cout<< "Mean mx: " << l_mx << std::endl;

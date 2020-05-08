@@ -4,7 +4,9 @@
 #include <iostream>
 
 // General parameters
-const bool DEBUG(true);
+const bool DEBUGCONTROL(true);
+const bool DEBUGPERCEPTION(true);
+const bool DEBUGNAVIGATION(true);
 
 // Planner parameters
 const bool BACKUPPLAN(false);

@@ -82,14 +82,14 @@ void Navigation::loadStaticMap()
     {
         m_occupacyGrid = l_srv_map.response.map;
 
-        if (DEBUG)
+        if (DEBUGNAVIGATION)
         {
             ROS_INFO("Map service called successfully");
         }
     }
     else
     {
-        if (DEBUG)
+        if (DEBUGNAVIGATION)
         {
             ROS_ERROR("Failed to call map service");
         }
@@ -101,7 +101,7 @@ void Navigation::loadStaticMap()
  */
 void Navigation::requestPlan()
 {
-    if (DEBUG)
+    if (DEBUGNAVIGATION)
     {
         ROS_INFO("Navigation: requestPlan called.");
     }
@@ -123,7 +123,7 @@ void Navigation::requestPlan()
         // Store computed path
         m_globalPath = l_service.response.path;
         
-        if (DEBUG)
+        if (DEBUGNAVIGATION)
         {
             ROS_INFO("Planner service called successfully");
         }
@@ -133,7 +133,7 @@ void Navigation::requestPlan()
     }
     else
     {
-        if (DEBUG)
+        if (DEBUGNAVIGATION)
         {
             ROS_ERROR("Failed to call planner service...");
         }     
@@ -145,7 +145,7 @@ void Navigation::requestPlan()
  */
 void Navigation::populatePlannerRequest(hsr_navigation::PlannerService &p_service)
 {
-    if (DEBUG)
+    if (DEBUGNAVIGATION)
     {
         ROS_INFO("Navigation: populating planner request.");
     }
@@ -183,7 +183,7 @@ void Navigation::populatePlannerRequest(hsr_navigation::PlannerService &p_servic
     p_service.request.grid = m_occupacyGrid;
 
     // Log
-    if (DEBUG)
+    if (DEBUGNAVIGATION)
     {
         ROS_INFO("Planner request populated successfully");
     }
@@ -207,7 +207,7 @@ void Navigation::checkGlobalPath(const nav_msgs::OccupancyGrid p_globalCostmap)
     // new clutter planner plan
     if (!m_control->actionInCourse())
     {
-        if (DEBUG)
+        if (DEBUGNAVIGATION)
         {
             ROS_INFO("action is fase so I am checking...");
         }
@@ -232,7 +232,7 @@ void Navigation::checkGlobalPath(const nav_msgs::OccupancyGrid p_globalCostmap)
             // Log cost
             if (l_cellCost > 253)
             {
-                if (DEBUG)
+                if (DEBUGNAVIGATION)
                 {
                     ROS_INFO("Obstacle detected on the path.");
                     std::cout << "GCM wx: " << l_wx << std::endl;

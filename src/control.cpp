@@ -47,7 +47,7 @@ void Control::handlePlan(const hsr_navigation::PlannerService &p_service)
 {
     if (p_service.response.obstacles_out.empty())
     {
-        if (DEBUG)
+        if (DEBUGCONTROL)
         {
             ROS_INFO("Control: path is empty -- starting simple DWA control.");
         }
@@ -56,7 +56,7 @@ void Control::handlePlan(const hsr_navigation::PlannerService &p_service)
     }
     else
     {
-        if (DEBUG)
+        if (DEBUGCONTROL)
         {
             ROS_INFO("Control: path is obstructed -- starting action control.");
         }
@@ -70,19 +70,19 @@ void Control::handlePlan(const hsr_navigation::PlannerService &p_service)
  * the goal without the need to
  * perform any sort of action.
  */
-bool Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
+void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
 {
     // Set global plan for local planner
     if (m_dp.setPlan(p_path))
     {
-        if (DEBUG)
+        if (DEBUGCONTROL)
         {
             ROS_INFO("Control: DWA set plan succeeded.");
         }
     }
     else
     {
-        if (DEBUG)
+        if (DEBUGCONTROL)
         {
             ROS_ERROR("Control: DWA set plan failed.");
         }
@@ -97,43 +97,50 @@ bool Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
         // Compute local velocities
         if (!m_dp.computeVelocityCommands(l_cmd_vel))
         {
-            if (DEBUG)
+            if (DEBUGCONTROL)
             {
                 ROS_ERROR("Control: DWA velocities computation failed.");
             }
         }
 
         // Send commands
-        if (DEBUG)
+        if (DEBUGCONTROL)
         {
             //ROS_INFO_STREAM(l_cmd_vel);
         }
         m_velPub.publish(l_cmd_vel);
 
+        // Keep spinning
         ros::spinOnce();
     }
 
-    // Reset replan flag
-    m_newPlan = false;
-
     if (m_dp.isGoalReached())
     {
-        if (DEBUG)
+        if (DEBUGCONTROL)
         {
             ROS_INFO("Control: Goal reached :)");
         }
 
-        return true;
+        // If action control then
+        // perform action for removal
+        if (m_action)
+        {
+            push();
+
+            // Reset flag
+            m_action = false;
+        }
     }
     else
     {
-        if (DEBUG)
+        if (DEBUGCONTROL)
         {
-            ROS_INFO_STREAM("Control: stopping control for replanning " << m_newPlan);
+            ROS_INFO_STREAM("Control: stopping control for replanning ");
         }
-
-        return false;
     }
+
+    // Reset replan flag
+    m_newPlan = false;
 }
 
 /**
@@ -141,14 +148,13 @@ bool Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
  */
 void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
 {
-    if (DEBUG)
+    if (DEBUGCONTROL)
     {
         ROS_INFO("Control: action control started.");
     }
 
     // Set action flag to avoid
     // replanning by navigation
-    // logic
     m_action = true;
 
     // Get intermiate pose index
@@ -162,19 +168,8 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
     std::cout << "Path: " << p_path.size() << std::endl;
     std::cout << "Intermediate: " << l_intermediatePath.size() << std::endl;
 
-    if (dwaControl(l_intermediatePath))
-    {
-        if (DEBUG)
-        {
-            ROS_INFO("Control: Intermediate path reached.");
-        }
-
-        // Push action
-        push();
-    }
-
-    // Reset action flag
-    m_action = false;
+    // Set intermediate path
+    dwaControl(l_intermediatePath);    
 }
 
 /**
@@ -182,7 +177,7 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
  */
 void Control::push()
 {
-    if (DEBUG)
+    if (DEBUGCONTROL)
     {
         ROS_INFO("Control: starting pushing action.");
     }
@@ -201,6 +196,9 @@ void Control::push()
         // Apply linear velocity
         ROS_INFO("Control: applying push velocity.");
         m_velPub.publish(l_cmd_vel);
+
+        // Keep spinning
+        ros::spinOnce();   
     }
 
     // Clear variables
@@ -279,7 +277,7 @@ unsigned int Control::getIndex(const std::vector<geometry_msgs::PoseStamped> &p_
         // Log cost
         if (l_cellCost > 253)
         {
-            if (DEBUG)
+            if (DEBUGCONTROL)
             {
                 ROS_INFO_STREAM("Control: Obstructed cell found at idx: " << l_idx);
                 ROS_INFO_STREAM("Control: l_wx: " << l_wx);
