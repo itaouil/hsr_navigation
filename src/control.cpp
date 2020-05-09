@@ -183,15 +183,28 @@ void Control::push()
     }
 
     // Pause costmaps
-    m_localCostmapROS->pause();
-    m_globalCostmapROS->pause();
+    // m_localCostmapROS->pause();
+    // m_globalCostmapROS->pause();
+
+    // Rotate by 180 degrees
+    // by enabling odometry for
+    // rotation
+    m_rotate = true;
+    while (m_rotate != false)
+    {
+        // Apply linear velocity
+        ROS_INFO("Control: rotating");
+
+        // Keep spinning
+        ros::spinOnce();   
+    }
 
     // Allow odometry computations
     m_push = true;
 
     // Populate velocity command
     geometry_msgs::Twist l_cmd_vel;
-    l_cmd_vel.linear.x = 0.2;
+    l_cmd_vel.linear.x = -0.2;
 
     // Push until distance is
     // above a certain threshold
@@ -207,7 +220,7 @@ void Control::push()
 
     // Back up from obstacle
     // Populate velocity command
-    l_cmd_vel.linear.x = -0.2;
+    l_cmd_vel.linear.x = 0.2;
 
     // Push until distance is
     // above a certain threshold
@@ -221,9 +234,22 @@ void Control::push()
         ros::spinOnce();   
     }
 
+    // Rotate by 180 degrees
+    // by enabling odometry for
+    // rotation
+    m_rotate = true;
+    while (m_rotate != false)
+    {
+        // Apply linear velocity
+        ROS_INFO("Control: rotating");
+
+        // Keep spinning
+        ros::spinOnce();   
+    }
+
     // Restart costmaps
-    m_localCostmapROS->start();
-    m_globalCostmapROS->start();
+    // m_localCostmapROS->start();
+    // m_globalCostmapROS->start();
 
     // Clear variables
     m_push = false;
@@ -240,34 +266,6 @@ void Control::push()
 void Control::grasp()
 {
     //TODO: implement grasping action
-}
-
-/**
- * Let control know about a
- * new plan that has been set
- */
-void Control::setNewPlan()
-{
-    m_newPlan = true;
-}
-
-/**
- * Method used by the navigation
- * class to avoid replanning while
- * action/manipulation is in course
- */
-bool Control::actionInCourse()
-{
-    return m_action;
-}
-
-/**
- * Confirms that control was
- * initialized successfully
- */
-bool Control::initialized()
-{
-    return m_initialized;
 }
 
 /**
@@ -326,6 +324,39 @@ unsigned int Control::getIndex(const std::vector<geometry_msgs::PoseStamped> &p_
  */
 void Control::checkOdometry(const nav_msgs::Odometry p_data)
 {
+    // Rotate
+    if (m_rotate)
+    {
+        // Create quaternion
+        double l_quatX = p_data.pose.pose.orientation.x;
+        double l_quatY = p_data.pose.pose.orientation.y;
+        double l_quatZ = p_data.pose.pose.orientation.z;
+        double l_quatW = p_data.pose.pose.orientation.w;
+        tf::Quaternion l_quat(l_quatX, l_quatY, l_quatZ, l_quatW);
+
+        // Creat matrix from quaternion
+        tf::Matrix3x3 l_m(q);
+
+        // Extract axis angle representation
+        double l_roll, l_pitch, l_yaw;
+        l_m.getRPY(l_roll, l_pitch, l_yaw); 
+
+        // Send rotation
+        l_targetRad = getRadians(180);
+
+        // Populate velocity command
+        geometry_msgs::Twist l_cmd_vel;
+        l_cmd_vel.angular.z = 0.5 * (l_targetRad - yaw)
+
+        m_velPub.publish(command)
+        std::cout << "Target: " << l_targetRad << " Current: " << l_yaw << std::endl;
+
+        if (l_targetRad - yaw <= 0.01)
+        {
+            m_rotate = false;
+        }
+    }
+
     // Only compute travelled
     // distance if control is
     // in push action mode
@@ -352,4 +383,53 @@ void Control::checkOdometry(const nav_msgs::Odometry p_data)
         m_previousX = p_data.pose.pose.position.x;
         m_previousY = p_data.pose.pose.position.y;
     }
+}
+
+/**
+ * Let control know about a
+ * new plan that has been set
+ */
+void Control::setNewPlan()
+{
+    m_newPlan = true;
+}
+
+/**
+ * Method used by the navigation
+ * class to avoid replanning while
+ * action/manipulation is in course
+ */
+bool Control::actionInCourse()
+{
+    return m_action;
+}
+
+/**
+ * Confirms that control was
+ * initialized successfully
+ */
+bool Control::initialized()
+{
+    return m_initialized;
+}
+
+/**
+ * Rotate robot by 180 degrees
+ * for push action
+ */
+void Control::rotate(const unsigned int)
+{
+    // Populate velocity command
+    geometry_msgs::Twist l_cmd_vel;
+    l_cmd_vel.linear.x = 0;
+    l_cmd_vel.angular.z = getRadians(180);
+}
+
+/**
+ * Convert degrees to
+ * radians
+ */
+double Control::getRadians(const unsigned int p_degrees)
+{
+    return p_degrees * (M_PI / 180);
 }

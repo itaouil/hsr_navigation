@@ -16,6 +16,7 @@
 // ROS general
 #include "ros/ros.h"
 #include <costmap_2d/costmap_2d.h>
+#include <tf/transform_datatypes.h>
 #include <costmap_2d/costmap_2d_ros.h>
 #include <dwa_local_planner/dwa_planner_ros.h>
 
@@ -47,6 +48,8 @@ private:
     void grasp();
     void initialize();
     void loadStaticMap();
+    void rotate(const unsigned int);
+    double getRadians(const unsigned int);
     void checkOdometry(const nav_msgs::Odometry);
     void dwaControl(const std::vector<geometry_msgs::PoseStamped>&);
     void actionControl(const std::vector<geometry_msgs::PoseStamped>&);
@@ -58,6 +61,7 @@ private:
 
     // General members
     bool m_push = false;
+    bool m_rotate = false;
     double m_previousX = 0;
     double m_previousY = 0;
     bool m_action = false;
