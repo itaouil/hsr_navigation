@@ -335,23 +335,23 @@ void Control::checkOdometry(const nav_msgs::Odometry p_data)
         tf::Quaternion l_quat(l_quatX, l_quatY, l_quatZ, l_quatW);
 
         // Creat matrix from quaternion
-        tf::Matrix3x3 l_m(q);
+        tf::Matrix3x3 l_m(l_quat);
 
         // Extract axis angle representation
         double l_roll, l_pitch, l_yaw;
         l_m.getRPY(l_roll, l_pitch, l_yaw); 
 
         // Send rotation
-        l_targetRad = getRadians(180);
+        double l_targetRad = getRadians(180);
 
         // Populate velocity command
         geometry_msgs::Twist l_cmd_vel;
-        l_cmd_vel.angular.z = 0.5 * (l_targetRad - yaw)
+        l_cmd_vel.angular.z = 0.5 * (l_targetRad - l_yaw);
 
-        m_velPub.publish(command)
+        m_velPub.publish(l_cmd_vel);
         std::cout << "Target: " << l_targetRad << " Current: " << l_yaw << std::endl;
 
-        if (l_targetRad - yaw <= 0.01)
+        if (l_targetRad - l_yaw <= 0.01)
         {
             m_rotate = false;
         }
