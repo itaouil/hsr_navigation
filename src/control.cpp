@@ -29,7 +29,7 @@ void Control::initialize()
     // Subscriber to global costmap
     m_odomSub = m_nh.subscribe<nav_msgs::Odometry>(ODOMETRY, 
                                                    1,
-                                                   &Control::checkOdometry,
+                                                   &Control::setOdometry,
                                                    this);
 
     // Initialize dwa local planner
@@ -187,17 +187,7 @@ void Control::push()
     // m_globalCostmapROS->pause();
 
     // Rotate by 180 degrees
-    // by enabling odometry for
-    // rotation
-    m_rotate = true;
-    while (m_rotate != false)
-    {
-        // Apply linear velocity
-        ROS_INFO("Control: rotating");
-
-        // Keep spinning
-        ros::spinOnce();   
-    }
+    rotate(180);
 
     // Allow odometry computations
     m_push = true;
@@ -234,18 +224,8 @@ void Control::push()
         ros::spinOnce();   
     }
 
-    // Rotate by 180 degrees
-    // by enabling odometry for
-    // rotation
-    m_rotate = true;
-    while (m_rotate != false)
-    {
-        // Apply linear velocity
-        ROS_INFO("Control: rotating");
-
-        // Keep spinning
-        ros::spinOnce();   
-    }
+    // Rotate by -180 degrees
+    rotate(-180);
 
     // Restart costmaps
     // m_localCostmapROS->start();
@@ -319,43 +299,11 @@ unsigned int Control::getIndex(const std::vector<geometry_msgs::PoseStamped> &p_
 }
 
 /**
- * Compute travelled distance
- * by robot during pushing action
+ * Set odometry message
  */
-void Control::checkOdometry(const nav_msgs::Odometry p_data)
+void Control::setOdometry(const nav_msgs::Odometry p_data)
 {
-    // Rotate
-    if (m_rotate)
-    {
-        // Create quaternion
-        double l_quatX = p_data.pose.pose.orientation.x;
-        double l_quatY = p_data.pose.pose.orientation.y;
-        double l_quatZ = p_data.pose.pose.orientation.z;
-        double l_quatW = p_data.pose.pose.orientation.w;
-        tf::Quaternion l_quat(l_quatX, l_quatY, l_quatZ, l_quatW);
-
-        // Creat matrix from quaternion
-        tf::Matrix3x3 l_m(l_quat);
-
-        // Extract axis angle representation
-        double l_roll, l_pitch, l_yaw;
-        l_m.getRPY(l_roll, l_pitch, l_yaw); 
-
-        // Send rotation
-        double l_targetRad = getRadians(180);
-
-        // Populate velocity command
-        geometry_msgs::Twist l_cmd_vel;
-        l_cmd_vel.angular.z = 0.5 * (l_targetRad - l_yaw);
-
-        m_velPub.publish(l_cmd_vel);
-        std::cout << "Target: " << l_targetRad << " Current: " << l_yaw << std::endl;
-
-        if (l_targetRad - l_yaw <= 0.01)
-        {
-            m_rotate = false;
-        }
-    }
+    m_odometry = p_data;
 
     // Only compute travelled
     // distance if control is
@@ -417,19 +365,41 @@ bool Control::initialized()
  * Rotate robot by 180 degrees
  * for push action
  */
-void Control::rotate(const unsigned int)
+void Control::rotate(const unsigned int p_degrees)
 {
-    // Populate velocity command
-    geometry_msgs::Twist l_cmd_vel;
-    l_cmd_vel.linear.x = 0;
-    l_cmd_vel.angular.z = getRadians(180);
-}
+    // Rotational difference
+    double l_diff = 10000000;
 
-/**
- * Convert degrees to
- * radians
- */
-double Control::getRadians(const unsigned int p_degrees)
-{
-    return p_degrees * (M_PI / 180);
+    // Target rotation
+    double l_targetRad = p_degrees * (M_PI / 180);
+
+    while (l_diff > 0.01)
+    {
+        // Create quaternion
+        double l_quatX = m_odometry.pose.pose.orientation.x;
+        double l_quatY = m_odometry.pose.pose.orientation.y;
+        double l_quatZ = m_odometry.pose.pose.orientation.z;
+        double l_quatW = m_odometry.pose.pose.orientation.w;
+        tf::Quaternion l_quat(l_quatX, l_quatY, l_quatZ, l_quatW);
+
+        // Creat matrix from quaternion
+        tf::Matrix3x3 l_m(l_quat);
+
+        // Extract axis angle representation
+        double l_roll, l_pitch, l_yaw;
+        l_m.getRPY(l_roll, l_pitch, l_yaw);
+
+        // Compute rotation difference
+        l_diff = l_targetRad - l_yaw;
+
+        // Populate velocity command
+        geometry_msgs::Twist l_cmd_vel;
+        l_cmd_vel.angular.z = 0.5 * (l_diff);
+
+        // Publish rotation velocity
+        m_velPub.publish(l_cmd_vel);
+
+        // Log
+        std::cout << "Target: " << l_targetRad << " Current: " << l_yaw << std::endl;
+    }
 }
