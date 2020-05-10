@@ -194,6 +194,7 @@ void Control::push()
 
     // Populate velocity command
     geometry_msgs::Twist l_cmd_vel;
+    l_cmd_vel.angular.z = 0;
     l_cmd_vel.linear.x = -0.2;
 
     // Push object
@@ -215,6 +216,7 @@ void Control::push()
 
     // Back up from obstacle
     // Populate velocity command
+    l_cmd_vel.angular.z = 0;
     l_cmd_vel.linear.x = 0.2;
 
     // Backtrack from push
@@ -386,7 +388,7 @@ void Control::rotate(const unsigned int p_degrees)
 
     while (ros::ok)
     {
-        if (l_diff < 0.01)
+        if (l_diff < 0.3)
             break;
         else
         {
@@ -412,7 +414,7 @@ void Control::rotate(const unsigned int p_degrees)
             l_cmd_vel.angular.z = 0.2 * (l_diff);
 
             // Log
-            std::cout << "Diff: " << l_diff << std::endl;
+            //std::cout << "Diff: " << l_diff << std::endl;
 
             // Publish rotation velocity
             m_velPub.publish(l_cmd_vel);
