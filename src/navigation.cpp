@@ -60,7 +60,16 @@ void Navigation::initialize()
     // Control instance
     m_control.reset(new Control(m_buffer, m_localCostmapROS, m_globalCostmapROS));
 
-    // Log
+    // Wait for members initialization
+    ros::Rate l_rate(10);
+    while (ros::ok)
+    {
+        ros::spinOnce();
+        l_rate.sleep();
+
+        if (m_perception->initialized() && m_control->initialized())
+            break;
+    }
     ROS_INFO("Navigation: Initialized Correctly.");
 }
 
@@ -168,8 +177,8 @@ void Navigation::populatePlannerRequest(hsr_navigation::PlannerService &p_servic
     // Goal pose
     geometry_msgs::PoseStamped l_goal;
     l_goal.header.frame_id = "map";
-    l_goal.pose.position.x = 6.02;
-	l_goal.pose.position.y = 2.27;
+    l_goal.pose.position.x = 0.721;
+	l_goal.pose.position.y = -0.478;
     l_goal.pose.position.z = 0;
     l_goal.pose.orientation.x = 0;
     l_goal.pose.orientation.y = 0;

@@ -187,7 +187,7 @@ void Control::push()
     // m_globalCostmapROS->pause();
 
     // Rotate by 180 degrees
-    rotate(180);
+    rotate(90);
 
     // Allow odometry computations
     m_push = true;
@@ -225,7 +225,7 @@ void Control::push()
     }
 
     // Rotate by -180 degrees
-    rotate(-180);
+    rotate(-90);
 
     // Restart costmaps
     // m_localCostmapROS->start();
@@ -275,9 +275,10 @@ unsigned int Control::getIndex(const std::vector<geometry_msgs::PoseStamped> &p_
 
         // Get cost (convert to int from unsigned char)
         int l_cellCost = (int) l_globalCostmap->getCost(l_mx, l_my);
+        //std::cout << "Cost: " << l_cellCost << "at :" << l_mx << " " << l_my << std::endl;
 
         // Log cost
-        if (l_cellCost > 253)
+        if (l_cellCost > 250)
         {
             if (DEBUGCONTROL)
             {
@@ -394,12 +395,15 @@ void Control::rotate(const unsigned int p_degrees)
 
         // Populate velocity command
         geometry_msgs::Twist l_cmd_vel;
-        l_cmd_vel.angular.z = 0.5 * (l_diff);
+        l_cmd_vel.angular.z = 0.2 * (l_diff);
 
         // Publish rotation velocity
         m_velPub.publish(l_cmd_vel);
 
         // Log
         std::cout << "Target: " << l_targetRad << " Current: " << l_yaw << std::endl;
+
+        // Keep receiving data
+        ros::spinOnce();   
     }
 }
