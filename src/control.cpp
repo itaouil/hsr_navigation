@@ -182,11 +182,7 @@ void Control::push()
         ROS_INFO("Control: starting pushing action.");
     }
 
-    // Pause costmaps
-    // m_localCostmapROS->pause();
-    // m_globalCostmapROS->pause();
-
-    // Rotate by 180 degrees
+    // Rotate
     rotate(90);
 
     // Allow odometry computations
@@ -196,48 +192,62 @@ void Control::push()
     geometry_msgs::Twist l_cmd_vel;
     l_cmd_vel.linear.x = -0.2;
 
-    // Push object
-    while (m_totalDistance < DISTANCE)
+    // Push
+    while (ros::ok)
     {
-        // Apply linear velocity
-        ROS_INFO("Control: applying push velocity.");
-        m_velPub.publish(l_cmd_vel);
+        if (m_totalDistance > DISTANCE)
+        {
+            // Reset total distance
+            // and break from the loop
+            m_totalDistance = 0;
+            break;
+        }
+        else
+        {
+            // Apply linear velocity
+            ROS_INFO("Control: pushing.");
+            m_velPub.publish(l_cmd_vel);
 
-        // Keep spinning
-        ros::spinOnce();
+            // Keep spinning
+            ros::spinOnce();
+            m_rate.sleep();
+        }
     }
-
-    // Reset total distance
-    m_totalDistance = 0;
 
     // Back up from obstacle
     // Populate velocity command
     l_cmd_vel.linear.x = 0.2;
 
-    // Backtrack from push
-    while (m_totalDistance < DISTANCE)
+    // Backtrack
+    while (ros::ok)
     {
-        // Apply linear velocity
-        ROS_INFO("Control: backtracking.");
-        m_velPub.publish(l_cmd_vel);
+        if (m_totalDistance > DISTANCE)
+        {
+            // Reset total distance
+            // and break from the loop
+            m_totalDistance = 0;
+            break;
+        }
+        else
+        {
+            // Apply linear velocity
+            ROS_INFO("Control: backtracking.");
+            m_velPub.publish(l_cmd_vel);
 
-        // Keep spinning
-        ros::spinOnce();
+            // Keep spinning
+            ros::spinOnce();
+            m_rate.sleep();
+        }
     }
 
     // Rotate by 180 degrees
     rotate(180);
-
-    // Restart costmaps
-    //m_localCostmapROS->start();
-    //m_globalCostmapROS->start();
 
     // Clear variables
     m_push = false;
     m_previousX = 0;
     m_previousY = 0;
     m_firstRun = true;
-    m_totalDistance = 0;
 }
 
 /**
@@ -336,6 +346,61 @@ void Control::setOdometry(const nav_msgs::Odometry p_data)
 }
 
 /**
+ * Rotate robot by 180 degrees
+ * for push action
+ */
+void Control::rotate(const unsigned int p_degrees)
+{
+    std::cout << "Degrees: " << p_degrees << std::endl;
+
+    // Rotational difference
+    double l_diff = 10000000;
+
+    // Target rotation
+    double l_targetRad = p_degrees * (M_PI / 180);
+
+    while (ros::ok)
+    {
+        if (l_diff < 0.2)
+        {
+            break;
+        }
+        else
+        {
+            // Create quaternion
+            double l_quatX = m_odometry.pose.pose.orientation.x;
+            double l_quatY = m_odometry.pose.pose.orientation.y;
+            double l_quatZ = m_odometry.pose.pose.orientation.z;
+            double l_quatW = m_odometry.pose.pose.orientation.w;
+            tf::Quaternion l_quat(l_quatX, l_quatY, l_quatZ, l_quatW);
+
+            // Creat matrix from quaternion
+            tf::Matrix3x3 l_m(l_quat);
+
+            // Extract axis angle representation
+            double l_roll, l_pitch, l_yaw;
+            l_m.getRPY(l_roll, l_pitch, l_yaw);
+
+            // Compute rotation difference
+            l_diff = l_targetRad - l_yaw;
+
+            // Populate velocity command
+            geometry_msgs::Twist l_cmd_vel;
+            l_cmd_vel.angular.z = 0.4;
+
+            // Publish rotation velocity
+            m_velPub.publish(l_cmd_vel);
+
+            std::cout << "Difference: " << l_diff << " " << l_targetRad << " " << l_yaw << std::endl;
+
+            // Keep receiving data
+            ros::spinOnce();
+            m_rate.sleep();
+        }
+    }
+}
+
+/**
  * Let control know about a
  * new plan that has been set
  */
@@ -361,51 +426,4 @@ bool Control::actionInCourse()
 bool Control::initialized()
 {
     return m_initialized;
-}
-
-/**
- * Rotate robot by 180 degrees
- * for push action
- */
-void Control::rotate(const unsigned int p_degrees)
-{
-    std::cout << "Degrees: " << p_degrees << std::endl;
-
-    // Rotational difference
-    double l_diff = 10000000;
-
-    // Target rotation
-    double l_targetRad = p_degrees * (M_PI / 180);
-
-    while (l_diff > 0.2)
-    {
-        // Create quaternion
-        double l_quatX = m_odometry.pose.pose.orientation.x;
-        double l_quatY = m_odometry.pose.pose.orientation.y;
-        double l_quatZ = m_odometry.pose.pose.orientation.z;
-        double l_quatW = m_odometry.pose.pose.orientation.w;
-        tf::Quaternion l_quat(l_quatX, l_quatY, l_quatZ, l_quatW);
-
-        // Creat matrix from quaternion
-        tf::Matrix3x3 l_m(l_quat);
-
-        // Extract axis angle representation
-        double l_roll, l_pitch, l_yaw;
-        l_m.getRPY(l_roll, l_pitch, l_yaw);
-
-        // Compute rotation difference
-        l_diff = l_targetRad - l_yaw;
-
-        // Populate velocity command
-        geometry_msgs::Twist l_cmd_vel;
-        l_cmd_vel.angular.z = 0.4;
-
-        // Publish rotation velocity
-        m_velPub.publish(l_cmd_vel);
-
-        std::cout << "Difference: " << l_diff << " " << l_targetRad << " " << l_yaw << std::endl;
-
-        // Keep receiving data
-        ros::spinOnce(); 
-    }
 }
