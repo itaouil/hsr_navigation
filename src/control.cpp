@@ -347,53 +347,32 @@ void Control::setOdometry(const nav_msgs::Odometry p_data)
  */
 void Control::rotate(const unsigned int p_degrees)
 {
-    std::cout << "Degrees: " << p_degrees << std::endl;
+    // Converting from angles to radians
+    double l_relativeAngle = p_degrees * (M_PI / 180);
 
-    // Rotational difference
-    double l_diff = 10000000;
+    // Velocity command
+    geometry_msgs::Twist l_cmd_vel;
+    l_cmd_vel.linear.x=0
+    l_cmd_vel.linear.y=0
+    l_cmd_vel.linear.z=0
+    l_cmd_vel.angular.x = 0
+    l_cmd_vel.angular.y = 0
+    l_cmd_vel.angular.z = 0.4;
 
-    // Target rotation
-    double l_targetRad = p_degrees * (M_PI / 180);
+    // Distance computations
+    double l_currentAngle = 0;
+    double l_t0 = ros::Time::now().toSec();
 
-    while (ros::ok)
+    while(l_currentAngle < l_relativeAngle)
     {
-        if (l_diff < 0.2)
-        {
-            break;
-        }
-        else
-        {
-            // Create quaternion
-            double l_quatX = m_odometry.pose.pose.orientation.x;
-            double l_quatY = m_odometry.pose.pose.orientation.y;
-            double l_quatZ = m_odometry.pose.pose.orientation.z;
-            double l_quatW = m_odometry.pose.pose.orientation.w;
-            tf::Quaternion l_quat(l_quatX, l_quatY, l_quatZ, l_quatW);
-
-            // Creat matrix from quaternion
-            tf::Matrix3x3 l_m(l_quat);
-
-            // Extract axis angle representation
-            double l_roll, l_pitch, l_yaw;
-            l_m.getRPY(l_roll, l_pitch, l_yaw);
-
-            // Compute rotation difference
-            l_diff = l_targetRad - l_yaw;
-
-            // Populate velocity command
-            geometry_msgs::Twist l_cmd_vel;
-            l_cmd_vel.angular.z = 0.4;
-
-            // Publish rotation velocity
-            m_velPub.publish(l_cmd_vel);
-
-            std::cout << "Difference: " << l_diff << " " << l_targetRad << " " << l_yaw << std::endl;
-
-            // Keep receiving data
-            ros::spinOnce();
-            m_rate.sleep();
-        }
+        m_velPub.publish(l_cmd_vel);
+        double l_t1 = ros::Time::now().toSec();
+        l_currentAngle = 0.4 * (l_t1 - l_t0);
     }
+
+    // Stop rotation
+    l_cmd_vel.angular.z = 0
+    m_velPub.publish(l_cmd_vel)
 }
 
 /**
