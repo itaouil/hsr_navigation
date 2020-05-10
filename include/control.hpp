@@ -46,6 +46,7 @@ private:
      */
     void push();
     void grasp();
+    void clear();
     void initialize();
     void loadStaticMap();
     void rotate(const unsigned int);

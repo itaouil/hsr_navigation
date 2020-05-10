@@ -185,7 +185,7 @@ void Control::push()
     // Rotate
     rotate(90);
 
-    // Allow odometry computations
+    // Allow push
     m_push = true;
 
     // Populate velocity command
@@ -197,9 +197,7 @@ void Control::push()
     {
         if (m_totalDistance > DISTANCE)
         {
-            // Reset total distance
-            // and break from the loop
-            m_totalDistance = 0;
+            clear();
             break;
         }
         else
@@ -214,6 +212,9 @@ void Control::push()
         }
     }
 
+    // Allow backtracking
+    m_push = true;
+
     // Back up from obstacle
     // Populate velocity command
     l_cmd_vel.linear.x = 0.2;
@@ -223,9 +224,7 @@ void Control::push()
     {
         if (m_totalDistance > DISTANCE)
         {
-            // Reset total distance
-            // and break from the loop
-            m_totalDistance = 0;
+            clear()
             break;
         }
         else
@@ -244,10 +243,7 @@ void Control::push()
     rotate(180);
 
     // Clear variables
-    m_push = false;
-    m_previousX = 0;
-    m_previousY = 0;
-    m_firstRun = true;
+    clear();
 }
 
 /**
@@ -426,4 +422,18 @@ bool Control::actionInCourse()
 bool Control::initialized()
 {
     return m_initialized;
+}
+
+/**
+ * Clear push variables
+ * for the sequential push
+ * actions
+ */
+void Control::clear()
+{
+    m_push = false;
+    m_previousX = 0;
+    m_previousY = 0;
+    m_firstRun = true;
+    m_totalDistance = 0;
 }
