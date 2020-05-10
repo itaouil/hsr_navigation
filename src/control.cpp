@@ -162,7 +162,7 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
 
     // Extract intermediate path
     std::vector<geometry_msgs::PoseStamped> l_intermediatePath(p_path.begin(), 
-                                                               p_path.begin() + l_idx - 4);
+                                                               p_path.begin() + l_idx - 2);
 
     // Send robot to intermediate path
     std::cout << "Path: " << p_path.size() << std::endl;
@@ -194,11 +194,10 @@ void Control::push()
 
     // Populate velocity command
     geometry_msgs::Twist l_cmd_vel;
-    l_cmd_vel.angular.z = 0;
     l_cmd_vel.linear.x = -0.2;
 
     // Push object
-    while (m_totalDistance > DISTANCE)
+    while (m_totalDistance < DISTANCE)
     {
         // Apply linear velocity
         ROS_INFO("Control: applying push velocity.");
@@ -206,15 +205,17 @@ void Control::push()
 
         // Keep spinning
         ros::spinOnce();
-        m_rate.sleep(); 
     }
+
+    // Reset total distance
+    m_totalDistance = 0;
 
     // Back up from obstacle
     // Populate velocity command
     l_cmd_vel.linear.x = 0.2;
 
     // Backtrack from push
-    while (m_totalDistance > DISTANCE)
+    while (m_totalDistance < DISTANCE)
     {
         // Apply linear velocity
         ROS_INFO("Control: backtracking.");
@@ -222,15 +223,14 @@ void Control::push()
 
         // Keep spinning
         ros::spinOnce();
-        m_rate.sleep();    
     }
 
-    // Rotate by -180 degrees
-    rotate(-90);
+    // Rotate by 180 degrees
+    rotate(180);
 
     // Restart costmaps
-    // m_localCostmapROS->start();
-    // m_globalCostmapROS->start();
+    //m_localCostmapROS->start();
+    //m_globalCostmapROS->start();
 
     // Clear variables
     m_push = false;
@@ -369,6 +369,8 @@ bool Control::initialized()
  */
 void Control::rotate(const unsigned int p_degrees)
 {
+    std::cout << "Degrees: " << p_degrees << std::endl;
+
     // Rotational difference
     double l_diff = 10000000;
 
@@ -398,14 +400,12 @@ void Control::rotate(const unsigned int p_degrees)
         geometry_msgs::Twist l_cmd_vel;
         l_cmd_vel.angular.z = 0.4;
 
-        // Log
-        //std::cout << "Diff: " << l_diff << std::endl;
-
         // Publish rotation velocity
         m_velPub.publish(l_cmd_vel);
 
+        std::cout << "Difference: " << l_diff << " " << l_targetRad << " " << l_yaw << std::endl;
+
         // Keep receiving data
         ros::spinOnce(); 
-        m_rate.sleep(); 
     }
 }

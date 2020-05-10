@@ -70,7 +70,7 @@ private:
     bool m_initialized = false;
 
     // ROS members
-    ros::Rate m_rate(10);
+    ros::Rate m_rate{10};
     ros::NodeHandle m_nh;
     ros::Publisher m_velPub;
     ros::Subscriber m_odomSub;
