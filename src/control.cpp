@@ -214,7 +214,7 @@ void Control::push()
 
     // Push until distance is
     // above a certain threshold
-    while (m_totalDistance < 1)
+    while (m_totalDistance < DISTANCE)
     {
         // Apply linear velocity
         ROS_INFO("Control: backing up.");
