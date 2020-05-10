@@ -162,7 +162,7 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
 
     // Extract intermediate path
     std::vector<geometry_msgs::PoseStamped> l_intermediatePath(p_path.begin(), 
-                                                               p_path.begin() + l_idx - 6);
+                                                               p_path.begin() + l_idx - 4);
 
     // Send robot to intermediate path
     std::cout << "Path: " << p_path.size() << std::endl;
@@ -196,32 +196,42 @@ void Control::push()
     geometry_msgs::Twist l_cmd_vel;
     l_cmd_vel.linear.x = -0.2;
 
-    // Push until distance is
-    // above a certain threshold
-    while (m_totalDistance < DISTANCE)
+    // Push object
+    while (ros::ok)
     {
-        // Apply linear velocity
-        ROS_INFO("Control: applying push velocity.");
-        m_velPub.publish(l_cmd_vel);
+        if (m_totalDistance < DISTANCE)
+            break;
+        else
+        {
+            // Apply linear velocity
+            ROS_INFO("Control: applying push velocity.");
+            m_velPub.publish(l_cmd_vel);
 
-        // Keep spinning
-        ros::spinOnce();   
+            // Keep spinning
+            ros::spinOnce();
+            m_rate.sleep(); 
+        }
     }
 
     // Back up from obstacle
     // Populate velocity command
     l_cmd_vel.linear.x = 0.2;
 
-    // Push until distance is
-    // above a certain threshold
-    while (m_totalDistance < DISTANCE)
+    // Backtrack from push
+    while (ros::ok)
     {
-        // Apply linear velocity
-        ROS_INFO("Control: backing up.");
-        m_velPub.publish(l_cmd_vel);
+        if (m_totalDistance < DISTANCE)
+            break;
+        else
+        {
+            // Apply linear velocity
+            ROS_INFO("Control: applying push velocity.");
+            m_velPub.publish(l_cmd_vel);
 
-        // Keep spinning
-        ros::spinOnce();   
+            // Keep spinning
+            ros::spinOnce();
+            m_rate.sleep(); 
+        }
     }
 
     // Rotate by -180 degrees
@@ -374,36 +384,42 @@ void Control::rotate(const unsigned int p_degrees)
     // Target rotation
     double l_targetRad = p_degrees * (M_PI / 180);
 
-    while (l_diff > 0.01)
+    while (ros::ok)
     {
-        // Create quaternion
-        double l_quatX = m_odometry.pose.pose.orientation.x;
-        double l_quatY = m_odometry.pose.pose.orientation.y;
-        double l_quatZ = m_odometry.pose.pose.orientation.z;
-        double l_quatW = m_odometry.pose.pose.orientation.w;
-        tf::Quaternion l_quat(l_quatX, l_quatY, l_quatZ, l_quatW);
+        if (l_diff < 0.01)
+            break;
+        else
+        {
+            // Create quaternion
+            double l_quatX = m_odometry.pose.pose.orientation.x;
+            double l_quatY = m_odometry.pose.pose.orientation.y;
+            double l_quatZ = m_odometry.pose.pose.orientation.z;
+            double l_quatW = m_odometry.pose.pose.orientation.w;
+            tf::Quaternion l_quat(l_quatX, l_quatY, l_quatZ, l_quatW);
 
-        // Creat matrix from quaternion
-        tf::Matrix3x3 l_m(l_quat);
+            // Creat matrix from quaternion
+            tf::Matrix3x3 l_m(l_quat);
 
-        // Extract axis angle representation
-        double l_roll, l_pitch, l_yaw;
-        l_m.getRPY(l_roll, l_pitch, l_yaw);
+            // Extract axis angle representation
+            double l_roll, l_pitch, l_yaw;
+            l_m.getRPY(l_roll, l_pitch, l_yaw);
 
-        // Compute rotation difference
-        l_diff = l_targetRad - l_yaw;
+            // Compute rotation difference
+            l_diff = l_targetRad - l_yaw;
 
-        // Populate velocity command
-        geometry_msgs::Twist l_cmd_vel;
-        l_cmd_vel.angular.z = 0.2 * (l_diff);
+            // Populate velocity command
+            geometry_msgs::Twist l_cmd_vel;
+            l_cmd_vel.angular.z = 0.2 * (l_diff);
 
-        // Publish rotation velocity
-        m_velPub.publish(l_cmd_vel);
+            // Log
+            std::cout << "Diff: " << l_diff << std::endl;
 
-        // Log
-        std::cout << "Target: " << l_targetRad << " Current: " << l_yaw << std::endl;
+            // Publish rotation velocity
+            m_velPub.publish(l_cmd_vel);
 
-        // Keep receiving data
-        ros::spinOnce();   
+            // Keep receiving data
+            ros::spinOnce(); 
+            m_rate.sleep(); 
+        }
     }
 }

@@ -64,12 +64,13 @@ void Navigation::initialize()
     ros::Rate l_rate(10);
     while (ros::ok)
     {
-        ros::spinOnce();
-        l_rate.sleep();
-
         if (m_perception->initialized() && m_control->initialized())
             break;
+
+        ros::spinOnce();
+        l_rate.sleep();
     }
+    
     ROS_INFO("Navigation: Initialized Correctly.");
 }
 
