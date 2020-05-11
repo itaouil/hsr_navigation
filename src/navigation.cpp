@@ -209,6 +209,9 @@ void Navigation::checkGlobalPath(const nav_msgs::OccupancyGrid p_globalCostmap)
     // Replan flag
     bool replan = false;
 
+    // Update map (globacl costmap)
+    m_updatedMap = p_globalCostmap;
+
     // Update global costmap
     m_globalCostmap = m_globalCostmapROS->getCostmap();
 
@@ -219,7 +222,7 @@ void Navigation::checkGlobalPath(const nav_msgs::OccupancyGrid p_globalCostmap)
     {
         if (DEBUGNAVIGATION)
         {
-            ROS_INFO("action is fase so I am checking...");
+            ROS_INFO("action is false so I am checking...");
         }
 
         // Map coordinates
@@ -240,7 +243,7 @@ void Navigation::checkGlobalPath(const nav_msgs::OccupancyGrid p_globalCostmap)
             int l_cellCost = (int) m_globalCostmap->getCost(l_mx, l_my);
 
             // Log cost
-            if (l_cellCost > 253)
+            if (l_cellCost > 252)
             {
                 if (DEBUGNAVIGATION)
                 {
@@ -258,14 +261,11 @@ void Navigation::checkGlobalPath(const nav_msgs::OccupancyGrid p_globalCostmap)
             }
         }
 
-        // Update map for replan
-        m_updatedMap = p_globalCostmap;
-
         // Handle replan
-        if (replan)
+        if (replan || m_control->postActionPlan())
         {
             // Stop control
-            m_control->setNewPlan();
+            m_control->stopControl();
 
             // Replan
             requestPlan();

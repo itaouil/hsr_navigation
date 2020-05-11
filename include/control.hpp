@@ -35,8 +35,9 @@ public:
     /**
      * Public methods
      */
-    void setNewPlan();
+    void stopControl();
     bool initialized();
+    bool postActionPlan();
     bool actionInCourse();
     void handlePlan(const hsr_navigation::PlannerService&);
 
@@ -66,9 +67,10 @@ private:
     double m_previousY = 0;
     bool m_action = false;
     bool m_firstRun = true;
-    bool m_newPlan = false;
+    bool m_stopControl = false;
     double m_totalDistance = 0;
     bool m_initialized = false;
+    bool m_postActionPlan = false;
 
     // ROS members
     ros::Rate m_rate{10};

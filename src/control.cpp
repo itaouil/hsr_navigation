@@ -45,6 +45,7 @@ void Control::initialize()
  */
 void Control::handlePlan(const hsr_navigation::PlannerService &p_service)
 {
+    // Choose simple control or action
     if (p_service.response.obstacles_out.empty())
     {
         if (DEBUGCONTROL)
@@ -72,6 +73,10 @@ void Control::handlePlan(const hsr_navigation::PlannerService &p_service)
  */
 void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
 {
+    // Reset flags
+    m_stopControl = false;
+    m_postActionPlan = false;
+
     // Set global plan for local planner
     if (m_dp.setPlan(p_path))
     {
@@ -92,7 +97,7 @@ void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
     geometry_msgs::Twist l_cmd_vel;
 
     // Control loop
-    while (!m_newPlan && !m_dp.isGoalReached())
+    while (!m_stopControl && !m_dp.isGoalReached())
     {
         // Compute local velocities
         if (!m_dp.computeVelocityCommands(l_cmd_vel))
@@ -127,8 +132,11 @@ void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
         {
             push();
 
-            // Reset flag
+            // Reset action flag
             m_action = false;
+
+            // Request new plan
+            m_postActionPlan = true;
         }
     }
     else
@@ -138,9 +146,6 @@ void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
             ROS_INFO_STREAM("Control: stopping control for replanning ");
         }
     }
-
-    // Reset replan flag
-    m_newPlan = false;
 }
 
 /**
@@ -181,6 +186,10 @@ void Control::push()
     {
         ROS_INFO("Control: starting pushing action.");
     }
+
+    // Pause costmaps update
+    m_localCostmapROS->pause();
+    m_globalCostmapROS->pause();
 
     // Rotate
     rotate(180);
@@ -244,6 +253,10 @@ void Control::push()
 
     // Clear variables
     clear();
+
+    // Resume costmaps update
+    m_localCostmapROS->start();
+    m_globalCostmapROS->start();
 }
 
 /**
@@ -379,9 +392,9 @@ void Control::rotate(const unsigned int p_degrees)
  * Let control know about a
  * new plan that has been set
  */
-void Control::setNewPlan()
+void Control::stopControl()
 {
-    m_newPlan = true;
+    m_stopControl = true;
 }
 
 /**
@@ -401,6 +414,16 @@ bool Control::actionInCourse()
 bool Control::initialized()
 {
     return m_initialized;
+}
+
+/**
+ * Confirms to navigation logic
+ * that control requested a post
+ * action re-planning after manipulation
+ */
+bool Control::postActionPlan()
+{
+    return m_postActionPlan;
 }
 
 /**
