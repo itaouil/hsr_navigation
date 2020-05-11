@@ -187,10 +187,6 @@ void Control::push()
         ROS_INFO("Control: starting pushing action.");
     }
 
-    // Pause costmaps update
-    m_localCostmapROS->pause();
-    m_globalCostmapROS->pause();
-
     // Rotate
     rotate(180);
 
@@ -253,10 +249,6 @@ void Control::push()
 
     // Clear variables
     clear();
-
-    // Resume costmaps update
-    m_localCostmapROS->start();
-    m_globalCostmapROS->start();
 }
 
 /**
