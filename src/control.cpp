@@ -183,7 +183,7 @@ void Control::push()
     }
 
     // Rotate
-    rotate(90);
+    rotate(180);
 
     // Allow push
     m_push = true;
@@ -224,7 +224,7 @@ void Control::push()
     {
         if (m_totalDistance > DISTANCE)
         {
-            clear()
+            clear();
             break;
         }
         else
@@ -352,11 +352,11 @@ void Control::rotate(const unsigned int p_degrees)
 
     // Velocity command
     geometry_msgs::Twist l_cmd_vel;
-    l_cmd_vel.linear.x=0
-    l_cmd_vel.linear.y=0
-    l_cmd_vel.linear.z=0
-    l_cmd_vel.angular.x = 0
-    l_cmd_vel.angular.y = 0
+    l_cmd_vel.linear.x = 0;
+    l_cmd_vel.linear.y = 0;
+    l_cmd_vel.linear.z = 0;
+    l_cmd_vel.angular.x = 0;
+    l_cmd_vel.angular.y = 0;
     l_cmd_vel.angular.z = 0.4;
 
     // Distance computations
@@ -371,8 +371,8 @@ void Control::rotate(const unsigned int p_degrees)
     }
 
     // Stop rotation
-    l_cmd_vel.angular.z = 0
-    m_velPub.publish(l_cmd_vel)
+    l_cmd_vel.angular.z = 0;
+    m_velPub.publish(l_cmd_vel);
 }
 
 /**
