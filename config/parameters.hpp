@@ -19,6 +19,7 @@ const unsigned int CHANGEOBJECTCOST(250);
 
 // Navigation parameters
 const std::string PLANNER_REQ("/hsr_navigation/srvReq");
+const std::string STATIC_MAP("/hsr_navigation/static_map");
 const std::string GLOBAL_COSTMAP("/hsr_navigation/global_costmap/costmap");
 
 // Perception parameters
