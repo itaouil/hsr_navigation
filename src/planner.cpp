@@ -43,9 +43,10 @@ Planner::Planner()
 	m_objMovCost = OBJMOVCOST;
 	m_backUpPlan = BACKUPPLAN;
 	m_robotRadius = ROBOTRADIUS;
-	m_inflationRadius = INFLATIONRADIUS;
+	//m_inflationRadius = INFLATIONRADIUS;
 	m_changeObjectCost = CHANGEOBJECTCOST;
-
+        extra_inflation = EXTRAINFLATION;
+        
 	// Create publishers
 	m_planPub = m_n.advertise<nav_msgs::Path>("relaxed_constraint_plan", 1);
 	m_gridPub = m_n.advertise<nav_msgs::OccupancyGrid>("server_grid", 1, true);
@@ -109,7 +110,7 @@ bool Planner::PlannerSrv(hsr_navigation::PlannerService::Request &req,
 
 	// Compute radiuses
 	m_cellRobotRadius = ceil(m_robotRadius / m_resolution);
-	m_cellInflationRadius = ceil(m_inflationRadius / m_resolution);
+	m_cellInflationRadius = m_cellRobotRadius + extra_inflation;//ceil(m_inflationRadius / m_resolution);
 
 	// Clear vectors
 	m_objectMap.clear();
@@ -190,20 +191,14 @@ bool Planner::PlannerSrv(hsr_navigation::PlannerService::Request &req,
 		for (int i = 0; i < plan.size() - 1; i++)
 		{
 			pointToNext(plan, i);
-			//			ROS_INFO("IN Planner PATH %f; %f;", plan[i].pose.position.x,
-			//					plan[i].pose.position.y);
 		}
-		//		std::ofstream myfile;
-		//		myfile.open("/home/pregier/Workspaces/testPath.csv");
-		//		for (int i = 0; i < plan.size(); ++i) {
-		//			myfile << plan[i].pose.position.x << " " << plan[i].pose.position.y << std::endl;
-		//		}
-		//		myfile.close();
-
-		//		res.path.clear();
-		//		res.path.resize(plan.size());
+//		std::ofstream myfile;
+//		myfile.open("/home/pregier/Workspaces/testPath.csv");
+//		for (int i = 0; i < plan.size(); ++i) {
+//			myfile << plan[i].pose.position.x << " " << plan[i].pose.position.y << std::endl;
+//		}
+//		myfile.close();
 		res.path = plan;
-		//		ROS_INFO("PLAN SIZE: %zu; %zu;",plan.size(), res.path.size());
 		publishPlan(plan);
 	}
 	else
@@ -231,8 +226,6 @@ bool Planner::PlannerSrv(hsr_navigation::PlannerService::Request &req,
 	}
 	res.obstacles_out = objectsMsgOnPath;
 
-	//	m_gridPub.publish(m_objectGrid);
-
 	return !plan.empty();
 }
 
@@ -245,10 +238,8 @@ void Planner::pointToNext(std::vector<geometry_msgs::PoseStamped> &path, int &in
 }
 
 void Planner::constraintAStar(Cell &start, 
-									 Cell &goal,
-									 std::unordered_map<Cell, Cell> &came_from, 
-									 std::unordered_map<Cell, double> &cost_so_far,
-									 std::vector<Cell> &path)
+	Cell &goal, std::unordered_map<Cell, Cell> &came_from, 
+	std::unordered_map<Cell, double> &cost_so_far, std::vector<Cell> &path)
 {
 	PriorityQueue frontier;
 	std::unordered_set<Cell> closedList;
@@ -318,7 +309,7 @@ void Planner::constraintAStar(Cell &start,
 			{
 				if (current_object_id == 0)
 				{
-					ROS_INFO("ENTER COST %d", m_objectClassCostMap[next.my_][next.mx_]);
+//					ROS_INFO("ENTER COST %d", m_objectClassCostMap[next.my_][next.mx_]);
 					cm_costs = m_enterCost + 2 * m_objectClassCostMap[next.my_][next.mx_];
 				}
 				else if (current_object_id != m_objectMap[next.my_][next.mx_].front())
@@ -363,7 +354,7 @@ void Planner::getConstraintNeighbors(const Cell &current, std::vector<Cell> &nei
 	yp2 = current.my_ + 2 < m_height;
 	ym2 = current.my_ - 2 < m_height;
 
-	if (m_staticMap[current.my_ - 1][current.mx_] == costmap_2d::FREE_SPACE && m_objectMap[current.my_ - 1][current.mx_].size() < 3 && ym1)
+	if (m_staticMap[current.my_ - 1][current.mx_] < costmap_2d::INSCRIBED_INFLATED_OBSTACLE && m_objectMap[current.my_ - 1][current.mx_].size() < 3 && ym1)
 	{
 		neighbors.push_back(Cell(current.mx_, current.my_ - 1));
 	}
@@ -372,7 +363,7 @@ void Planner::getConstraintNeighbors(const Cell &current, std::vector<Cell> &nei
 		diag_neighbors = false;
 	}
 
-	if (m_staticMap[current.my_ + 1][current.mx_] == costmap_2d::FREE_SPACE && m_objectMap[current.my_ + 1][current.mx_].size() < 3 && yp1)
+	if (m_staticMap[current.my_ + 1][current.mx_] < costmap_2d::INSCRIBED_INFLATED_OBSTACLE && m_objectMap[current.my_ + 1][current.mx_].size() < 3 && yp1)
 	{
 		neighbors.push_back(Cell(current.mx_, current.my_ + 1));
 	}
@@ -380,7 +371,7 @@ void Planner::getConstraintNeighbors(const Cell &current, std::vector<Cell> &nei
 	{
 		diag_neighbors = false;
 	}
-	if (m_staticMap[current.my_][current.mx_ - 1] == costmap_2d::FREE_SPACE && m_objectMap[current.my_][current.mx_ - 1].size() < 3 && xm1)
+	if (m_staticMap[current.my_][current.mx_ - 1] < costmap_2d::INSCRIBED_INFLATED_OBSTACLE && m_objectMap[current.my_][current.mx_ - 1].size() < 3 && xm1)
 	{
 		neighbors.push_back(Cell(current.mx_ - 1, current.my_));
 	}
@@ -388,7 +379,7 @@ void Planner::getConstraintNeighbors(const Cell &current, std::vector<Cell> &nei
 	{
 		diag_neighbors = false;
 	}
-	if (m_staticMap[current.my_][current.mx_ + 1] == costmap_2d::FREE_SPACE && m_objectMap[current.my_][current.mx_ + 1].size() < 3 && xp1)
+	if (m_staticMap[current.my_][current.mx_ + 1] < costmap_2d::INSCRIBED_INFLATED_OBSTACLE && m_objectMap[current.my_][current.mx_ + 1].size() < 3 && xp1)
 	{
 		neighbors.push_back(Cell(current.mx_ + 1, current.my_));
 	}
@@ -479,7 +470,6 @@ void Planner::createOccSemGrid(const hsr_navigation::PlannerService::Request &re
 									  std::vector<hsr_navigation::ObjectMessage> &objects,
 									  std::vector<std::set<std::pair<unsigned int, unsigned int>>> &objectsInflationCells)
 {
-	//	m_colorImg = cv::Mat(m_height, m_width, CV_8UC3, cv::Scalar(255, 255, 255));
 	if (!objects.empty())
 	{
 		int increasCostStep = 100 / objects.size();
@@ -493,17 +483,7 @@ void Planner::createOccSemGrid(const hsr_navigation::PlannerService::Request &re
 				mx = k->first;
 				my = k->second;
 				m_objectGrid.data[my * m_width + mx] = 10 + i * increasCostStep;
-				//				m_colorImg.at<cv::Vec3b>(my, mx) = cv::Vec3b(150 + i * increasCostStep,
-				//						(150 + i * increasCostStep) / 3, (150 + i * increasCostStep) / 3);
 			}
-
-			//			for (int j = 0; j < objects[i].cell_vector.size(); ++j) {
-			//				int tmp_mx, tmp_my;
-			//				tmp_my = (int) (objects[i].cell_vector[j].my);
-			//				tmp_mx = (int) (objects[i].cell_vector[j].mx);
-			////				m_colorImg.at<cv::Vec3b>(tmp_my, tmp_mx) = cv::Vec3b(75 + i * increasCostStep,
-			////						(75 + i * increasCostStep) / 3, (75 + i * increasCostStep) / 3);
-			//			}
 		}
 	}
 
@@ -513,32 +493,18 @@ void Planner::createOccSemGrid(const hsr_navigation::PlannerService::Request &re
 		{
 			if (m_objectMap[i][j].size() > 1)
 			{
-				//				std::list<long long unsigned int>::iterator it =
-				//						m_objectMap[i][j].begin();
-				//				std::advance(it, 1);
-				//				ROS_INFO("TWO OBJECT ID: %d, %d Size %zu;",
-				//						m_objectMap[i][j].front(), *it, m_objectMap[i][j].size());
 				m_objectGrid.data[i * m_width + j] = 200;
-				//				m_colorImg.at<cv::Vec3b>(i, j) = cv::Vec3b(50, 50, 50);
 			}
-			if (m_staticMap[i][j] >= costmap_2d::INSCRIBED_INFLATED_OBSTACLE)
+			if (m_staticMap[i][j] == costmap_2d::INSCRIBED_INFLATED_OBSTACLE)
 			{
 				m_objectGrid.data[i * m_width + j] = 254;
-				//				m_colorImg.at<cv::Vec3b>(i, j) = cv::Vec3b(150, 150, 150);
+			}
+			else if (m_staticMap[i][j] > costmap_2d::INSCRIBED_INFLATED_OBSTACLE)
+			{
+				m_objectGrid.data[i * m_width + j] = 255;
 			}
 		}
 	}
-
-	//	for (int i = 0; i < m_height; ++i) {
-	//		for (int j = 0; j < m_width; ++j) {
-	//			uint8_t cBuffer = req.grid.data[i * m_width + j];
-	//
-	//			if (cBuffer > costmap_2d::FREE_SPACE) {
-	//				m_colorImg.at<cv::Vec3b>(i, j) = cv::Vec3b(100, 100, 100);
-	//			}
-	//		}
-	//	}
-	//	cv::imwrite("/home/pregier/Workspaces/pathInflationMapt.png", m_colorImg);
 }
 
 /**
@@ -555,13 +521,9 @@ void Planner::createObjectMap(std::vector<hsr_navigation::ObjectMessage> &object
 			"Object inflation vector size differs from the objects vector size. Object %zu; Inflation %zu",
 			objects.size(), objectsInflationCells.size());
 	}
-
-	//	ROS_INFO("SIZE OF OBJECT IN SERVER: %zu", objects.size());
-
 	// Iterate over objects
 	for (int i = 0; i < objects.size(); ++i)
 	{
-		//ROS_INFO("OBJECT %d; SIze %zu ",i,objects[i].cell_vector.size());
 		ROS_INFO("OBJECT CLASS ASSIGN %d", objects[i].object_class);
 		for (std::set<std::pair<unsigned int, unsigned int>>::iterator k =
 				 objectsInflationCells[i].begin();
@@ -574,28 +536,23 @@ void Planner::createObjectMap(std::vector<hsr_navigation::ObjectMessage> &object
 			// m_objectClassCostMap[my][mx].push_back(objects[i].object_class
 
 			// Update cost map
+			// Factor 5 for average cell size of object.
+			
 			if (objects[i].object_class == BALL)
-				m_objectClassCostMap[my][mx] = 100;
+				m_objectClassCostMap[my][mx] = 5*(2.1 * m_movingCost);
 			if (objects[i].object_class == BOOKS)
-				m_objectClassCostMap[my][mx] = 400;
+				m_objectClassCostMap[my][mx] = 5*(5.1 * m_movingCost);
 			if (objects[i].object_class == BOXES)
-				m_objectClassCostMap[my][mx] = 100;
+				m_objectClassCostMap[my][mx] = 5*(5.1 * m_movingCost);
 			if (objects[i].object_class == CARS)
-				m_objectClassCostMap[my][mx] = 600;
+				m_objectClassCostMap[my][mx] = 5*(3.5 * m_movingCost);
 			if (objects[i].object_class == DOLL)
-				m_objectClassCostMap[my][mx] = 500;
+				m_objectClassCostMap[my][mx] = 5*(4.5 * m_movingCost);
 			if (objects[i].object_class == STAFFED)
-				m_objectClassCostMap[my][mx] = 100;
+				m_objectClassCostMap[my][mx] = 5*(4.5 * m_movingCost);
 			if (objects[i].object_class == BLOCKS)
-				m_objectClassCostMap[my][mx] = 300;
-
-			// if (m_objectMap[my][mx].size() > 1)
-			// {
-			// 	ROS_INFO("OBJECT ID GEPUSHT %ld", objects[i].uid);
-			// }
+				m_objectClassCostMap[my][mx] = 5*(3.5 * m_movingCost);
 		}
-
-		//ROS_INFO("OBJECT ZU ENDE !!!!!!!!!!!!!!");
 	}
 }
 
@@ -648,17 +605,18 @@ void Planner::inflateStaticMap()
 		{
 			if (m_staticMap[i][j] > costmap_2d::INSCRIBED_INFLATED_OBSTACLE)
 			{
-				for (int k = 0; k < m_cellLethalInflation.size(); ++k)
+				for (int k = 0; k < m_cellInflationCost.size(); ++k)
+//				for (int k = 0; k < m_cellLethalInflation.size(); ++k)
 				{
 					int tmp_mx, tmp_my;
-					tmp_my = i + (int)(m_cellLethalInflation[k].my_);
-					tmp_mx = j + (int)(m_cellLethalInflation[k].mx_);
+					tmp_my = i + (int)(m_cellInflationCost[k].my_);
+					tmp_mx = j + (int)(m_cellInflationCost[k].mx_);
 					if (tmp_my < 0 || tmp_mx < 0 || tmp_mx >= m_width || tmp_my >= m_height)
 					{
 						continue;
 					}
 					unsigned int oldCost = m_staticMap[tmp_my][tmp_mx];
-					unsigned char cost = m_cellLethalInflation[k].cost;
+					unsigned char cost = m_cellInflationCost[k].cost;
 					if (cost > oldCost)
 					{
 						m_staticMap[tmp_my][tmp_mx] = cost; //costmap_2d::INSCRIBED_INFLATED_OBSTACLE;
@@ -864,12 +822,11 @@ int main(int argc, char **argv)
 
 	// Create ROS service
 	ros::ServiceServer l_service;
-	l_service = l_nh.advertiseService("planner_service",
-									  &Planner::PlannerSrv,
-									  &l_pl);
+	l_service = l_nh.advertiseService("planner_service", &Planner::PlannerSrv, &l_pl);
 	
 	ROS_INFO("Clutter Planner Service: RUNNING...");
 	ros::spin();
 
 	return 0;
 }
+
