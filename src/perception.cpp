@@ -130,11 +130,8 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
     cv::Mat l_redMask = l_redLower + l_redUpper;
 
     // Define blue color mask
-    cv::Mat l_blueLower;
-    cv::Mat l_blueUpper;
-    cv::inRange(l_hsv, cv::Scalar(100, 150, 0), cv::Scalar(10, 255, 255), l_blueLower);
-    cv::inRange(l_hsv, cv::Scalar(140, 255, 255), cv::Scalar(180, 255, 255), l_blueUpper);
-    cv::Mat l_blueMask = l_blueLower + l_blueUpper;
+    cv::Mat l_blueMask;
+    cv::inRange(l_hsv, cv::Scalar(100, 150, 0), cv::Scalar(140, 255, 255), l_blueLower);
 
     cv::imshow("Mask Blue", l_blueMask);
     cv::waitKey(0);
