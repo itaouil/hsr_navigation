@@ -178,7 +178,7 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
     // Set action to be performed
     // based on the obstacles received
     // by the planner
-    if (p_obstacles.object_class == 1)
+    if (p_obstacles[0].object_class == 1)
     {
         m_pushAction = true;
     }

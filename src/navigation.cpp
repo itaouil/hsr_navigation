@@ -181,8 +181,8 @@ void Navigation::populatePlannerRequest(hsr_navigation::PlannerService &p_servic
     // Goal pose
     geometry_msgs::PoseStamped l_goal;
     l_goal.header.frame_id = "map";
-    l_goal.pose.position.x = 0.69;
-	l_goal.pose.position.y = -0.245;
+    l_goal.pose.position.x = 1.88;
+	l_goal.pose.position.y = 1.04;
     l_goal.pose.position.z = 0;
     l_goal.pose.orientation.x = 0;
     l_goal.pose.orientation.y = 0;
