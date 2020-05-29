@@ -219,13 +219,14 @@ public:
   double m_robotRadius = -1;
   unsigned int m_width = -1;
   unsigned int m_height = -1;
-  double m_inflationRadius;
+  //double m_inflationRadius;
   unsigned char m_enterCost;
   unsigned char m_movingCost;
   unsigned char m_objMovCost;
   unsigned int m_cellRobotRadius;
   unsigned char m_changeObjectCost;
   unsigned int m_cellInflationRadius = -1;
+  unsigned int extra_inflation;
 
   std::vector<InflationCell> m_cellInflationCost;
   std::vector<InflationCell> m_cellLethalInflation;

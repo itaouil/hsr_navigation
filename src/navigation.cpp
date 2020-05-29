@@ -44,6 +44,9 @@ void Navigation::initialize()
     // Clutter planner request publisher
     m_srvPub = m_nh.advertise<hsr_navigation::PlannerServiceReq>(PLANNER_REQ, 1);
 
+    // Static map publisher
+    m_mapPub = m_nh.advertise<nav_msgs::OccupancyGrid>(STATIC_MAP, 1);
+
     // Subscriber to global costmap
     m_costSub = m_nh.subscribe<nav_msgs::OccupancyGrid>(GLOBAL_COSTMAP, 
                                                         1,
@@ -178,8 +181,8 @@ void Navigation::populatePlannerRequest(hsr_navigation::PlannerService &p_servic
     // Goal pose
     geometry_msgs::PoseStamped l_goal;
     l_goal.header.frame_id = "map";
-    l_goal.pose.position.x = 0.721;
-	l_goal.pose.position.y = -0.478;
+    l_goal.pose.position.x = 0.69;
+	l_goal.pose.position.y = -0.245;
     l_goal.pose.position.z = 0;
     l_goal.pose.orientation.x = 0;
     l_goal.pose.orientation.y = 0;
@@ -191,6 +194,9 @@ void Navigation::populatePlannerRequest(hsr_navigation::PlannerService &p_servic
     p_service.request.goal = l_goal;
 	p_service.request.obstacles_in = m_perception->getObstacles(m_globalCostmap);
     p_service.request.grid = m_occupacyGrid;
+
+    // Publish static map used
+    m_mapPub.publish(m_occupacyGrid);
 
     // Log
     if (DEBUGNAVIGATION)
