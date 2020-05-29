@@ -131,10 +131,10 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
 
     // Define blue color mask
     cv::Mat l_blueMask;
-    cv::inRange(l_hsv, cv::Scalar(100, 150, 0), cv::Scalar(140, 255, 255), l_blueLower);
+    cv::inRange(l_hsv, cv::Scalar(100, 150, 0), cv::Scalar(140, 255, 255), l_blueMask);
 
-    cv::imshow("Mask Blue", l_blueMask);
-    cv::waitKey(0);
+    //cv::imshow("Mask Blue", l_blueMask);
+    //cv::waitKey(0);
 
     // Get red pixel location in the matrix
     std::vector<cv::Point> l_redPixelsLocation;
@@ -145,7 +145,8 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
     cv::findNonZero(l_blueMask, l_bluePixelsLocation);
 
     // Populate red object
-    if (l_redPixelsLocation.size())
+    std::cout << "Number of red pixels: " << l_redPixelsLocation.size() << std::endl;
+    if (l_redPixelsLocation.size() > 1000)
     {
         if (DEBUGPERCEPTION)
         {
@@ -156,7 +157,8 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
     }
 
     // Populate blue object
-    if (l_bluePixelsLocation.size())
+    std::cout << "Number of blue pixels: " << l_bluePixelsLocation.size() << std::endl;
+    if (l_bluePixelsLocation.size() > 1000)
     {
         if (DEBUGPERCEPTION)
         {

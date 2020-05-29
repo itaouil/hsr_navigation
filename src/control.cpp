@@ -312,7 +312,7 @@ unsigned int Control::getIndex(const std::vector<geometry_msgs::PoseStamped> &p_
 
         // Get cost (convert to int from unsigned char)
         int l_cellCost = (int) l_globalCostmap->getCost(l_mx, l_my);
-        //std::cout << "Cost: " << l_cellCost << "at :" << l_mx << " " << l_my << std::endl;
+        std::cout << "Cost: " << l_cellCost << "at :" << l_mx << " " << l_my << std::endl;
 
         // Log cost
         if (l_cellCost > 250)
