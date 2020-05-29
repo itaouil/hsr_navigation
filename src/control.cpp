@@ -62,7 +62,7 @@ void Control::handlePlan(const hsr_navigation::PlannerService &p_service)
             ROS_INFO("Control: path is obstructed -- starting action control.");
         }
 
-        actionControl(p_service.response.path);
+        actionControl(p_service.response.path, p_service.response.obstacles_out);
     }
 }
 
@@ -130,10 +130,22 @@ void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
         // perform action for removal
         if (m_action)
         {
-            push();
-
-            // Reset action flag
+            // Check if push action
+            if (m_pushAction)
+            {
+                push();
+            }
+            
+            // Check if grasp action
+            if (m_graspAction)
+            {
+                grasp();
+            }
+            
+            // Reset action flags
             m_action = false;
+            m_pushAction = false;
+            m_graspAction = false;
 
             // Request new plan
             m_postActionPlan = true;
@@ -151,7 +163,8 @@ void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
 /**
  * Action control that 
  */
-void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
+void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_path,
+                            const std::vector<hsr_navigation::ObjectMessage> &p_obstacles)
 {
     if (DEBUGCONTROL)
     {
@@ -161,6 +174,18 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
     // Set action flag to avoid
     // replanning by navigation
     m_action = true;
+
+    // Set action to be performed
+    // based on the obstacles received
+    // by the planner
+    if (p_obstacles.object_class == 1)
+    {
+        m_pushAction = true;
+    }
+    else
+    {
+        m_graspAction = true;
+    }
 
     // Get intermiate pose index
     unsigned int l_idx = getIndex(p_path);
@@ -257,7 +282,7 @@ void Control::push()
  */
 void Control::grasp()
 {
-    //TODO: implement grasping action
+    std::cout << "I SHOULD START GRASPIIIIIIIING RIGHT NOW....." << std::endl;
 }
 
 /**

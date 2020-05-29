@@ -11,6 +11,7 @@
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <hsr_navigation/ObjectMessage.h>
 #include <hsr_navigation/PlannerService.h>
 
 // ROS general
@@ -53,7 +54,8 @@ private:
     void rotate(const unsigned int);
     void setOdometry(const nav_msgs::Odometry);
     void dwaControl(const std::vector<geometry_msgs::PoseStamped>&);
-    void actionControl(const std::vector<geometry_msgs::PoseStamped>&);
+    void actionControl(const std::vector<geometry_msgs::PoseStamped>&,
+                       const std::vector<hsr_navigation::ObjectMessage>&);
     unsigned int getIndex(const std::vector<geometry_msgs::PoseStamped> &);
 
     /**
@@ -63,10 +65,12 @@ private:
     // General members
     bool m_push = false;
     bool m_rotate = false;
+    bool m_action = false;
     double m_previousX = 0;
     double m_previousY = 0;
-    bool m_action = false;
     bool m_firstRun = true;
+    bool m_pushAction = false;
+    bool m_graspAction = false;
     bool m_stopControl = false;
     double m_totalDistance = 0;
     bool m_initialized = false;

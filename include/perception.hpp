@@ -80,7 +80,6 @@ private:
 
     // General members
     std::mutex m_mtx;
-    bool m_debug = true;
     unsigned int m_uid = 1;
     bool m_initialized = false;
     bool m_modelInitialized = false;
