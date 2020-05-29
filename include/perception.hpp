@@ -69,7 +69,8 @@ private:
                         geometry_msgs::PointStamped&, 
                         const geometry_msgs::PointStamped&);
 
-    void populateObjectMessage(costmap_2d::Costmap2D*,
+    void populateObjectMessage(const bool,
+                               costmap_2d::Costmap2D*,
                                const std::vector<cv::Point>&,
                                std::vector<hsr_navigation::ObjectMessage>&);
 
@@ -80,6 +81,7 @@ private:
     // General members
     std::mutex m_mtx;
     bool m_debug = true;
+    unsigned int m_uid = 1;
     bool m_initialized = false;
     bool m_modelInitialized = false;
 

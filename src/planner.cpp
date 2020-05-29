@@ -303,7 +303,7 @@ void Planner::constraintAStar(Cell &start,
 
 			if (m_objectMap[next.my_][next.mx_].empty())
 			{
-				cm_costs = costmap_2d::FREE_SPACE;
+				cm_costs = m_staticMap[next.my_][next.mx_];//costmap_2d::FREE_SPACE;
 			}
 			else
 			{
@@ -390,6 +390,7 @@ void Planner::getConstraintNeighbors(const Cell &current, std::vector<Cell> &nei
 
 	if (false /*diag_neighbors*/)
 	{
+	ROS_INFO("IN DIAG NEIGBORS");
 		if (m_staticMap[current.my_ - 1][current.mx_ - 1] == costmap_2d::FREE_SPACE && m_objectMap[current.my_ - 1][current.mx_ - 1].size() < 1 && xm1 && ym1)
 		{
 			neighbors.push_back(Cell(current.mx_ - 1, current.my_ - 1));
@@ -431,35 +432,35 @@ void Planner::getConstraintNeighbors(const Cell &current, std::vector<Cell> &nei
 	}
 	if (isExtendTrue && (extend_neighbors && diag_neighbors))
 	{
-		if (m_staticMap[current.my_ - 1][current.mx_ - 2] == costmap_2d::FREE_SPACE && m_objectMap[current.my_ - 1][current.mx_ - 2].size() < 1 && xm2 && ym1)
+		if (m_staticMap[current.my_ - 1][current.mx_ - 2] < costmap_2d::INSCRIBED_INFLATED_OBSTACLE && m_objectMap[current.my_ - 1][current.mx_ - 2].size() < 1 && xm2 && ym1)
 		{
 			neighbors.push_back(Cell(current.mx_ - 2, current.my_ - 1));
 		}
-		if (m_staticMap[current.my_ + 1][current.mx_ - 2] == costmap_2d::FREE_SPACE && m_objectMap[current.my_ + 1][current.mx_ - 2].size() < 1 && xm2 && yp1)
+		if (m_staticMap[current.my_ + 1][current.mx_ - 2] < costmap_2d::INSCRIBED_INFLATED_OBSTACLE && m_objectMap[current.my_ + 1][current.mx_ - 2].size() < 1 && xm2 && yp1)
 		{
 			neighbors.push_back(Cell(current.mx_ - 2, current.my_ + 1));
 		}
-		if (m_staticMap[current.my_ + 2][current.mx_ - 1] == costmap_2d::FREE_SPACE && m_objectMap[current.my_ + 2][current.mx_ - 1].size() < 1 && xm1 && yp2)
+		if (m_staticMap[current.my_ + 2][current.mx_ - 1] < costmap_2d::INSCRIBED_INFLATED_OBSTACLE && m_objectMap[current.my_ + 2][current.mx_ - 1].size() < 1 && xm1 && yp2)
 		{
 			neighbors.push_back(Cell(current.mx_ - 1, current.my_ + 2));
 		}
-		if (m_staticMap[current.my_ + 2][current.mx_ + 1] == costmap_2d::FREE_SPACE && m_objectMap[current.my_ + 2][current.mx_ + 1].size() < 1 && xp1 && yp2)
+		if (m_staticMap[current.my_ + 2][current.mx_ + 1] < costmap_2d::INSCRIBED_INFLATED_OBSTACLE && m_objectMap[current.my_ + 2][current.mx_ + 1].size() < 1 && xp1 && yp2)
 		{
 			neighbors.push_back(Cell(current.mx_ + 1, current.my_ + 2));
 		}
-		if (m_staticMap[current.my_ + 1][current.mx_ + 2] == costmap_2d::FREE_SPACE && m_objectMap[current.my_ + 1][current.mx_ + 2].size() < 1 && xp2 && yp1)
+		if (m_staticMap[current.my_ + 1][current.mx_ + 2] < costmap_2d::INSCRIBED_INFLATED_OBSTACLE && m_objectMap[current.my_ + 1][current.mx_ + 2].size() < 1 && xp2 && yp1)
 		{
 			neighbors.push_back(Cell(current.mx_ + 2, current.my_ + 1));
 		}
-		if (m_staticMap[current.my_ - 1][current.mx_ + 2] == costmap_2d::FREE_SPACE && m_objectMap[current.my_ - 1][current.mx_ + 2].size() < 1 && xp2 && ym1)
+		if (m_staticMap[current.my_ - 1][current.mx_ + 2] < costmap_2d::INSCRIBED_INFLATED_OBSTACLE && m_objectMap[current.my_ - 1][current.mx_ + 2].size() < 1 && xp2 && ym1)
 		{
 			neighbors.push_back(Cell(current.mx_ + 2, current.my_ - 1));
 		}
-		if (m_staticMap[current.my_ - 2][current.mx_ + 1] == costmap_2d::FREE_SPACE && m_objectMap[current.my_ - 2][current.mx_ + 1].size() < 1 && xp1 && ym2)
+		if (m_staticMap[current.my_ - 2][current.mx_ + 1] < costmap_2d::INSCRIBED_INFLATED_OBSTACLE && m_objectMap[current.my_ - 2][current.mx_ + 1].size() < 1 && xp1 && ym2)
 		{
 			neighbors.push_back(Cell(current.mx_ + 1, current.my_ - 2));
 		}
-		if (m_staticMap[current.my_ - 2][current.mx_ - 1] == costmap_2d::FREE_SPACE && m_objectMap[current.my_ - 2][current.mx_ - 1].size() < 1 && xm1 && ym2)
+		if (m_staticMap[current.my_ - 2][current.mx_ - 1] < costmap_2d::INSCRIBED_INFLATED_OBSTACLE && m_objectMap[current.my_ - 2][current.mx_ - 1].size() < 1 && xm1 && ym2)
 		{
 			neighbors.push_back(Cell(current.mx_ - 1, current.my_ - 2));
 		}
@@ -829,4 +830,3 @@ int main(int argc, char **argv)
 
 	return 0;
 }
-

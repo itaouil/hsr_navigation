@@ -123,43 +123,54 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
     }
 
     // Define red color mask
-    cv::Mat l_mask1;
-    cv::Mat l_mask2;
-    cv::inRange(l_hsv, cv::Scalar(0, 120, 70), cv::Scalar(10, 255, 255), l_mask1);
-    cv::inRange(l_hsv, cv::Scalar(170, 120, 70), cv::Scalar(180, 255, 255), l_mask2);
-    cv::Mat l_mask = l_mask1 + l_mask2;
+    cv::Mat l_redLower;
+    cv::Mat l_redUpper;
+    cv::inRange(l_hsv, cv::Scalar(0, 120, 70), cv::Scalar(10, 255, 255), l_redLower);
+    cv::inRange(l_hsv, cv::Scalar(170, 120, 70), cv::Scalar(180, 255, 255), l_redUpper);
+    cv::Mat l_redMask = l_redLower + l_redUpper;
 
-    //cv::imshow("Mask", l_mask1);
-    //cv::waitKey(0);
+    // Define blue color mask
+    cv::Mat l_blueLower;
+    cv::Mat l_blueUpper;
+    cv::inRange(l_hsv, cv::Scalar(100, 150, 0), cv::Scalar(10, 255, 255), l_blueLower);
+    cv::inRange(l_hsv, cv::Scalar(140, 255, 255), cv::Scalar(180, 255, 255), l_blueUpper);
+    cv::Mat l_blueMask = l_blueLower + l_blueUpper;
 
-    if (DEBUGPERCEPTION)
-    {
-        ROS_INFO("Perception: created final mask");
-    }
+    cv::imshow("Mask Blue", l_blueMask);
+    cv::waitKey(0);
 
     // Get red pixel location in the matrix
-    std::vector<cv::Point> l_locations;
-    cv::findNonZero(l_mask, l_locations);
+    std::vector<cv::Point> l_redPixelsLocation;
+    cv::findNonZero(l_redMask, l_redPixelsLocation);
 
-    if (DEBUGPERCEPTION)
-    {
-        ROS_INFO("Perception: found pixel locations");
-    }
+    // Get blue pixel location in the matrix
+    std::vector<cv::Point> l_bluePixelsLocation;
+    cv::findNonZero(l_blueMask, l_bluePixelsLocation);
 
-    if (l_locations.size())
+    // Populate red object
+    if (l_redPixelsLocation.size())
     {
         if (DEBUGPERCEPTION)
         {
             ROS_INFO("Red pixels detected.");
         }
 
-        populateObjectMessage(p_gcm, l_locations, l_objects);
+        populateObjectMessage(true, p_gcm, l_redPixelsLocation, l_objects);
     }
-    
-    if (DEBUGPERCEPTION)
+
+    // Populate blue object
+    if (l_bluePixelsLocation.size())
     {
-        ROS_INFO("Perception: Obstacles computed correctly");
+        if (DEBUGPERCEPTION)
+        {
+            ROS_INFO("Blue pixels detected.");
+        }
+
+        populateObjectMessage(false, p_gcm, l_bluePixelsLocation, l_objects);
     }
+
+    // Reset m_uid
+    m_uid = 1;
 
     return l_objects;
 }
@@ -168,7 +179,8 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
  * Create ObjectMessage instance
  * to be used for re-planning.
  */
-void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
+void Perception::populateObjectMessage(const bool color,
+                                       costmap_2d::Costmap2D *p_gcm,
                                        const std::vector<cv::Point> &p_locations,
                                        std::vector<hsr_navigation::ObjectMessage> &p_objs)
 {
@@ -279,8 +291,8 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
 
     // Create object message
     hsr_navigation::ObjectMessage l_obj;
-    l_obj.uid = 1;
-    l_obj.object_class = 1;
+    l_obj.uid = m_uid;
+    l_obj.object_class = (color) ? 1 : 5;
     l_obj.center_cell.mx = l_mx;
     l_obj.center_cell.my = l_my;
     l_obj.center_wx = l_meanX;
@@ -298,6 +310,9 @@ void Perception::populateObjectMessage(costmap_2d::Costmap2D *p_gcm,
 
     // Update object message vector
     p_objs.push_back(l_obj);
+
+    // Increase m_uid
+    m_uid += 1;
 }
 
 /**
