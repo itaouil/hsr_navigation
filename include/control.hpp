@@ -5,6 +5,7 @@
 #include <mutex>
 #include <math.h>
 #include <iostream>
+#include <Python.h>
 
 // ROS msg/srv
 #include <nav_msgs/Odometry.h>
@@ -66,7 +67,6 @@ private:
     // General members
     bool m_push = false;
     bool m_rotate = false;
-    bool m_action = false;
     double m_previousX = 0;
     double m_previousY = 0;
     bool m_firstRun = true;
@@ -75,6 +75,7 @@ private:
     bool m_stopControl = false;
     double m_totalDistance = 0;
     bool m_initialized = false;
+    bool m_publishFrame = false;
     bool m_postActionPlan = false;
 
     // ROS members
@@ -84,9 +85,9 @@ private:
     tf::Transform m_transform;
     ros::Subscriber m_odomSub;
     tf2_ros::Buffer &m_buffer;
-    tf::TransformBroadcaster m_br;
     nav_msgs::Odometry m_odometry;
     dwa_local_planner::DWAPlannerROS m_dp;
+    tf::TransformBroadcaster m_broadcaster;
     costmap_2d::Costmap2DROS* m_localCostmapROS = nullptr;
     costmap_2d::Costmap2DROS* m_globalCostmapROS = nullptr;
 };
