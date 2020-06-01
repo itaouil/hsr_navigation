@@ -128,24 +128,28 @@ void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
 
         // If action control then
         // perform action for removal
-        if (m_action)
+        if (m_pushAction || m_graspAction)
         {
             // Check if push action
             if (m_pushAction)
             {
+                // Call push routine
                 push();
+
+                // Reset flag
+                m_pushAction = false;
             }
             
             // Check if grasp action
             if (m_graspAction)
-            {
+            {   
+                // Call grasp routine
                 grasp();
+
+                // Reset related flags
+                m_graspAction = false;
+                m_publishFrame = false;
             }
-            
-            // Reset action flags
-            m_action = false;
-            m_pushAction = false;
-            m_graspAction = false;
 
             // Request new plan
             m_postActionPlan = true;
@@ -171,20 +175,38 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
         ROS_INFO("Control: action control started.");
     }
 
-    // Set action flag to avoid
-    // replanning by navigation
-    m_action = true;
-
     // Set action to be performed
-    // based on the obstacles received
-    // by the planner
+    // based on the obstacles uid 
+    // received by planner
     if (p_obstacles[0].object_class == 1)
     {
+        // Set action as push
+        // for DWA control check
         m_pushAction = true;
     }
     else
     {
+        // Set action as grasp
+        // for DWA control check
         m_graspAction = true;
+
+        // Extract x and y pose
+        // of the object in map
+        // coordinate system
+        double l_mx = p_obstacles[0].center_wx;
+        double l_my = p_obstacles[0].center_wy;
+
+        // Set obstacle frame transform origin
+        m_transform.setOrigin(tf::Vector3(l_mx, l_my, 0.0));
+
+        // Set obstacle frame rotation
+        tf::Quaternion l_q;
+        l_q.setRPY(3.14, -1.57, 0);
+        m_transform.setRotation(l_q);
+
+        // Start publishing frame
+        // of the object to be grasped
+        m_publishFrame = true;
     }
 
     // Get intermiate pose index
@@ -282,7 +304,25 @@ void Control::push()
  */
 void Control::grasp()
 {
-    std::cout << "I SHOULD START GRASPIIIIIIIING RIGHT NOW....." << std::endl;
+    // Set env variables
+    Py_SetProgramName(argv[0]);
+
+    // Initialize interpreter
+    Py_Initialize();
+
+    // Read python script to execute
+    FILE *l_file = _Py_fopen( "../scripts/grasp.py", "r+" );
+    if (l_file)
+    {
+        PyRun_SimpleFile(l_file, "../scripts/grasp.py");
+    }
+    else
+    {
+        ROS_ERROR("Error opening grasping script.");
+    }
+
+    // The end
+    Py_Finalize();
 }
 
 /**
@@ -342,6 +382,16 @@ unsigned int Control::getIndex(const std::vector<geometry_msgs::PoseStamped> &p_
 void Control::setOdometry(const nav_msgs::Odometry p_data)
 {
     m_odometry = p_data;
+
+    // Publish tf frame
+    // of object to be grasped
+    if (m_publishFrame)
+    {
+        m_broadcaster.sendTransform(tf::StampedTransform(m_transform, 
+                                                         ros::Time::now(), 
+                                                         "map", 
+                                                         GRASP_FRAME));
+    }
 
     // Only compute travelled
     // distance if control is
@@ -421,7 +471,7 @@ void Control::stopControl()
  */
 bool Control::actionInCourse()
 {
-    return m_action;
+    return (m_pushAction || m_graspAction);
 }
 
 /**

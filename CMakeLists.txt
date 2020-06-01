@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   pluginlib
   costmap_2d
+  PythonLibs
   sensor_msgs
   geometry_msgs
   actionlib_msgs
@@ -107,6 +108,7 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${Eigen3_INCLUDE_DIRS}
+  ${PYTHON_INCLUDE_DIRS}
 )
 
 ## Declare a C++ executable
@@ -114,4 +116,4 @@ add_executable(planner src/planner.cpp)
 target_link_libraries(planner ${catkin_LIBRARIES})
 
 add_executable(navigation src/navigation.cpp src/control.cpp src/perception.cpp)
-target_link_libraries(navigation ${catkin_LIBRARIES} ${OpenCV_LIBS})
+target_link_libraries(navigation ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PYTHON_LIBRARIES})
