@@ -4,8 +4,11 @@
 /**
  * Default constructor.
  */
-Control::Control(tf2_ros::Buffer &p_buf, costmap_2d::Costmap2DROS* p_lc, costmap_2d::Costmap2DROS* p_gc): 
-    m_buffer(p_buf), m_localCostmapROS(p_lc), m_globalCostmapROS(p_gc)
+Control::Control(tf2_ros::Buffer &p_buf, 
+                 tf2_ros::TransformListener &p_tf, 
+                 costmap_2d::Costmap2DROS* p_lc, 
+                 costmap_2d::Costmap2DROS* p_gc):
+    m_buffer(p_buf), m_tf(p_tf), m_localCostmapROS(p_lc), m_globalCostmapROS(p_gc)
 {
     // Initialize members
     initialize();
@@ -199,9 +202,32 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
         // Set obstacle frame transform origin
         m_transform.setOrigin(tf::Vector3(l_mx, l_my, 0.0));
 
-        // Set obstacle frame rotation
-        tf::Quaternion l_q;
-        l_q.setRPY(3.14, -1.57, 0);
+        // Get transformation from map
+        // to hand_palm_link
+        geometry_msgs::TransformStamped l_out;
+        l_out = m_buffer.lookupTransform("map", 
+                                         "hand_palm_link",
+                                         ros::Time(0),
+                                         ros::Duration(1.0));
+
+        // Set quaternion
+        tf::Quaternion l_q(
+            l_out.transform.rotation.x,
+            l_out.transform.rotation.y,
+            l_out.transform.rotation.z,
+            l_out.transform.rotation.w);
+        
+        // Get RPY in radians
+        double l_roll, l_pitch, l_yaw;
+        tf::Matrix3x3 l_m(l_q);
+        l_m.getRPY(l_roll, l_pitch, l_yaw);
+
+        // Set new quaternion to
+        // match hand_palm_link
+        // yaw offset during manipulation
+        l_q.setRPY(l_roll, l_pitch, l_yaw + 1.57);
+
+        // Set transform rotation
         m_transform.setRotation(l_q);
 
         // Start publishing frame

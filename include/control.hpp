@@ -14,6 +14,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <hsr_navigation/ObjectMessage.h>
 #include <hsr_navigation/PlannerService.h>
+#include <geometry_msgs/TransformStamped.h>
 
 // ROS general
 #include "ros/ros.h"
@@ -30,7 +31,10 @@ class Control
 {
 public:
     // Contructor (explicit)
-    explicit Control(tf2_ros::Buffer &, costmap_2d::Costmap2DROS*, costmap_2d::Costmap2DROS*);
+    explicit Control(tf2_ros::Buffer &, 
+                     tf2_ros::TransformListener&, 
+                     costmap_2d::Costmap2DROS*, 
+                     costmap_2d::Costmap2DROS*);
 
     // Destructor (virtual)
     virtual ~Control();
@@ -86,6 +90,7 @@ private:
     ros::Subscriber m_odomSub;
     tf2_ros::Buffer &m_buffer;
     nav_msgs::Odometry m_odometry;
+    tf2_ros::TransformListener &m_tf;
     dwa_local_planner::DWAPlannerROS m_dp;
     tf::TransformBroadcaster m_broadcaster;
     costmap_2d::Costmap2DROS* m_localCostmapROS = nullptr;

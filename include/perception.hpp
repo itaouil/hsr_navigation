@@ -20,13 +20,13 @@
 #include <geometry_msgs/PointStamped.h>
 #include <hsr_navigation/CellMessage.h>
 #include <hsr_navigation/ObjectMessage.h>
+#include <geometry_msgs/TransformStamped.h>
 
 // ROS general
 #include "ros/ros.h"
 #include <costmap_2d/costmap_2d.h>
 #include <message_filters/subscriber.h>
 #include <tf2_ros/transform_listener.h>
-#include <geometry_msgs/TransformStamped.h>
 #include <message_filters/time_synchronizer.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <image_geometry/pinhole_camera_model.h>

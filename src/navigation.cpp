@@ -61,7 +61,7 @@ void Navigation::initialize()
     m_perception.reset(new Perception(m_buffer, m_tf));
 
     // Control instance
-    m_control.reset(new Control(m_buffer, m_localCostmapROS, m_globalCostmapROS));
+    m_control.reset(new Control(m_buffer, m_tf, m_localCostmapROS, m_globalCostmapROS));
 
     // Wait for members initialization
     ros::Rate l_rate(10);
