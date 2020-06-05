@@ -330,14 +330,11 @@ void Control::push()
  */
 void Control::grasp()
 {
-    // Set env variables
-    Py_SetProgramName(argv[0]);
-
     // Initialize interpreter
     Py_Initialize();
 
     // Read python script to execute
-    FILE *l_file = _Py_fopen( "../scripts/grasp.py", "r+" );
+    FILE *l_file = fopen( "../scripts/grasp.py", "r+" );
     if (l_file)
     {
         PyRun_SimpleFile(l_file, "../scripts/grasp.py");
