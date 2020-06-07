@@ -69,7 +69,7 @@ private:
                         geometry_msgs::PointStamped&, 
                         const geometry_msgs::PointStamped&);
 
-    void populateObjectMessage(const bool,
+    void populateObjectMessage(const unsigned int,
                                costmap_2d::Costmap2D*,
                                const std::vector<cv::Point>&,
                                std::vector<hsr_navigation::ObjectMessage>&);

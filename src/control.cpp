@@ -131,9 +131,9 @@ void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
 
         // If action control then
         // perform action for removal
-        if (m_pushAction || m_graspAction)
+        if (m_pushAction || m_graspAction || m_kickAction)
         {
-            // Check if push action
+            // Check which action to perform
             if (m_pushAction)
             {
                 // Call push routine
@@ -142,18 +142,25 @@ void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
                 // Reset flag
                 m_pushAction = false;
             }
-            
-            // Check if grasp action
-            if (m_graspAction)
+            else if (m_graspAction)
             {   
                 // Call grasp routine
-                grasp();
+                armAction("grasp");
 
                 // Reset related flags
                 m_graspAction = false;
                 m_publishFrame = false;
             }
+            else
+            {
+                // Call kick routine
+                armAction("kick");
 
+                // Reset related flags
+                m_kickAction = false;
+                m_publishFrame = false;
+            }
+            
             // Request new plan
             m_postActionPlan = true;
         }
@@ -181,13 +188,13 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
     // Set action to be performed
     // based on the obstacles uid 
     // received by planner
-    if (p_obstacles[0].object_class == 1)
+    if (p_obstacles[0].object_class == 3)
     {
         // Set action as push
         // for DWA control check
         m_pushAction = true;
     }
-    else
+    else if (p_obstacles[0].object_class == 5)
     {
         // Set action as grasp
         // for DWA control check
@@ -232,6 +239,16 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
 
         // Start publishing frame
         // of the object to be grasped
+        m_publishFrame = true;
+    }
+    else
+    {
+        // Set action as push
+        // for DWA control check
+        m_kickAction = true;
+
+        // Start publishing frame
+        // of the object to be kicked
         m_publishFrame = true;
     }
 
@@ -325,27 +342,44 @@ void Control::push()
 }
 
 /**
- * Grasp action to remove
- * obstacle from the path
+ * Robotic arm action to
+ * either grasp of kick object
  */
-void Control::grasp()
+void Control::armAction(const std::string &p_action)
 {
-    // Initialize interpreter
-    Py_Initialize();
+    // Create service client
+    ros::ServiceClient l_client;
+    l_client = m_nh.serviceClient<hsr_navigation::ActionService>("action_service");
 
-    // Read python script to execute
-    FILE *l_file = fopen( "../scripts/grasp.py", "r+" );
-    if (l_file)
-    {
-        PyRun_SimpleFile(l_file, "../scripts/grasp.py");
+    // Populate action request
+    hsr_navigation::ActionService l_service;
+    l_service.request.action = p_action;
+
+    // Call action service
+    if (l_client.call(l_service))
+    {   
+        if (DEBUGCONTROL)
+        {
+            ROS_INFO("Action Service: service called succesfully.");
+        }
+
+        if (l_service.response.output)
+        {
+            ROS_INFO("Action Service: action performed.");
+        }
+        else
+        {
+            ROS_INFO("Action Service: failed to perform action.");
+        }
+        
     }
     else
     {
-        ROS_ERROR("Error opening grasping script.");
+        if (DEBUGCONTROL)
+        {
+            ROS_INFO("Action Service: failed to call service.");
+        }     
     }
-
-    // The end
-    Py_Finalize();
 }
 
 /**
@@ -413,7 +447,7 @@ void Control::setOdometry(const nav_msgs::Odometry p_data)
         m_broadcaster.sendTransform(tf::StampedTransform(m_transform, 
                                                          ros::Time::now(), 
                                                          "map", 
-                                                         GRASP_FRAME));
+                                                         OBJECT_FRAME));
     }
 
     // Only compute travelled
@@ -494,7 +528,7 @@ void Control::stopControl()
  */
 bool Control::actionInCourse()
 {
-    return (m_pushAction || m_graspAction);
+    return (m_pushAction || m_graspAction || m_kickAction);
 }
 
 /**

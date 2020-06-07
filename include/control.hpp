@@ -13,6 +13,7 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <hsr_navigation/ObjectMessage.h>
+#include <hsr_navigation/ActionService.h>
 #include <hsr_navigation/PlannerService.h>
 #include <geometry_msgs/TransformStamped.h>
 
@@ -54,8 +55,8 @@ private:
      * Private methods
      */
     void push();
-    void grasp();
     void clear();
+    void armAction(const std::string&);
     void initialize();
     void loadStaticMap();
     void rotate(const unsigned int);
@@ -76,6 +77,7 @@ private:
     double m_previousY = 0;
     bool m_firstRun = true;
     bool m_pushAction = false;
+    bool m_kickAction = false;
     bool m_graspAction = false;
     bool m_stopControl = false;
     double m_totalDistance = 0;

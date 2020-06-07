@@ -32,7 +32,7 @@ const std::string DEPTH_DATA("/hsrb/head_rgbd_sensor/depth_registered/image_rect
 // Control parameters
 const double DISTANCE(0.510);
 const std::string ODOMETRY("/hsrb/odom");
-const std::string GRASP_FRAME("grasp_frame");
+const std::string OBJECT_FRAME("object_frame");
 const std::string DWA_VELOCITIES("/hsrb/command_velocity");
 
 #endif
