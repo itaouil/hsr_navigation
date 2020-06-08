@@ -29,7 +29,6 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(PythonLibs REQUIRED)
 set(OpenCV_LIBS opencv_core opencv_imgproc opencv_calib3d opencv_video opencv_features2d opencv_ml opencv_highgui)
 
-
 ################################################
 ## Declare ROS messages, services and actions ##
 ################################################

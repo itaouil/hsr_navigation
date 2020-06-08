@@ -7,6 +7,7 @@ import rospy
 import rospy
 import hsrb_interface
 from hsrb_interface import geometry
+from hsr_navigation.srv import ActionService, ActionServiceResponse
 
 # Grasp force[N]
 GRASP_FORCE = 0.2
@@ -81,7 +82,7 @@ def grasp():
 
     print("Grasp: done.")
 
-def handle_action_request(action):
+def handle_action_request(service_msg):
     """
         Handles action request.
     """
@@ -99,7 +100,7 @@ def handle_action_request(action):
         whole_body.looking_hand_constraint = True
 
         # Call action method
-        if action == "grasp":
+        if service_msg.req.action == "grasp":
             grasp()
         elif action == "kick":
             kick()
@@ -110,18 +111,27 @@ def handle_action_request(action):
 
         print("Action: done.")
 
+        # Return service response
+        return ActionServiceResponse(True)
+
     except Exception as e:
         print("Exception occured: ", e)
         rospy.logerr('Failed to grasp')
-        sys.exit()
+
+        # Switch to moving configuration
+        print("Action: transition to moving configuration.")
+        whole_body.move_to_go()
+
+        # Return service response
+        return ActionServiceResponse(False)
 
 def action_server():
     # Create node
     rospy.init_node('action_server')
-    s = rospy.Service('action_service', Action, handle_action_request)
+    s = rospy.Service('action_service', ActionService, handle_action_request)
 
     # Sping action server
-    print("Action server spinning.")
+    print("Action: spinning.")
     rospy.spin()
 
 # Execute
