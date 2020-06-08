@@ -181,8 +181,8 @@ void Navigation::populatePlannerRequest(hsr_navigation::PlannerService &p_servic
     // Goal pose
     geometry_msgs::PoseStamped l_goal;
     l_goal.header.frame_id = "map";
-    l_goal.pose.position.x = 1.97;
-	l_goal.pose.position.y = 2.47;
+    l_goal.pose.position.x = -4.11;
+	l_goal.pose.position.y = 0.05;
     l_goal.pose.position.z = 0;
     l_goal.pose.orientation.x = 0;
     l_goal.pose.orientation.y = 0;
@@ -192,7 +192,7 @@ void Navigation::populatePlannerRequest(hsr_navigation::PlannerService &p_servic
     // Populate request parameter by reference
 	p_service.request.start = l_start;
     p_service.request.goal = l_goal;
-	p_service.request.obstacles_in = m_perception->getObstacles(m_globalCostmap);
+	//p_service.request.obstacles_in = m_perception->getObstacles(m_globalCostmap);
     p_service.request.grid = m_occupacyGrid;
 
     // Publish static map used
