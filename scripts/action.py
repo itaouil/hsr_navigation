@@ -29,11 +29,11 @@ def kick():
     """
     # Kick: phase 1 (approach)
     print("Kick: phase 1.")
-    whole_body.move_end_effector_pose(geometry.pose(x=0.1, ej=-1.57), OBJECT_TF))
+    whole_body.move_end_effector_pose(geometry.pose(x=0.1, z=-0.3, ej=-1.57), OBJECT_TF)
 
     # Kick: phase 1 (kick)
     print("Kick: phase 2.")
-    whole_body.move_end_effector_pose(geometry.pose(), OBJECT_TF))
+    whole_body.move_end_effector_pose(geometry.pose(x=0.1), OBJECT_TF)
 
     # Log
     print("Kick: done.")
