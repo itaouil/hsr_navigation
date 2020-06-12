@@ -136,6 +136,11 @@ void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
             // Check which action to perform
             if (m_pushAction)
             {
+                if (DEBUGCONTROL)
+                {
+                    ROS_INFO("Starting push control.");
+                }
+
                 // Call push routine
                 push();
 
@@ -144,6 +149,11 @@ void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
             }
             else if (m_graspAction)
             {   
+                if (DEBUGCONTROL)
+                {
+                    ROS_INFO("Starting grasp control.");
+                }
+
                 // Call grasp routine
                 armAction("grasp");
 
@@ -153,6 +163,11 @@ void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
             }
             else
             {
+                if (DEBUGCONTROL)
+                {
+                    ROS_INFO("Starting kick control.");
+                }
+
                 // Call kick routine
                 armAction("kick");
 
@@ -183,6 +198,8 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
     if (DEBUGCONTROL)
     {
         ROS_INFO("Control: action control started.");
+
+        std::cout << "Number of elements received: " << p_obstacles.size() << std::endl;
     }
 
     // Set action to be performed
@@ -212,8 +229,8 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
         // Get transformation from map
         // to hand_palm_link
         geometry_msgs::TransformStamped l_out;
-        l_out = m_buffer.lookupTransform("map", 
-                                         "hand_palm_link",
+        l_out = m_buffer.lookupTransform("hand_palm_link", 
+                                         "map",
                                          ros::Time(0),
                                          ros::Duration(1.0));
 
@@ -229,10 +246,13 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
         tf::Matrix3x3 l_m(l_q);
         l_m.getRPY(l_roll, l_pitch, l_yaw);
 
+        std::cout << "Roll: " << l_roll << " Pitch: " << l_pitch << " Yaw: " << l_yaw << std::endl;
+        std::cout << "Mean point x: " << l_mx << " Mean  point y: " << l_my << std::endl;
+
         // Set new quaternion to
         // match hand_palm_link
         // yaw offset during manipulation
-        l_q.setRPY(l_roll, l_pitch, l_yaw + 1.57);
+        l_q.setRPY(l_roll, l_pitch, l_yaw);
 
         // Set transform rotation
         m_transform.setRotation(l_q);
@@ -247,6 +267,46 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
         // for DWA control check
         m_kickAction = true;
 
+        // Extract x and y pose
+        // of the object in map
+        // coordinate system
+        double l_mx = p_obstacles[0].center_wx;
+        double l_my = p_obstacles[0].center_wy;
+
+        // Set obstacle frame transform origin
+        m_transform.setOrigin(tf::Vector3(l_mx, l_my, 0.0));
+
+        // Get transformation from map
+        // to hand_palm_link
+        geometry_msgs::TransformStamped l_out;
+        l_out = m_buffer.lookupTransform("hand_palm_link", 
+                                         "map",
+                                         ros::Time(0),
+                                         ros::Duration(1.0));
+
+        // Set quaternion
+        tf::Quaternion l_q(
+            l_out.transform.rotation.x,
+            l_out.transform.rotation.y,
+            l_out.transform.rotation.z,
+            l_out.transform.rotation.w);
+        
+        // Get RPY in radians
+        double l_roll, l_pitch, l_yaw;
+        tf::Matrix3x3 l_m(l_q);
+        l_m.getRPY(l_roll, l_pitch, l_yaw);
+
+        std::cout << "Roll: " << l_roll << " Pitch: " << l_pitch << " Yaw: " << l_yaw << std::endl;
+        std::cout << "Mean point x: " << l_mx << " Mean  point y: " << l_my << std::endl;
+
+        // Set new quaternion to
+        // match hand_palm_link
+        // yaw offset during manipulation
+        l_q.setRPY(l_roll, l_pitch, l_yaw);
+
+        // Set transform rotation
+        m_transform.setRotation(l_q);
+
         // Start publishing frame
         // of the object to be kicked
         m_publishFrame = true;
@@ -257,7 +317,7 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
 
     // Extract intermediate path
     std::vector<geometry_msgs::PoseStamped> l_intermediatePath(p_path.begin(), 
-                                                               p_path.begin() + l_idx - 2);
+                                                               p_path.begin() + l_idx - 5);
 
     // Send robot to intermediate path
     std::cout << "Path: " << p_path.size() << std::endl;

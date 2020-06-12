@@ -4,7 +4,6 @@
 # Imports
 import sys
 import rospy
-import rospy
 import hsrb_interface
 from hsrb_interface import geometry
 from hsr_navigation.srv import ActionService, ActionServiceResponse
@@ -14,6 +13,8 @@ GRASP_FORCE = 0.2
 
 # TF name of the object to be grasped
 OBJECT_TF = 'object_frame'
+OBJECT_TF_GRASP = 'object_frame_grasp'
+OBJECT_TF_KICK = 'object_frame_kick'
 
 # TF name of the gripper
 HAND_TF = 'hand_palm_link'
@@ -28,6 +29,10 @@ def kick():
     """
         Kick action.
     """
+    # Command to open the gripper
+    print("Action: closing gripper.")
+    gripper.command(0.1)
+
     # Kick: phase 1 (approach)
     print("Kick: phase 1.")
     whole_body.move_end_effector_pose(geometry.pose(x=0.1, z=-0.3, ej=-1.57), OBJECT_TF)
@@ -43,6 +48,10 @@ def grasp():
     """
         Grasping action.
     """
+    # Command to open the gripper
+    print("Grasp: opening gripper.")
+    gripper.command(1.2)
+
     # Grasp: phase 1 (approach)
     print("Grasp: phase 1.")
     whole_body.move_end_effector_pose(geometry.pose(x=0.1, z=-0.1), OBJECT_TF)
@@ -91,23 +100,23 @@ def handle_action_request(service_msg):
         print("Action: transition to action configuration.")
         whole_body.move_to_neutral()
 
-        # Command to open the gripper
-        print("Action: opening gripper.")
-        gripper.command(1.2)
-
         # Look at the hand after the transition
         print("Action: set hand constraint.")
         whole_body.looking_hand_constraint = True
 
         # Call action method
-        if service_msg.req.action == "grasp":
+        if service_msg.action == "grasp":
             grasp()
-        elif action == "kick":
+        elif service_msg.action == "kick":
             kick()
 
         # Switch to moving configuration
         print("Action: transition to moving configuration.")
         whole_body.move_to_go()
+
+        # Command to open the gripper
+        print("Action: closing gripper.")
+        gripper.command(0.0)
 
         print("Action: done.")
 
@@ -122,12 +131,16 @@ def handle_action_request(service_msg):
         print("Action: transition to moving configuration.")
         whole_body.move_to_go()
 
+        # Command to open the gripper
+        print("Action: closing gripper.")
+        gripper.command(0.2)
+
         # Return service response
         return ActionServiceResponse(False)
 
-def action_server():
+def main():
     # Create node
-    rospy.init_node('action_server')
+    # rospy.init_node('action_service_server')
     s = rospy.Service('action_service', ActionService, handle_action_request)
 
     # Sping action server
@@ -136,4 +149,4 @@ def action_server():
 
 # Execute
 if __name__ == "__main__":
-    action_server()
+    main()

@@ -127,15 +127,15 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
     // Define yellow color mask (grasp)
     cv::Mat l_yellowLower;
     cv::Mat l_yellowUpper;
-    cv::inRange(l_hsv, cv::Scalar(22, 0, 152), cv::Scalar(180, 255, 255), l_yellowLower);
-    cv::inRange(l_hsv, cv::Scalar(118, 255, 0255), cv::Scalar(180, 255, 255), l_yellowUpper);
+    cv::inRange(l_hsv, cv::Scalar(18, 85, 150), cv::Scalar(180, 255, 255), l_yellowLower);
+    cv::inRange(l_hsv, cv::Scalar(101, 236, 255), cv::Scalar(180, 255, 255), l_yellowUpper);
     cv::Mat l_yellowMask = l_yellowLower + l_yellowUpper;
 
     // Define green color mask (kick)
     cv::Mat l_greenLower;
     cv::Mat l_greenUpper;
-    cv::inRange(l_hsv, cv::Scalar(38, 11, 0), cv::Scalar(180, 255, 255), l_greenLower);
-    cv::inRange(l_hsv, cv::Scalar(98, 220, 255), cv::Scalar(180, 255, 255), l_greenUpper);
+    cv::inRange(l_hsv, cv::Scalar(47, 86, 0), cv::Scalar(180, 255, 255), l_greenLower);
+    cv::inRange(l_hsv, cv::Scalar(98, 255, 255), cv::Scalar(180, 255, 255), l_greenUpper);
     cv::Mat l_greenMask = l_greenLower + l_greenUpper;
 
     // Get red pixel location in the matrix
@@ -151,24 +151,24 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
     cv::findNonZero(l_greenMask, l_greenPixelsLocation);
 
     // Populate red object
-    std::cout << "Number of red pixels: " << l_redPixelsLocation.size() << std::endl;
-    if (l_redPixelsLocation.size() > 1000)
-    {
-        if (DEBUGPERCEPTION)
-        {
-            ROS_INFO("Red pixels detected.");
-        }
+    // std::cout << "Number of red pixels: " << l_redPixelsLocation.size() << std::endl;
+    // if (l_redPixelsLocation.size() > 1000)
+    // {
+    //     if (DEBUGPERCEPTION)
+    //     {
+    //         ROS_INFO("Red pixels detected.");
+    //     }
 
-        populateObjectMessage(3, p_gcm, l_redPixelsLocation, l_objects);
-    }
+    //     populateObjectMessage(3, p_gcm, l_redPixelsLocation, l_objects);
+    // }
 
     // Populate blue object
-    std::cout << "Number of blue pixels: " << l_yellowPixelsLocation.size() << std::endl;
+    std::cout << "Number of yellow pixels: " << l_yellowPixelsLocation.size() << std::endl;
     if (l_yellowPixelsLocation.size() > 1000)
     {
         if (DEBUGPERCEPTION)
         {
-            ROS_INFO("Blue pixels detected.");
+            ROS_INFO("Yellow pixels detected.");
         }
 
         populateObjectMessage(5, p_gcm, l_yellowPixelsLocation, l_objects);
