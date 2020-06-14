@@ -22,6 +22,11 @@
 #include <hsr_navigation/ObjectMessage.h>
 #include <geometry_msgs/TransformStamped.h>
 
+// HSR imports
+#include <trajectory_msgs/JointTrajectory.h>
+#include <controller_manager_msgs/ControllerState.h>
+#include <controller_manager_msgs/ListControllers.h>
+
 // ROS general
 #include "ros/ros.h"
 #include <costmap_2d/costmap_2d.h>
@@ -59,16 +64,13 @@ private:
      * Class methods
      */
 
+    void lookDown();
     void initialize();
-
     void setCameraInfo(sensor_msgs::CameraInfo);
-
     void setRGBD(const sensor_msgs::ImageConstPtr&, const sensor_msgs::ImageConstPtr&);
-    
     void transformPoint(const std::string&, 
                         geometry_msgs::PointStamped&, 
                         const geometry_msgs::PointStamped&);
-
     void populateObjectMessage(const unsigned int,
                                costmap_2d::Costmap2D*,
                                const std::vector<cv::Point>&,
@@ -91,6 +93,7 @@ private:
 
     // ROS members
     ros::NodeHandle m_nh;
+    ros::Publisher m_trajPub;
     ros::Subscriber m_camInfo;
     tf2_ros::Buffer &m_buffer;
     boost::shared_ptr<Sync> m_sync;

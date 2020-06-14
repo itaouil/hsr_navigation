@@ -29,6 +29,9 @@ Perception::~Perception()
  */
 void Perception::initialize()
 {
+    // Head trajectory publisher
+    m_trajPub = m_nh.advertise<trajectory_msgs::JointTrajectory>(HEAD_CONTROL, 10);
+
     // Camera info subscriber
     m_camInfo = m_nh.subscribe<sensor_msgs::CameraInfo>(CAMERA_INFO, 
                                                        1,
@@ -91,6 +94,9 @@ void Perception::setRGBD(const sensor_msgs::ImageConstPtr& p_rgb,
  */
 std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::Costmap2D *p_gcm)
 {
+    // Make head look down
+    lookDown();
+
     if (DEBUGPERCEPTION)
     {
         ROS_INFO("Perception: getObstacles called from Navigation");
@@ -361,4 +367,63 @@ void Perception::transformPoint(const std::string &p_frameID,
 
     // Perform transformation
     tf2::doTransform(p_input, p_output, l_transformer);
+}
+
+/**
+ * Sends commands to the head to
+ * look down in order to check for
+ * obstacles in the path.
+ */
+void Perception::lookDown()
+{
+    // Wait for publisher connection
+    while (pub.getNumSubscribers() == 0) {
+        ros::Duration(0.1).sleep();
+    }
+
+    // Flags
+    bool l_running = false;
+
+    // Make sure controller is running
+    ros::ServiceClient l_client = m_nh.serviceClient<controller_manager_msgs::ListControllers>(CONTROLLER);
+    
+    // Initialize controllers holder
+    controller_manager_msgs::ListControllers m_listControllers;
+
+    while (l_running == false) {
+        ros::Duration(0.1).sleep();
+        if (l_client.call(m_listControllers)) {
+            for (unsigned int i = 0; i < m_listControllers.response.controller.size(); i++) {
+                controller_manager_msgs::ControllerState c = m_listControllers.response.controller[i];
+                if (c.name == "head_trajectory_controller" && c.state == "running") {
+                    l_running = true;
+                }
+            }
+        }
+    }
+
+    // Fill ROS message
+    trajectory_msgs::JointTrajectory l_traj;
+    l_traj.joint_names.push_back("head_pan_joint");
+    l_traj.joint_names.push_back("head_tilt_joint");
+    l_traj.points.resize(1);
+    l_traj.points[0].positions.resize(2);
+    l_traj.points[0].positions[0] = 0.5;
+    l_traj.points[0].positions[1] = 0.5;
+    l_traj.points[0].velocities.resize(2);
+    for (size_t i = 0; i < 2; ++i) {
+        l_traj.points[0].velocities[i] = 0.0;
+    }
+    l_traj.points[0].time_from_start = ros::Duration(3.0);
+
+    // Publish ROS message
+    m_trajPub.publish(l_traj);
+
+    ros::spinOnce();
+    ros::Duration(3.0).sleep();
+
+    if (DEBUGPERCEPTION)
+    {
+        ROS_INFO("Perception: head control trajectory sent.");
+    }
 }

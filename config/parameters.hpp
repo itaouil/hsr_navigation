@@ -26,7 +26,9 @@ const std::string GLOBAL_COSTMAP("/hsr_navigation/global_costmap/costmap");
 // Perception parameters
 const std::string FRAME_ID("head_rgbd_sensor_rgb_frame");
 const std::string CAMERA_INFO("/hsrb/head_rgbd_sensor/rgb/camera_info");
+const std::string CONTROLLER("/hsrb/controller_manager/list_controllers");
 const std::string RGB_DATA("/hsrb/head_rgbd_sensor/rgb/image_rect_color");
+const std::string HEAD_CONTROL("/hsrb/head_trajectory_controller/command");
 const std::string DEPTH_DATA("/hsrb/head_rgbd_sensor/depth_registered/image_rect_raw");
 
 // Control parameters
