@@ -123,73 +123,73 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
         ROS_INFO("Perception: converted BGR to HSV");
     }
 
-    // Define red color mask (push)
-    cv::Mat l_redLower;
-    cv::Mat l_redUpper;
-    cv::inRange(l_hsv, cv::Scalar(0, 120, 70), cv::Scalar(10, 255, 255), l_redLower);
-    cv::inRange(l_hsv, cv::Scalar(170, 120, 70), cv::Scalar(180, 255, 255), l_redUpper);
-    cv::Mat l_redMask = l_redLower + l_redUpper;
+    // Define push action mask
+    cv::Mat l_pushLower;
+    cv::Mat l_pushUpper;
+    cv::inRange(l_hsv, cv::Scalar(0, 120, 70), cv::Scalar(10, 255, 255), l_pushLower);
+    cv::inRange(l_hsv, cv::Scalar(170, 120, 70), cv::Scalar(180, 255, 255), l_pushUpper);
+    cv::Mat l_pushMask = l_pushLower + l_pushUpper;
 
-    // Define yellow color mask (grasp)
-    cv::Mat l_yellowLower;
-    cv::Mat l_yellowUpper;
-    cv::inRange(l_hsv, cv::Scalar(18, 85, 150), cv::Scalar(180, 255, 255), l_yellowLower);
-    cv::inRange(l_hsv, cv::Scalar(101, 236, 255), cv::Scalar(180, 255, 255), l_yellowUpper);
-    cv::Mat l_yellowMask = l_yellowLower + l_yellowUpper;
+    // Define grasp action mask
+    cv::Mat l_graspLower;
+    cv::Mat l_graspUpper;
+    cv::inRange(l_hsv, cv::Scalar(18, 85, 150), cv::Scalar(180, 255, 255), l_graspLower);
+    cv::inRange(l_hsv, cv::Scalar(101, 236, 255), cv::Scalar(180, 255, 255), l_graspUpper);
+    cv::Mat l_graspMask = l_graspLower + l_graspUpper;
 
-    // Define green color mask (kick)
-    cv::Mat l_greenLower;
-    cv::Mat l_greenUpper;
-    cv::inRange(l_hsv, cv::Scalar(47, 86, 0), cv::Scalar(180, 255, 255), l_greenLower);
-    cv::inRange(l_hsv, cv::Scalar(98, 255, 255), cv::Scalar(180, 255, 255), l_greenUpper);
-    cv::Mat l_greenMask = l_greenLower + l_greenUpper;
+    // Define kick action mask
+    cv::Mat l_kickLower;
+    cv::Mat l_kickUpper;
+    cv::inRange(l_hsv, cv::Scalar(47, 86, 0), cv::Scalar(180, 255, 255), l_kickLower);
+    cv::inRange(l_hsv, cv::Scalar(98, 255, 255), cv::Scalar(180, 255, 255), l_kickUpper);
+    cv::Mat l_kickUpper = l_kickLower + l_kickUpper;
 
-    // Get red pixel location in the matrix
-    std::vector<cv::Point> l_redPixelsLocation;
-    cv::findNonZero(l_redMask, l_redPixelsLocation);
+    // Get pushable object pixel locations
+    std::vector<cv::Point> l_pushPixelsLocation;
+    cv::findNonZero(l_pushMask, l_pushPixelsLocation);
 
-    // Get blue pixel location in the matrix
-    std::vector<cv::Point> l_yellowPixelsLocation;
-    cv::findNonZero(l_yellowMask, l_yellowPixelsLocation);
+    // Get graspable object pixel locations
+    std::vector<cv::Point> l_graspPixelsLocation;
+    cv::findNonZero(l_graspMask, l_graspPixelsLocation);
 
-    // Get green pixel location in the matrix
-    std::vector<cv::Point> l_greenPixelsLocation;
-    cv::findNonZero(l_greenMask, l_greenPixelsLocation);
+    // Get kick object pixel locations
+    std::vector<cv::Point> l_kickPixelsLocation;
+    cv::findNonZero(l_kickUpper, l_kickPixelsLocation);
 
     // Populate red object
-    // std::cout << "Number of red pixels: " << l_redPixelsLocation.size() << std::endl;
-    // if (l_redPixelsLocation.size() > 1000)
-    // {
-    //     if (DEBUGPERCEPTION)
-    //     {
-    //         ROS_INFO("Red pixels detected.");
-    //     }
-
-    //     populateObjectMessage(3, p_gcm, l_redPixelsLocation, l_objects);
-    // }
-
-    // Populate blue object
-    std::cout << "Number of yellow pixels: " << l_yellowPixelsLocation.size() << std::endl;
-    if (l_yellowPixelsLocation.size() > 1000)
+    std::cout << "Number of push pixels: " << l_pushPixelsLocation.size() << std::endl;
+    if (l_pushPixelsLocation.size() > 1000)
     {
         if (DEBUGPERCEPTION)
         {
-            ROS_INFO("Yellow pixels detected.");
+            ROS_INFO("Push pixels detected.");
         }
 
-        populateObjectMessage(5, p_gcm, l_yellowPixelsLocation, l_objects);
+        populateObjectMessage(3, p_gcm, l_pushPixelsLocation, l_objects);
+    }
+
+    // Populate blue object
+    std::cout << "Number of grasp pixels: " << l_graspPixelsLocation.size() << std::endl;
+    if (l_graspPixelsLocation.size() > 1000)
+    {
+        if (DEBUGPERCEPTION)
+        {
+            ROS_INFO("Grasp pixels detected.");
+        }
+
+        populateObjectMessage(5, p_gcm, l_graspPixelsLocation, l_objects);
     }
 
     // Populate green object
-    std::cout << "Number of green pixels: " << l_greenPixelsLocation.size() << std::endl;
-    if (l_greenPixelsLocation.size() > 1000)
+    std::cout << "Number of kick pixels: " << l_kickPixelsLocation.size() << std::endl;
+    if (l_kickPixelsLocation.size() > 1000)
     {
         if (DEBUGPERCEPTION)
         {
-            ROS_INFO("Green pixels detected.");
+            ROS_INFO("Kick pixels detected.");
         }
 
-        populateObjectMessage(1, p_gcm, l_greenPixelsLocation, l_objects);
+        populateObjectMessage(1, p_gcm, l_kickPixelsLocation, l_objects);
     }
 
     // Reset m_uid
