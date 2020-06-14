@@ -48,6 +48,7 @@ public:
     bool initialized();
     bool postActionPlan();
     bool actionInCourse();
+    void setObjectFrame(const double, const double);
     void handlePlan(const hsr_navigation::PlannerService&);
 
 private:
@@ -56,10 +57,10 @@ private:
      */
     void push();
     void clear();
-    void armAction(const std::string&);
     void initialize();
     void loadStaticMap();
     void rotate(const unsigned int);
+    void armAction(const std::string&);
     void setOdometry(const nav_msgs::Odometry);
     void dwaControl(const std::vector<geometry_msgs::PoseStamped>&);
     void actionControl(const std::vector<geometry_msgs::PoseStamped>&,

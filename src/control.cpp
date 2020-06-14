@@ -223,39 +223,8 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
         double l_mx = p_obstacles[0].center_wx;
         double l_my = p_obstacles[0].center_wy;
 
-        // Set obstacle frame transform origin
-        m_transform.setOrigin(tf::Vector3(l_mx, l_my, 0.0));
-
-        // Get transformation from map
-        // to hand_palm_link
-        geometry_msgs::TransformStamped l_out;
-        l_out = m_buffer.lookupTransform("hand_palm_link", 
-                                         "map",
-                                         ros::Time(0),
-                                         ros::Duration(1.0));
-
-        // Set quaternion
-        tf::Quaternion l_q(
-            l_out.transform.rotation.x,
-            l_out.transform.rotation.y,
-            l_out.transform.rotation.z,
-            l_out.transform.rotation.w);
-        
-        // Get RPY in radians
-        double l_roll, l_pitch, l_yaw;
-        tf::Matrix3x3 l_m(l_q);
-        l_m.getRPY(l_roll, l_pitch, l_yaw);
-
-        std::cout << "Roll: " << l_roll << " Pitch: " << l_pitch << " Yaw: " << l_yaw << std::endl;
-        std::cout << "Mean point x: " << l_mx << " Mean  point y: " << l_my << std::endl;
-
-        // Set new quaternion to
-        // match hand_palm_link
-        // yaw offset during manipulation
-        l_q.setRPY(l_roll, l_pitch, l_yaw);
-
-        // Set transform rotation
-        m_transform.setRotation(l_q);
+        // Set object frame
+        setObjectFrame(l_mx, l_my);
 
         // Start publishing frame
         // of the object to be grasped
@@ -273,39 +242,8 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
         double l_mx = p_obstacles[0].center_wx;
         double l_my = p_obstacles[0].center_wy;
 
-        // Set obstacle frame transform origin
-        m_transform.setOrigin(tf::Vector3(l_mx, l_my, 0.0));
-
-        // Get transformation from map
-        // to hand_palm_link
-        geometry_msgs::TransformStamped l_out;
-        l_out = m_buffer.lookupTransform("hand_palm_link", 
-                                         "map",
-                                         ros::Time(0),
-                                         ros::Duration(1.0));
-
-        // Set quaternion
-        tf::Quaternion l_q(
-            l_out.transform.rotation.x,
-            l_out.transform.rotation.y,
-            l_out.transform.rotation.z,
-            l_out.transform.rotation.w);
-        
-        // Get RPY in radians
-        double l_roll, l_pitch, l_yaw;
-        tf::Matrix3x3 l_m(l_q);
-        l_m.getRPY(l_roll, l_pitch, l_yaw);
-
-        std::cout << "Roll: " << l_roll << " Pitch: " << l_pitch << " Yaw: " << l_yaw << std::endl;
-        std::cout << "Mean point x: " << l_mx << " Mean  point y: " << l_my << std::endl;
-
-        // Set new quaternion to
-        // match hand_palm_link
-        // yaw offset during manipulation
-        l_q.setRPY(l_roll, l_pitch, l_yaw);
-
-        // Set transform rotation
-        m_transform.setRotation(l_q);
+        // Set object frame
+        setObjectFrame(l_mx, l_my);
 
         // Start publishing frame
         // of the object to be kicked
@@ -570,6 +508,48 @@ void Control::rotate(const unsigned int p_degrees)
     // Stop rotation
     l_cmd_vel.angular.z = 0;
     m_velPub.publish(l_cmd_vel);
+}
+
+/**
+ * Sets object frame transform
+ * for object manipulation tasks
+ */
+void Control::setObjectFrame(const double p_mx, const double p_my)
+{
+    // Set obstacle frame transform origin
+    m_transform.setOrigin(tf::Vector3(p_mx, p_my, 0.0));
+
+    // Get transformation from palm link
+    // to map coordinate frame
+    geometry_msgs::TransformStamped l_out;
+    l_out = m_buffer.lookupTransform("hand_palm_link", 
+                                     "map",
+                                     ros::Time(0),
+                                     ros::Duration(1.0));
+
+    // Set quaternion
+    tf::Quaternion l_q(
+        l_out.transform.rotation.x,
+        l_out.transform.rotation.y,
+        l_out.transform.rotation.z,
+        l_out.transform.rotation.w
+    );
+    
+    // Get RPY in radians
+    double l_roll, l_pitch, l_yaw;
+    tf::Matrix3x3 l_m(l_q);
+    l_m.getRPY(l_roll, l_pitch, l_yaw);
+
+    std::cout << "Roll: " << l_roll << " Pitch: " << l_pitch << " Yaw: " << l_yaw << std::endl;
+    std::cout << "Mean point x: " << p_mx << " Mean  point y: " << p_my << std::endl;
+
+    // Set new quaternion to
+    // match hand_palm_link
+    // yaw offset during manipulation
+    l_q.setRPY(l_roll, l_pitch, l_yaw);
+
+    // Set transform rotation
+    m_transform.setRotation(l_q);
 }
 
 /**
