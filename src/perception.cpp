@@ -377,7 +377,7 @@ void Perception::transformPoint(const std::string &p_frameID,
 void Perception::lookDown()
 {
     // Wait for publisher connection
-    while (pub.getNumSubscribers() == 0) {
+    while (m_trajPub.getNumSubscribers() == 0) {
         ros::Duration(0.1).sleep();
     }
 
