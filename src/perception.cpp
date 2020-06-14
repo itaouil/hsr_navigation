@@ -142,7 +142,7 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
     cv::Mat l_kickUpper;
     cv::inRange(l_hsv, cv::Scalar(47, 86, 0), cv::Scalar(180, 255, 255), l_kickLower);
     cv::inRange(l_hsv, cv::Scalar(98, 255, 255), cv::Scalar(180, 255, 255), l_kickUpper);
-    cv::Mat l_kickUpper = l_kickLower + l_kickUpper;
+    cv::Mat l_kickMask = l_kickLower + l_kickUpper;
 
     // Get pushable object pixel locations
     std::vector<cv::Point> l_pushPixelsLocation;
@@ -154,7 +154,7 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
 
     // Get kick object pixel locations
     std::vector<cv::Point> l_kickPixelsLocation;
-    cv::findNonZero(l_kickUpper, l_kickPixelsLocation);
+    cv::findNonZero(l_kickMask, l_kickPixelsLocation);
 
     // Populate red object
     std::cout << "Number of push pixels: " << l_pushPixelsLocation.size() << std::endl;
