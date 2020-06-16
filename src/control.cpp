@@ -260,7 +260,7 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
 
     // Extract intermediate path
     std::vector<geometry_msgs::PoseStamped> l_intermediatePath(p_path.begin(), 
-                                                               p_path.begin() + l_idx - 5);
+                                                               p_path.begin() + l_idx - 2);
 
     // Send robot to intermediate path
     std::cout << "Path: " << p_path.size() << std::endl;
