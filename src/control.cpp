@@ -142,7 +142,7 @@ void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
                 }
 
                 // Call push routine
-                push();
+                performAction("push");
 
                 // Reset flag
                 m_pushAction = false;
@@ -155,7 +155,7 @@ void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
                 }
 
                 // Call grasp routine
-                armAction("grasp");
+                performAction("grasp");
 
                 // Reset related flags
                 m_graspAction = false;
@@ -169,7 +169,7 @@ void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
                 }
 
                 // Call kick routine
-                armAction("kick");
+                performAction("kick");
 
                 // Reset related flags
                 m_kickAction = false;
@@ -271,84 +271,10 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
 }
 
 /**
- * Push action to remove obstacle
- */
-void Control::push()
-{
-    if (DEBUGCONTROL)
-    {
-        ROS_INFO("Control: starting pushing action.");
-    }
-
-    // Rotate
-    rotate(180);
-
-    // Allow push
-    m_push = true;
-
-    // Populate velocity command
-    geometry_msgs::Twist l_cmd_vel;
-    l_cmd_vel.linear.x = -0.2;
-
-    // Push
-    while (ros::ok)
-    {
-        if (m_totalDistance > DISTANCE)
-        {
-            clear();
-            break;
-        }
-        else
-        {
-            // Apply linear velocity
-            ROS_INFO("Control: pushing.");
-            m_velPub.publish(l_cmd_vel);
-
-            // Keep spinning
-            ros::spinOnce();
-            m_rate.sleep();
-        }
-    }
-
-    // Allow backtracking
-    m_push = true;
-
-    // Back up from obstacle
-    // Populate velocity command
-    l_cmd_vel.linear.x = 0.2;
-
-    // Backtrack
-    while (ros::ok)
-    {
-        if (m_totalDistance > DISTANCE)
-        {
-            clear();
-            break;
-        }
-        else
-        {
-            // Apply linear velocity
-            ROS_INFO("Control: backtracking.");
-            m_velPub.publish(l_cmd_vel);
-
-            // Keep spinning
-            ros::spinOnce();
-            m_rate.sleep();
-        }
-    }
-
-    // Rotate by 180 degrees
-    rotate(180);
-
-    // Clear variables
-    clear();
-}
-
-/**
  * Robotic arm action to
  * either grasp of kick object
  */
-void Control::armAction(const std::string &p_action)
+void Control::performAction(const std::string &p_action)
 {
     // Create service client
     ros::ServiceClient l_client;
@@ -440,8 +366,6 @@ unsigned int Control::getIndex(const std::vector<geometry_msgs::PoseStamped> &p_
  */
 void Control::setOdometry(const nav_msgs::Odometry p_data)
 {
-    m_odometry = p_data;
-
     // Publish tf frame
     // of object to be grasped
     if (m_publishFrame)
@@ -451,67 +375,6 @@ void Control::setOdometry(const nav_msgs::Odometry p_data)
                                                          "map", 
                                                          OBJECT_FRAME));
     }
-
-    // Only compute travelled
-    // distance if control is
-    // in push action mode
-    if (m_push)
-    {
-        // Store initial pose
-        if(m_firstRun)
-        {
-            m_previousX = p_data.pose.pose.position.x;
-            m_previousY = p_data.pose.pose.position.y;
-            m_firstRun = false;
-        }
-
-        // Get current pose
-        double l_x = p_data.pose.pose.position.x;
-        double l_y = p_data.pose.pose.position.y;
-
-        // Add increment to total distance
-        m_totalDistance += sqrt(pow(l_x - m_previousX, 2) + pow(l_y - m_previousY, 2));
-        
-        std::cout << "Total distance travelled so far is: " << m_totalDistance << std::endl;
-
-        // Update previous point
-        m_previousX = p_data.pose.pose.position.x;
-        m_previousY = p_data.pose.pose.position.y;
-    }
-}
-
-/**
- * Rotate robot by 180 degrees
- * for push action
- */
-void Control::rotate(const unsigned int p_degrees)
-{
-    // Converting from angles to radians
-    double l_relativeAngle = p_degrees * (M_PI / 180);
-
-    // Velocity command
-    geometry_msgs::Twist l_cmd_vel;
-    l_cmd_vel.linear.x = 0;
-    l_cmd_vel.linear.y = 0;
-    l_cmd_vel.linear.z = 0;
-    l_cmd_vel.angular.x = 0;
-    l_cmd_vel.angular.y = 0;
-    l_cmd_vel.angular.z = 0.4;
-
-    // Distance computations
-    double l_currentAngle = 0;
-    double l_t0 = ros::Time::now().toSec();
-
-    while(l_currentAngle < l_relativeAngle)
-    {
-        m_velPub.publish(l_cmd_vel);
-        double l_t1 = ros::Time::now().toSec();
-        l_currentAngle = 0.4 * (l_t1 - l_t0);
-    }
-
-    // Stop rotation
-    l_cmd_vel.angular.z = 0;
-    m_velPub.publish(l_cmd_vel);
 }
 
 /**
@@ -592,18 +455,4 @@ bool Control::initialized()
 bool Control::postActionPlan()
 {
     return m_postActionPlan;
-}
-
-/**
- * Clear push variables
- * for the sequential push
- * actions
- */
-void Control::clear()
-{
-    m_push = false;
-    m_previousX = 0;
-    m_previousY = 0;
-    m_firstRun = true;
-    m_totalDistance = 0;
 }

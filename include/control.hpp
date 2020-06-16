@@ -55,12 +55,9 @@ private:
     /**
      * Private methods
      */
-    void push();
-    void clear();
     void initialize();
     void loadStaticMap();
-    void rotate(const unsigned int);
-    void armAction(const std::string&);
+    void performAction(const std::string&);
     void setOdometry(const nav_msgs::Odometry);
     void dwaControl(const std::vector<geometry_msgs::PoseStamped>&);
     void actionControl(const std::vector<geometry_msgs::PoseStamped>&,
@@ -72,16 +69,10 @@ private:
      */
 
     // General members
-    bool m_push = false;
-    bool m_rotate = false;
-    double m_previousX = 0;
-    double m_previousY = 0;
-    bool m_firstRun = true;
     bool m_pushAction = false;
     bool m_kickAction = false;
     bool m_graspAction = false;
     bool m_stopControl = false;
-    double m_totalDistance = 0;
     bool m_initialized = false;
     bool m_publishFrame = false;
     bool m_postActionPlan = false;
@@ -93,7 +84,6 @@ private:
     tf::Transform m_transform;
     ros::Subscriber m_odomSub;
     tf2_ros::Buffer &m_buffer;
-    nav_msgs::Odometry m_odometry;
     tf2_ros::TransformListener &m_tf;
     dwa_local_planner::DWAPlannerROS m_dp;
     tf::TransformBroadcaster m_broadcaster;

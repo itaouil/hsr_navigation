@@ -8,22 +8,44 @@ import hsrb_interface
 from hsrb_interface import geometry
 from hsr_navigation.srv import ActionService, ActionServiceResponse
 
-# Grasp force[N]
+# Kick/Grasp variables
 GRASP_FORCE = 0.2
-
-# TF name of the object to be grasped
 OBJECT_TF = 'object_frame'
+HAND_TF = 'hand_palm_link'
 OBJECT_TF_GRASP = 'object_frame_grasp'
 OBJECT_TF_KICK = 'object_frame_kick'
 
-# TF name of the gripper
-HAND_TF = 'hand_palm_link'
+# Push variables
+DISTANCE = 0.510
 
-# Preparation for using the robot functions
+# Common variables
 robot = hsrb_interface.Robot()
 gripper = robot.get('gripper')
 omni_base = robot.get('omni_base')
 whole_body = robot.get('whole_body')
+
+def push():
+    """
+        Push action.
+    """
+    # Perform push (first rotation)
+    print("Push: first rotation.")
+    omni_base.go_rel(0.0, 0.0, 3.14)
+
+    # Perform push (push)
+    print("Push: push action.")
+    omni_base.go_rel(-DISTANCE, 0.0, 0.0)
+
+    # Perform push (backtracking)
+    print("Push: backtracking.")
+    omni_base.go_rel(DISTANCE, 0.0, 0.0)
+
+    # Perform push (final rotation)
+    print("Push: final rotation.")
+    omni_base.go_rel(0.0, 0.0, 3.14)
+
+    # Log
+    print("Push: done.")
 
 def kick():
     """
@@ -109,6 +131,8 @@ def handle_action_request(service_msg):
             grasp()
         elif service_msg.action == "kick":
             kick()
+        elif service_msg.action == "push":
+            push()
 
         # Switch to moving configuration
         print("Action: transition to moving configuration.")
@@ -139,8 +163,7 @@ def handle_action_request(service_msg):
         return ActionServiceResponse(False)
 
 def main():
-    # Create node
-    # rospy.init_node('action_service_server')
+    # Create service
     s = rospy.Service('action_service', ActionService, handle_action_request)
 
     # Sping action server
