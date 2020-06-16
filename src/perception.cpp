@@ -97,6 +97,11 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
     // Make head look down
     lookDown();
 
+    // Sleep for two seconds to
+    // avoid problems with illumination
+    // changes while head is moving
+    ros::Duration(2).sleep();
+
     if (DEBUGPERCEPTION)
     {
         ROS_INFO("Perception: getObstacles called from Navigation");
@@ -124,29 +129,29 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
     }
 
     // Define push action mask
-    cv::Mat l_pushLower;
-    cv::Mat l_pushUpper;
-    cv::inRange(l_hsv, cv::Scalar(0, 120, 70), cv::Scalar(10, 255, 255), l_pushLower);
-    cv::inRange(l_hsv, cv::Scalar(170, 120, 70), cv::Scalar(180, 255, 255), l_pushUpper);
-    cv::Mat l_pushMask = l_pushLower + l_pushUpper;
+    // cv::Mat l_pushMask;
+    // cv::Mat l_pushHSV = l_hsv.clone();
+    // cv::inRange(l_pushHSV, cv::Scalar(0, 120, 70), cv::Scalar(170, 120, 70), l_pushMask);
 
     // Define grasp action mask
-    cv::Mat l_graspLower;
-    cv::Mat l_graspUpper;
-    cv::inRange(l_hsv, cv::Scalar(18, 85, 150), cv::Scalar(180, 255, 255), l_graspLower);
-    cv::inRange(l_hsv, cv::Scalar(101, 236, 255), cv::Scalar(180, 255, 255), l_graspUpper);
-    cv::Mat l_graspMask = l_graspLower + l_graspUpper;
+    cv::Mat l_graspMask;
+    cv::Mat l_graspHSV = l_hsv.clone();
+    cv::inRange(l_graspHSV, cv::Scalar(23, 106, 144), cv::Scalar(43, 224, 255), l_graspMask);
 
     // Define kick action mask
-    cv::Mat l_kickLower;
-    cv::Mat l_kickUpper;
-    cv::inRange(l_hsv, cv::Scalar(47, 86, 0), cv::Scalar(180, 255, 255), l_kickLower);
-    cv::inRange(l_hsv, cv::Scalar(98, 255, 255), cv::Scalar(180, 255, 255), l_kickUpper);
-    cv::Mat l_kickMask = l_kickLower + l_kickUpper;
+    cv::Mat l_kickMask;
+    cv::Mat l_kickHSV = l_hsv.clone();
+    cv::inRange(l_kickHSV, cv::Scalar(0, 0, 156), cv::Scalar(180, 15, 255), l_kickMask);
 
-    // Get pushable object pixel locations
-    std::vector<cv::Point> l_pushPixelsLocation;
-    cv::findNonZero(l_pushMask, l_pushPixelsLocation);
+    // cv::imshow("Push Mask", l_pushMask);
+    cv::imshow("Grasp Mask", l_graspMask);
+    cv::imshow("Kick Mask", l_kickMask);
+
+    cv::waitKey(0);
+
+    // // Get pushable object pixel locations
+    // std::vector<cv::Point> l_pushPixelsLocation;
+    // cv::findNonZero(l_pushMask, l_pushPixelsLocation);
 
     // Get graspable object pixel locations
     std::vector<cv::Point> l_graspPixelsLocation;
@@ -156,21 +161,21 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
     std::vector<cv::Point> l_kickPixelsLocation;
     cv::findNonZero(l_kickMask, l_kickPixelsLocation);
 
-    // Populate red object
-    std::cout << "Number of push pixels: " << l_pushPixelsLocation.size() << std::endl;
-    if (l_pushPixelsLocation.size() > 1000)
-    {
-        if (DEBUGPERCEPTION)
-        {
-            ROS_INFO("Push pixels detected.");
-        }
+    // // Populate push object
+    // std::cout << "Number of push pixels: " << l_pushPixelsLocation.size() << std::endl;
+    // if (l_pushPixelsLocation.size() > 1000)
+    // {
+    //     if (DEBUGPERCEPTION)
+    //     {
+    //         ROS_INFO("Push pixels detected.");
+    //     }
 
-        populateObjectMessage(3, p_gcm, l_pushPixelsLocation, l_objects);
-    }
+    //     populateObjectMessage(3, p_gcm, l_pushPixelsLocation, l_objects);
+    // }
 
-    // Populate blue object
+    // Populate grasp object
     std::cout << "Number of grasp pixels: " << l_graspPixelsLocation.size() << std::endl;
-    if (l_graspPixelsLocation.size() > 1000)
+    if (l_graspPixelsLocation.size() > 600 && l_graspPixelsLocation.size() < 3000)
     {
         if (DEBUGPERCEPTION)
         {
@@ -180,9 +185,9 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
         populateObjectMessage(5, p_gcm, l_graspPixelsLocation, l_objects);
     }
 
-    // Populate green object
+    // Populate kick object
     std::cout << "Number of kick pixels: " << l_kickPixelsLocation.size() << std::endl;
-    if (l_kickPixelsLocation.size() > 1000)
+    if (l_kickPixelsLocation.size() > 700 && l_kickPixelsLocation.size() < 1800)
     {
         if (DEBUGPERCEPTION)
         {
@@ -408,8 +413,8 @@ void Perception::lookDown()
     l_traj.joint_names.push_back("head_tilt_joint");
     l_traj.points.resize(1);
     l_traj.points[0].positions.resize(2);
-    l_traj.points[0].positions[0] = 0.5;
-    l_traj.points[0].positions[1] = 0.5;
+    l_traj.points[0].positions[0] = 0.0;
+    l_traj.points[0].positions[1] = -1.0;
     l_traj.points[0].velocities.resize(2);
     for (size_t i = 0; i < 2; ++i) {
         l_traj.points[0].velocities[i] = 0.0;

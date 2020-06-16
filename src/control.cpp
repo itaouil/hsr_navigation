@@ -200,6 +200,11 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
         ROS_INFO("Control: action control started.");
 
         std::cout << "Number of elements received: " << p_obstacles.size() << std::endl;
+
+        for (int x = 0; x < p_obstacles.size(); x++)
+        {
+            std::cout << "Element: " << x << " ; Object class: " << p_obstacles[x].object_class << std::endl;
+        }
     }
 
     // Set action to be performed
@@ -369,7 +374,6 @@ void Control::armAction(const std::string &p_action)
         {
             ROS_INFO("Action Service: failed to perform action.");
         }
-        
     }
     else
     {
