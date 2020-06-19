@@ -11,6 +11,7 @@
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/OccupancyGrid.h>
+#include <hsr_navigation/CellMessage.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <hsr_navigation/ObjectMessage.h>
 #include <hsr_navigation/ActionService.h>
@@ -60,6 +61,7 @@ private:
     void performAction(const std::string&);
     void setOdometry(const nav_msgs::Odometry);
     void dwaControl(const std::vector<geometry_msgs::PoseStamped>&);
+    float distance(geometry_msgs::PoseStamped, hsr_navigation::CellMessage);
     void actionControl(const std::vector<geometry_msgs::PoseStamped>&,
                        const std::vector<hsr_navigation::ObjectMessage>&);
     unsigned int getIndex(const std::vector<geometry_msgs::PoseStamped> &);

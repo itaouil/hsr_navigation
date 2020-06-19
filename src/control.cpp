@@ -203,68 +203,90 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
 
         for (int x = 0; x < p_obstacles.size(); x++)
         {
-            std::cout << "Element: " << x << " ; Object class: " << p_obstacles[x].object_class << std::endl;
+            std::cout << "Element: " << x << " ; Object class: " << unsigned(p_obstacles[x].object_class) << std::endl;
         }
     }
 
-    // Set action to be performed
-    // based on the obstacles uid 
-    // received by planner
-    if (p_obstacles[0].object_class == 3)
-    {
-        // Set action as push
-        // for DWA control check
-        m_pushAction = true;
-    }
-    else if (p_obstacles[0].object_class == 5)
-    {
-        // Set action as grasp
-        // for DWA control check
-        m_graspAction = true;
-
-        // Extract x and y pose
-        // of the object in map
-        // coordinate system
-        double l_mx = p_obstacles[0].center_wx;
-        double l_my = p_obstacles[0].center_wy;
-
-        // Set object frame
-        setObjectFrame(l_mx, l_my);
-
-        // Start publishing frame
-        // of the object to be grasped
-        m_publishFrame = true;
-    }
-    else
-    {
-        // Set action as push
-        // for DWA control check
-        m_kickAction = true;
-
-        // Extract x and y pose
-        // of the object in map
-        // coordinate system
-        double l_mx = p_obstacles[0].center_wx;
-        double l_my = p_obstacles[0].center_wy;
-
-        // Set object frame
-        setObjectFrame(l_mx, l_my);
-
-        // Start publishing frame
-        // of the object to be kicked
-        m_publishFrame = true;
-    }
-
-    // Get intermiate pose index
+    // Compute at which index the
+    // intermediate point for the
+    // initial part of the path is
     unsigned int l_idx = getIndex(p_path);
 
     // Extract intermediate path
     std::vector<geometry_msgs::PoseStamped> l_intermediatePath(p_path.begin(), 
                                                                p_path.begin() + l_idx - 2);
 
-    // Send robot to intermediate path
-    std::cout << "Path: " << p_path.size() << std::endl;
-    std::cout << "Intermediate: " << l_intermediatePath.size() << std::endl;
+    // Log
+    if (DEBUGCONTROL)
+    {
+        std::cout << "Path: " << p_path.size() << std::endl;
+        std::cout << "Intermediate: " << l_intermediatePath.size() << std::endl;
+    }
+
+    if (!p_obstacles.empty())
+    {
+        // Get which obstacle to manipulate
+        float l_minDistance = 100000000;
+        unsigned int l_objIdx = -1;
+        for (int x = 0; x < p_obstacles.size(); x++)
+        {
+            // Get min distance
+            if (distance(p_path[l_idx], p_obstacles[x].center_cell) < l_minDistance)
+            {
+                l_objIdx = x;
+            }
+        }
+
+        std::cout << "Object ID to be manipulated is: " << l_objIdx << std::endl;
+
+        // Set action to be performed
+        // based on the obstacles uid 
+        // received by planner
+        if (unsigned(p_obstacles[l_objIdx].object_class) == 3)
+        {
+            // Set action as push
+            // for DWA control check
+            m_pushAction = true;
+        }
+        else if (unsigned(p_obstacles[l_objIdx].object_class) == 5)
+        {
+            // Set action as grasp
+            // for DWA control check
+            m_graspAction = true;
+
+            // Extract x and y pose
+            // of the object in map
+            // coordinate system
+            double l_mx = p_obstacles[0].center_wx;
+            double l_my = p_obstacles[0].center_wy;
+
+            // Set object frame
+            setObjectFrame(l_mx, l_my);
+
+            // Start publishing frame
+            // of the object to be grasped
+            m_publishFrame = true;
+        }
+        else
+        {
+            // Set action as push
+            // for DWA control check
+            m_kickAction = true;
+
+            // Extract x and y pose
+            // of the object in map
+            // coordinate system
+            double l_mx = p_obstacles[0].center_wx;
+            double l_my = p_obstacles[0].center_wy;
+
+            // Set object frame
+            setObjectFrame(l_mx, l_my);
+
+            // Start publishing frame
+            // of the object to be kicked
+            m_publishFrame = true;
+        }
+    }
 
     // Set intermediate path
     dwaControl(l_intermediatePath);    
@@ -417,6 +439,21 @@ void Control::setObjectFrame(const double p_mx, const double p_my)
 
     // Set transform rotation
     m_transform.setRotation(l_q);
+}
+
+/**
+ * Compute euclidean distance
+ * to find which object on the
+ * path is to be manipulated
+ */
+float Control::distance(geometry_msgs::PoseStamped p_pose, hsr_navigation::CellMessage p_omcenter)
+{
+    float l_x = p_pose.pose.position.x - p_omcenter.mx;
+    float l_y = p_pose.pose.position.y - p_omcenter.my;
+
+    float l_distance = sqrt(pow(l_x, 2) + pow(l_y, 2));
+
+    return l_distance;
 }
 
 /**

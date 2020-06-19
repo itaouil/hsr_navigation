@@ -85,6 +85,7 @@ private:
     unsigned int m_uid = 1;
     bool m_initialized = false;
     bool m_modelInitialized = false;
+    bool m_firstTime = true;
 
     // OpenCV members
     cv_bridge::CvImagePtr m_rgbPtr;

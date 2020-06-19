@@ -16,7 +16,7 @@ OBJECT_TF_GRASP = 'object_frame_grasp'
 OBJECT_TF_KICK = 'object_frame_kick'
 
 # Push variables
-DISTANCE = 0.510
+DISTANCE = 0.700
 
 # Common variables
 robot = hsrb_interface.Robot()
@@ -51,17 +51,21 @@ def kick():
     """
         Kick action.
     """
+    # Initial kicking setup
+    manipulation_setup()
+
     # Command to open the gripper
     print("Action: closing gripper.")
     gripper.command(0.1)
 
     # Kick: phase 1 (approach)
     print("Kick: phase 1.")
-    whole_body.move_end_effector_pose(geometry.pose(x=0.1, z=-0.3, ej=-1.57), OBJECT_TF_KICK)
+    whole_body.move_end_effector_pose(geometry.pose(x=0.15, z=-0.15, ej=-1.57), OBJECT_TF_KICK)
 
     # Kick: phase 1 (kick)
     print("Kick: phase 2.")
-    whole_body.move_end_effector_pose(geometry.pose(x=0.1), OBJECT_TF_KICK)
+    whole_body.move_to_joint_positions({'wrist_flex_joint': 1.0})
+    # whole_body.move_end_effector_pose(geometry.pose(x=0.2, z=0.2), OBJECT_TF_KICK)
 
     # Log
     print("Kick: done.")
@@ -70,6 +74,9 @@ def grasp():
     """
         Grasping action.
     """
+    # Initial grasping setup
+    manipulation_setup()
+
     # Command to open the gripper
     print("Grasp: opening gripper.")
     gripper.command(1.2)
@@ -113,19 +120,20 @@ def grasp():
 
     print("Grasp: done.")
 
+def manipulation_setup():
+    # Transit to initial grasping posture
+    print("Action: transition to action configuration.")
+    whole_body.move_to_neutral()
+
+    # Look at the hand after the transition
+    print("Action: set hand constraint.")
+    whole_body.looking_hand_constraint = True
+
 def handle_action_request(service_msg):
     """
         Handles action request.
     """
     try:
-        # Transit to initial grasping posture
-        print("Action: transition to action configuration.")
-        whole_body.move_to_neutral()
-
-        # Look at the hand after the transition
-        print("Action: set hand constraint.")
-        whole_body.looking_hand_constraint = True
-
         # Call action method
         if service_msg.action == "grasp":
             grasp()

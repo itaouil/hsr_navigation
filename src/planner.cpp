@@ -540,7 +540,7 @@ void Planner::createObjectMap(std::vector<hsr_navigation::ObjectMessage> &object
 			// Factor 5 for average cell size of object.
 			
 			if (objects[i].object_class == BALL)
-				m_objectClassCostMap[my][mx] = 5*(2.1 * m_movingCost);
+				m_objectClassCostMap[my][mx] = 5*(8 * m_movingCost);
 			if (objects[i].object_class == BOOKS)
 				m_objectClassCostMap[my][mx] = 5*(5.1 * m_movingCost);
 			if (objects[i].object_class == BOXES)

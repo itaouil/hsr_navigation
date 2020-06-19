@@ -95,7 +95,10 @@ void Perception::setRGBD(const sensor_msgs::ImageConstPtr& p_rgb,
 std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::Costmap2D *p_gcm)
 {
     // Make head look down
-    lookDown();
+    if (!m_firstTime)
+    {
+        lookDown();
+    }
 
     // Sleep for two seconds to
     // avoid problems with illumination
@@ -141,7 +144,7 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
     // Define kick action mask
     cv::Mat l_kickMask;
     cv::Mat l_kickHSV = l_hsv.clone();
-    cv::inRange(l_kickHSV, cv::Scalar(0, 0, 156), cv::Scalar(180, 15, 255), l_kickMask);
+    cv::inRange(l_kickHSV, cv::Scalar(43, 91, 0), cv::Scalar(88, 223, 76), l_kickMask);
 
     // cv::imshow("Push Mask", l_pushMask);
     cv::imshow("Grasp Mask", l_graspMask);
@@ -175,7 +178,7 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
 
     // Populate grasp object
     std::cout << "Number of grasp pixels: " << l_graspPixelsLocation.size() << std::endl;
-    if (l_graspPixelsLocation.size() > 600 && l_graspPixelsLocation.size() < 3000)
+    if (l_graspPixelsLocation.size() > 600 && l_graspPixelsLocation.size() < 4000)
     {
         if (DEBUGPERCEPTION)
         {
@@ -199,6 +202,9 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
 
     // Reset m_uid
     m_uid = 1;
+
+    // Set flag
+    m_firstTime = false;
 
     return l_objects;
 }
@@ -414,7 +420,7 @@ void Perception::lookDown()
     l_traj.points.resize(1);
     l_traj.points[0].positions.resize(2);
     l_traj.points[0].positions[0] = 0.0;
-    l_traj.points[0].positions[1] = -1.0;
+    l_traj.points[0].positions[1] = -0.7;
     l_traj.points[0].velocities.resize(2);
     for (size_t i = 0; i < 2; ++i) {
         l_traj.points[0].velocities[i] = 0.0;
