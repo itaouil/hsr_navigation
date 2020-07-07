@@ -132,53 +132,63 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
     }
 
     // Define push action mask
-    // cv::Mat l_pushMask;
-    // cv::Mat l_pushHSV = l_hsv.clone();
-    // cv::inRange(l_pushHSV, cv::Scalar(0, 120, 70), cv::Scalar(170, 120, 70), l_pushMask);
+    cv::Mat l_pushMask;
+    cv::Mat l_pushHSV = l_hsv.clone();
+    cv::inRange(l_pushHSV, cv::Scalar(0, 0, 0), cv::Scalar(180, 255, 0), l_pushMask);
 
     // Define grasp action mask
     cv::Mat l_graspMask;
     cv::Mat l_graspHSV = l_hsv.clone();
-    cv::inRange(l_graspHSV, cv::Scalar(23, 106, 144), cv::Scalar(43, 224, 255), l_graspMask);
+    cv::inRange(l_graspHSV, cv::Scalar(23,168,0), cv::Scalar(29,193,255), l_graspMask);
+
+    // Define grasp action mask 2
+    cv::Mat l_graspMask2;
+    cv::Mat l_graspHSV2 = l_hsv.clone();
+    cv::inRange(l_graspHSV2, cv::Scalar(0,255,0), cv::Scalar(0,255,255), l_graspMask2);
 
     // Define kick action mask
     cv::Mat l_kickMask;
     cv::Mat l_kickHSV = l_hsv.clone();
-    cv::inRange(l_kickHSV, cv::Scalar(43, 91, 0), cv::Scalar(88, 223, 76), l_kickMask);
+    cv::inRange(l_kickHSV, cv::Scalar(0, 0, 130), cv::Scalar(180, 0, 255), l_kickMask);
 
-    // cv::imshow("Push Mask", l_pushMask);
+    cv::imshow("Push Mask", l_pushMask);
     cv::imshow("Grasp Mask", l_graspMask);
+    cv::imshow("Grasp Mask 2", l_graspMask2);
     cv::imshow("Kick Mask", l_kickMask);
 
     cv::waitKey(0);
 
     // // Get pushable object pixel locations
-    // std::vector<cv::Point> l_pushPixelsLocation;
-    // cv::findNonZero(l_pushMask, l_pushPixelsLocation);
+    std::vector<cv::Point> l_pushPixelsLocation;
+    cv::findNonZero(l_pushMask, l_pushPixelsLocation);
 
     // Get graspable object pixel locations
     std::vector<cv::Point> l_graspPixelsLocation;
     cv::findNonZero(l_graspMask, l_graspPixelsLocation);
+
+    // Get graspable object2 pixel locations
+    std::vector<cv::Point> l_graspPixelsLocation2;
+    cv::findNonZero(l_graspMask2, l_graspPixelsLocation2);
 
     // Get kick object pixel locations
     std::vector<cv::Point> l_kickPixelsLocation;
     cv::findNonZero(l_kickMask, l_kickPixelsLocation);
 
     // // Populate push object
-    // std::cout << "Number of push pixels: " << l_pushPixelsLocation.size() << std::endl;
-    // if (l_pushPixelsLocation.size() > 1000)
-    // {
-    //     if (DEBUGPERCEPTION)
-    //     {
-    //         ROS_INFO("Push pixels detected.");
-    //     }
+    std::cout << "Number of push pixels: " << l_pushPixelsLocation.size() << std::endl;
+    if (l_pushPixelsLocation.size() > 3500)
+    {
+        if (DEBUGPERCEPTION)
+        {
+            ROS_INFO("Push pixels detected.");
+        }
 
-    //     populateObjectMessage(3, p_gcm, l_pushPixelsLocation, l_objects);
-    // }
+        populateObjectMessage(3, p_gcm, l_pushPixelsLocation, l_objects);
+    }
 
     // Populate grasp object
     std::cout << "Number of grasp pixels: " << l_graspPixelsLocation.size() << std::endl;
-    if (l_graspPixelsLocation.size() > 600 && l_graspPixelsLocation.size() < 4000)
+    if (l_graspPixelsLocation.size() > 400 && l_graspPixelsLocation.size() < 4600)
     {
         if (DEBUGPERCEPTION)
         {
@@ -188,9 +198,21 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
         populateObjectMessage(5, p_gcm, l_graspPixelsLocation, l_objects);
     }
 
+    // Populate grasp2 object
+    std::cout << "Number of grasp2 pixels: " << l_graspPixelsLocation2.size() << std::endl;
+    if (l_graspPixelsLocation2.size() > 400 && l_graspPixelsLocation2.size() < 4600)
+    {
+        if (DEBUGPERCEPTION)
+        {
+            ROS_INFO("Grasp2 pixels detected.");
+        }
+
+        populateObjectMessage(5, p_gcm, l_graspPixelsLocation2, l_objects);
+    }
+
     // Populate kick object
     std::cout << "Number of kick pixels: " << l_kickPixelsLocation.size() << std::endl;
-    if (l_kickPixelsLocation.size() > 700 && l_kickPixelsLocation.size() < 1800)
+    if (l_kickPixelsLocation.size() > 300 && l_kickPixelsLocation.size() < 4800)
     {
         if (DEBUGPERCEPTION)
         {

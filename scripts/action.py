@@ -42,7 +42,7 @@ def push():
 
     # Perform push (final rotation)
     print("Push: final rotation.")
-    omni_base.go_rel(0.0, 0.0, 3.14)
+    omni_base.go_rel(0.0, 0.0, -3.14)
 
     # Log
     print("Push: done.")
@@ -56,16 +56,15 @@ def kick():
 
     # Command to open the gripper
     print("Action: closing gripper.")
-    gripper.command(0.1)
+    gripper.command(1.2)
 
     # Kick: phase 1 (approach)
     print("Kick: phase 1.")
-    whole_body.move_end_effector_pose(geometry.pose(x=0.15, z=-0.15, ej=-1.57), OBJECT_TF_KICK)
+    whole_body.move_end_effector_pose(geometry.pose(x=0.12, z=-0.3, ej=-1.57), OBJECT_TF_KICK)
 
     # Kick: phase 1 (kick)
     print("Kick: phase 2.")
-    whole_body.move_to_joint_positions({'wrist_flex_joint': 1.0})
-    # whole_body.move_end_effector_pose(geometry.pose(x=0.2, z=0.2), OBJECT_TF_KICK)
+    whole_body.move_end_effector_pose(geometry.pose(x=0.12, z=0.4), OBJECT_TF_KICK)
 
     # Log
     print("Kick: done.")
@@ -95,7 +94,7 @@ def grasp():
 
     # Wait time for simulator's grasp hack. Not needed on actual robot
     print("Grasp: simulator hack.")
-    rospy.sleep(2.0)
+    # rospy.sleep(2.0)
 
     # Transit to neutral position
     print("Grasp: neutral pose transition.")
@@ -108,7 +107,7 @@ def grasp():
     # Release object
     print("Grasp: object drop.")
     gripper.command(1.2)
-    rospy.sleep(2.0)
+    # rospy.sleep(2.0)
 
     # Rotate to initial pose
     print("Grasp: 180 degree rotation.")

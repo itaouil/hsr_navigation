@@ -8,18 +8,19 @@ const bool DEBUGCONTROL(true);
 const bool DEBUGPERCEPTION(true);
 const bool DEBUGNAVIGATION(true);
 
-// Planner parameters
+// Planner parameters (new)
 const bool BACKUPPLAN(false);
 const float ROBOTRADIUS(0.215);
 const unsigned int OBJMOVCOST(2);
-//const float INFLATIONRADIUS(0.8);
+const float INFLATIONRADIUS(0.8);
 const unsigned int MOVINGCOST(11);
 const unsigned int ENTERCOST(100);
 const unsigned int CHANGEOBJECTCOST(250);
-const unsigned int EXTRAINFLATION(5);
+const unsigned int EXTRAINFLATION(3);
 
 // Navigation parameters
 const std::string PLANNER_REQ("/hsr_navigation/srvReq");
+const std::string PLANNER_RES("/hsr_navigation/srvRes");
 const std::string STATIC_MAP("/hsr_navigation/static_map");
 const std::string GLOBAL_COSTMAP("/hsr_navigation/global_costmap/costmap");
 

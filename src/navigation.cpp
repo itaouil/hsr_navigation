@@ -42,7 +42,8 @@ Navigation::~Navigation()
 void Navigation::initialize()
 {
     // Clutter planner request publisher
-    m_srvPub = m_nh.advertise<hsr_navigation::PlannerServiceReq>(PLANNER_REQ, 1);
+    m_srvReq = m_nh.advertise<hsr_navigation::PlannerServiceReq>(PLANNER_REQ, 1);
+    m_srvRes = m_nh.advertise<hsr_navigation::PlannerServiceReq>(PLANNER_RES, 1);
 
     // Static map publisher
     m_mapPub = m_nh.advertise<nav_msgs::OccupancyGrid>(STATIC_MAP, 1);
@@ -128,13 +129,16 @@ void Navigation::requestPlan()
     populatePlannerRequest(l_service);
 
     // Publish request
-    m_srvPub.publish(l_service.request);
+    m_srvReq.publish(l_service.request);
 
     // Call service
     if (l_client.call(l_service))
     {
         // Store computed path
         m_globalPath = l_service.response.path;
+
+        // Publish service response
+        m_srvRes.publish(l_service.response);
         
         if (DEBUGNAVIGATION)
         {
@@ -181,8 +185,8 @@ void Navigation::populatePlannerRequest(hsr_navigation::PlannerService &p_servic
     // Goal pose
     geometry_msgs::PoseStamped l_goal;
     l_goal.header.frame_id = "map";
-    l_goal.pose.position.x = 2.85;
-	l_goal.pose.position.y = 0.83;
+    l_goal.pose.position.x = 2.78;
+	l_goal.pose.position.y = -0.01;
     l_goal.pose.position.z = 0;
     l_goal.pose.orientation.x = 0;
     l_goal.pose.orientation.y = 0;

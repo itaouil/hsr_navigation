@@ -9,15 +9,13 @@ from cv_bridge import CvBridge, CvBridgeError
 # Instantiate CvBridge
 bridge = CvBridge()
 
-lowH, lowS, lowV = 43, 91, 0
-highH, highS, highV = 88, 223, 76
+lowH, lowS, lowV = 0,255,0
+highH, highS, highV = 0,255,255
 
 lower_hsv = np.array([lowH, lowS, lowV])
 higher_hsv = np.array([highH, highS, highV])
 
 def image_callback(msg):
-    print("Received an image!")
-
     try:
         # Convert your ROS Image message to OpenCV2
         cv2_img = bridge.imgmsg_to_cv2(msg, "bgr8")
@@ -28,7 +26,7 @@ def image_callback(msg):
 
         cv2_img = cv2.bitwise_and(cv2_img, cv2_img, mask=mask)
 
-        cv2.imshow('image', cv2_img)
+        cv2.imshow('image', mask)
         cv2.waitKey(3)
     except CvBridgeError as e:
         print(e)

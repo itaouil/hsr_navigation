@@ -5,7 +5,7 @@
  * Default constructor.
  */
 Control::Control(tf2_ros::Buffer &p_buf, 
-                 tf2_ros::TransformListener &p_tf, 
+                 tf2_ros::TransformListener &p_tf,
                  costmap_2d::Costmap2DROS* p_lc, 
                  costmap_2d::Costmap2DROS* p_gc):
     m_buffer(p_buf), m_tf(p_tf), m_localCostmapROS(p_lc), m_globalCostmapROS(p_gc)
@@ -203,8 +203,60 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
 
         for (int x = 0; x < p_obstacles.size(); x++)
         {
-            std::cout << "Element: " << x << " ; Object class: " << unsigned(p_obstacles[x].object_class) << std::endl;
+            std::cout << "Element: " << x << ". Object class: " << unsigned(p_obstacles[x].object_class) << std::endl;
         }
+    }
+
+    // Get which object is to be manipulated
+    unsigned int l_objIdx = p_obstacles.size() - 1;
+    // unsigned int l_objIdx = 0;
+
+    // Set action to be performed
+    // based on the obstacles uid 
+    // received by planner
+    if (unsigned(p_obstacles[l_objIdx].object_class) == 3)
+    {
+        // Set action as push
+        // for DWA control check
+        m_pushAction = true;
+    }
+    else if (unsigned(p_obstacles[l_objIdx].object_class) == 5)
+    {
+        // Set action as grasp
+        // for DWA control check
+        m_graspAction = true;
+
+        // Extract x and y pose
+        // of the object in map
+        // coordinate system
+        double l_mx = p_obstacles[0].center_wx;
+        double l_my = p_obstacles[0].center_wy;
+
+        // Set object frame
+        setObjectFrame(l_mx, l_my);
+
+        // Start publishing frame
+        // of the object to be grasped
+        m_publishFrame = true;
+    }
+    else
+    {
+        // Set action as push
+        // for DWA control check
+        m_kickAction = true;
+
+        // Extract x and y pose
+        // of the object in map
+        // coordinate system
+        double l_mx = p_obstacles[0].center_wx;
+        double l_my = p_obstacles[0].center_wy;
+
+        // Set object frame
+        setObjectFrame(l_mx, l_my);
+
+        // Start publishing frame
+        // of the object to be kicked
+        m_publishFrame = true;
     }
 
     // Compute at which index the
@@ -223,73 +275,33 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
         std::cout << "Intermediate: " << l_intermediatePath.size() << std::endl;
     }
 
-    if (!p_obstacles.empty())
-    {
-        // Get which obstacle to manipulate
-        float l_minDistance = 100000000;
-        unsigned int l_objIdx = -1;
-        for (int x = 0; x < p_obstacles.size(); x++)
-        {
-            // Get min distance
-            if (distance(p_path[l_idx], p_obstacles[x].center_cell) < l_minDistance)
-            {
-                l_objIdx = x;
-            }
-        }
-
-        std::cout << "Object ID to be manipulated is: " << l_objIdx << std::endl;
-
-        // Set action to be performed
-        // based on the obstacles uid 
-        // received by planner
-        if (unsigned(p_obstacles[l_objIdx].object_class) == 3)
-        {
-            // Set action as push
-            // for DWA control check
-            m_pushAction = true;
-        }
-        else if (unsigned(p_obstacles[l_objIdx].object_class) == 5)
-        {
-            // Set action as grasp
-            // for DWA control check
-            m_graspAction = true;
-
-            // Extract x and y pose
-            // of the object in map
-            // coordinate system
-            double l_mx = p_obstacles[0].center_wx;
-            double l_my = p_obstacles[0].center_wy;
-
-            // Set object frame
-            setObjectFrame(l_mx, l_my);
-
-            // Start publishing frame
-            // of the object to be grasped
-            m_publishFrame = true;
-        }
-        else
-        {
-            // Set action as push
-            // for DWA control check
-            m_kickAction = true;
-
-            // Extract x and y pose
-            // of the object in map
-            // coordinate system
-            double l_mx = p_obstacles[0].center_wx;
-            double l_my = p_obstacles[0].center_wy;
-
-            // Set object frame
-            setObjectFrame(l_mx, l_my);
-
-            // Start publishing frame
-            // of the object to be kicked
-            m_publishFrame = true;
-        }
-    }
-
     // Set intermediate path
-    dwaControl(l_intermediatePath);    
+    dwaControl(l_intermediatePath);
+
+    // if (!p_obstacles.empty())
+    // {
+    //     // Get which obstacle to manipulate
+    //     float l_minDistance = 100000000;
+    //     unsigned int l_objIdx = -1;
+    //     for (int x = 0; x < p_obstacles.size(); x++)
+    //     {
+    //         // Compute distance
+    //         float l_distance = distance(p_path[l_idx], p_obstacles[x].center_cell);
+
+    //         // Log
+    //         std::cout << "Object: " << unsigned(p_obstacles[x].object_class) << ". Distance: " << l_distance << std::endl; 
+
+    //         // Get min distance
+    //         if (l_distance < l_minDistance)
+    //         {
+    //             l_objIdx = x;
+    //             l_minDistance = l_distance;
+    //         }
+    //     }
+
+    //     std::cout << "Object ID to be manipulated is: " << l_objIdx << std::endl;
+    //     std::cout << "Min distance is: " << l_minDistance << std::endl;    
+    // }
 }
 
 /**
