@@ -2,8 +2,10 @@
 #define PERCEPTION_HPP_
 
 // General imports
+#include <set>
 #include <mutex>
 #include <math.h>
+#include <utility>
 #include <iostream>
 #include <boost/thread/thread.hpp>
 
@@ -83,9 +85,10 @@ private:
     // General members
     std::mutex m_mtx;
     unsigned int m_uid = 1;
+    bool m_firstTime = true;
     bool m_initialized = false;
     bool m_modelInitialized = false;
-    bool m_firstTime = true;
+    std::set<std::pair<int, int>> m_geometry;
 
     // OpenCV members
     cv_bridge::CvImagePtr m_rgbPtr;

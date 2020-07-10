@@ -16,7 +16,7 @@ const float INFLATIONRADIUS(0.8);
 const unsigned int MOVINGCOST(11);
 const unsigned int ENTERCOST(100);
 const unsigned int CHANGEOBJECTCOST(250);
-const unsigned int EXTRAINFLATION(3);
+const unsigned int EXTRAINFLATION(1);
 
 // Navigation parameters
 const std::string PLANNER_REQ("/hsr_navigation/srvReq");

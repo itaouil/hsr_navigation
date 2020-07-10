@@ -43,7 +43,7 @@ void Navigation::initialize()
 {
     // Clutter planner request publisher
     m_srvReq = m_nh.advertise<hsr_navigation::PlannerServiceReq>(PLANNER_REQ, 1);
-    m_srvRes = m_nh.advertise<hsr_navigation::PlannerServiceReq>(PLANNER_RES, 1);
+    m_srvRes = m_nh.advertise<hsr_navigation::PlannerServiceResp>(PLANNER_RES, 1);
 
     // Static map publisher
     m_mapPub = m_nh.advertise<nav_msgs::OccupancyGrid>(STATIC_MAP, 1);

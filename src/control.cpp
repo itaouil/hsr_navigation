@@ -107,7 +107,7 @@ void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
         {
             if (DEBUGCONTROL)
             {
-                ROS_ERROR("Control: DWA velocities computation failed.");
+                // ROS_ERROR("Control: DWA velocities computation failed.");
             }
         }
 

@@ -16,6 +16,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <hsr_navigation/PlannerService.h>
 #include <hsr_navigation/PlannerServiceReq.h>
+#include <hsr_navigation/PlannerServiceResp.h>
 
 // ROS general
 #include "ros/ros.h"

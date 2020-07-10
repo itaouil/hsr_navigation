@@ -9,8 +9,8 @@ from cv_bridge import CvBridge, CvBridgeError
 # Instantiate CvBridge
 bridge = CvBridge()
 
-lowH, lowS, lowV = 0,255,0
-highH, highS, highV = 0,255,255
+lowH, lowS, lowV = 0, 0, 130
+highH, highS, highV = 180, 0, 255
 
 lower_hsv = np.array([lowH, lowS, lowV])
 higher_hsv = np.array([highH, highS, highV])

@@ -151,13 +151,6 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
     cv::Mat l_kickHSV = l_hsv.clone();
     cv::inRange(l_kickHSV, cv::Scalar(0, 0, 130), cv::Scalar(180, 0, 255), l_kickMask);
 
-    cv::imshow("Push Mask", l_pushMask);
-    cv::imshow("Grasp Mask", l_graspMask);
-    cv::imshow("Grasp Mask 2", l_graspMask2);
-    cv::imshow("Kick Mask", l_kickMask);
-
-    cv::waitKey(0);
-
     // // Get pushable object pixel locations
     std::vector<cv::Point> l_pushPixelsLocation;
     cv::findNonZero(l_pushMask, l_pushPixelsLocation);
@@ -174,18 +167,6 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
     std::vector<cv::Point> l_kickPixelsLocation;
     cv::findNonZero(l_kickMask, l_kickPixelsLocation);
 
-    // // Populate push object
-    std::cout << "Number of push pixels: " << l_pushPixelsLocation.size() << std::endl;
-    if (l_pushPixelsLocation.size() > 3500)
-    {
-        if (DEBUGPERCEPTION)
-        {
-            ROS_INFO("Push pixels detected.");
-        }
-
-        populateObjectMessage(3, p_gcm, l_pushPixelsLocation, l_objects);
-    }
-
     // Populate grasp object
     std::cout << "Number of grasp pixels: " << l_graspPixelsLocation.size() << std::endl;
     if (l_graspPixelsLocation.size() > 400 && l_graspPixelsLocation.size() < 4600)
@@ -199,20 +180,20 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
     }
 
     // Populate grasp2 object
-    std::cout << "Number of grasp2 pixels: " << l_graspPixelsLocation2.size() << std::endl;
-    if (l_graspPixelsLocation2.size() > 400 && l_graspPixelsLocation2.size() < 4600)
-    {
-        if (DEBUGPERCEPTION)
-        {
-            ROS_INFO("Grasp2 pixels detected.");
-        }
+    // std::cout << "Number of grasp2 pixels: " << l_graspPixelsLocation2.size() << std::endl;
+    // if (l_graspPixelsLocation2.size() > 400 && l_graspPixelsLocation2.size() < 4600)
+    // {
+    //     if (DEBUGPERCEPTION)
+    //     {
+    //         ROS_INFO("Grasp2 pixels detected.");
+    //     }
 
-        populateObjectMessage(5, p_gcm, l_graspPixelsLocation2, l_objects);
-    }
+    //     populateObjectMessage(5, p_gcm, l_graspPixelsLocation2, l_objects);
+    // }
 
     // Populate kick object
     std::cout << "Number of kick pixels: " << l_kickPixelsLocation.size() << std::endl;
-    if (l_kickPixelsLocation.size() > 300 && l_kickPixelsLocation.size() < 4800)
+    if (l_kickPixelsLocation.size() > 250 && l_kickPixelsLocation.size() < 4800)
     {
         if (DEBUGPERCEPTION)
         {
@@ -222,11 +203,30 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
         populateObjectMessage(1, p_gcm, l_kickPixelsLocation, l_objects);
     }
 
+    // // Populate push object
+    std::cout << "Number of push pixels: " << l_pushPixelsLocation.size() << std::endl;
+    if (l_pushPixelsLocation.size() > 3500)
+    {
+        if (DEBUGPERCEPTION)
+        {
+            ROS_INFO("Push pixels detected.");
+        }
+
+        populateObjectMessage(3, p_gcm, l_pushPixelsLocation, l_objects);
+    }
+
     // Reset m_uid
     m_uid = 1;
 
     // Set flag
     m_firstTime = false;
+
+    cv::imshow("Push Mask", l_pushMask);
+    cv::imshow("Grasp Mask", l_graspMask);
+    cv::imshow("Grasp Mask 2", l_graspMask2);
+    cv::imshow("Kick Mask", l_kickMask);
+
+    cv::waitKey(0);
 
     return l_objects;
 }
@@ -300,10 +300,6 @@ void Perception::populateObjectMessage(const unsigned int p_action,
             geometry_msgs::PointStamped l_3dPointMapFrame;
             transformPoint(FRAME_ID, l_3dPointMapFrame, l_3dPointRGBDFrame);
 
-            // Aggregate means
-            l_meanX += l_3dPointMapFrame.point.x;
-            l_meanY += l_3dPointMapFrame.point.y;
-
             // World coord. to map coord. conversion
             int l_mx;
             int l_my;
@@ -312,13 +308,29 @@ void Perception::populateObjectMessage(const unsigned int p_action,
                                            l_mx, 
                                            l_my);
 
-            // Populate cell message vector
-            hsr_navigation::CellMessage l_cellMessage;
-            l_cellMessage.mx = l_mx;
-            l_cellMessage.my = l_my;
+            // Populate vector with new
+            // cell only if not already
+            // present in the geometry set
+            // in order to avoid planner issues
+            // due to overlapping cells
+            std::pair<int, int> l_cellPair = std::make_pair(l_mx, l_my);
+            if (!(m_geometry.find(l_cellPair) != m_geometry.end()))
+            {
+                // Add new element to set
+                m_geometry.insert(l_cellPair);
 
-            // Populate vector
-            l_cellMessages.push_back(l_cellMessage);
+                // Create cell message
+                hsr_navigation::CellMessage l_cellMessage;
+                l_cellMessage.mx = l_mx;
+                l_cellMessage.my = l_my;
+
+                // Populate cell message vector
+                l_cellMessages.push_back(l_cellMessage);
+
+                // Aggregate means
+                l_meanX += l_3dPointMapFrame.point.x;
+                l_meanY += l_3dPointMapFrame.point.y;
+            }
         }
         catch (tf2::TransformException &e)
         {
