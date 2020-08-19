@@ -1,0 +1,26 @@
+<annotation>
+	<folder>images</folder>
+	<filename>image397.jpg</filename>
+	<path>/home/hrl/Downloads/images/image397.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>3840</width>
+		<height>2160</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>push</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>1184</xmin>
+			<ymin>356</ymin>
+			<xmax>2611</xmax>
+			<ymax>1477</ymax>
+		</bndbox>
+	</object>
+</annotation>

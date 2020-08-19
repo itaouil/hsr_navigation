@@ -1,0 +1,26 @@
+<annotation>
+	<folder>images</folder>
+	<filename>image305.jpg</filename>
+	<path>/home/hrl/Downloads/images/image305.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>3840</width>
+		<height>2160</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>grasp</name>
+		<pose>Unspecified</pose>
+		<truncated>1</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>161</xmin>
+			<ymin>633</ymin>
+			<xmax>2467</xmax>
+			<ymax>2160</ymax>
+		</bndbox>
+	</object>
+</annotation>

@@ -64,7 +64,7 @@ def kick():
 
     # Kick: phase 1 (kick)
     print("Kick: phase 2.")
-    whole_body.move_end_effector_pose(geometry.pose(x=0.12, z=0.4), OBJECT_TF_KICK)
+    whole_body.move_end_effector_pose(geometry.pose(x=0.12, z=0.6), OBJECT_TF_KICK)
 
     # Log
     print("Kick: done.")
@@ -94,6 +94,8 @@ def grasp():
 
     # Wait time for simulator's grasp hack. Not needed on actual robot
     print("Grasp: simulator hack.")
+
+    # Uncomment if working in simulation
     # rospy.sleep(2.0)
 
     # Transit to neutral position
@@ -107,6 +109,8 @@ def grasp():
     # Release object
     print("Grasp: object drop.")
     gripper.command(1.2)
+
+    # Uncomment if working in simulation
     # rospy.sleep(2.0)
 
     # Rotate to initial pose

@@ -1,0 +1,26 @@
+<annotation>
+	<folder>images</folder>
+	<filename>image158.jpeg</filename>
+	<path>/home/hrl/catkin_ws/src/hsr_navigation/scripts/images/image158.jpeg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>640</width>
+		<height>480</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>push</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>157</xmin>
+			<ymin>204</ymin>
+			<xmax>428</xmax>
+			<ymax>474</ymax>
+		</bndbox>
+	</object>
+</annotation>

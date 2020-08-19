@@ -69,6 +69,7 @@ private:
     void lookDown();
     void initialize();
     void setCameraInfo(sensor_msgs::CameraInfo);
+    bool pointWithinOffset(const unsigned int, const geometry_msgs::PointStamped&);
     void setRGBD(const sensor_msgs::ImageConstPtr&, const sensor_msgs::ImageConstPtr&);
     void transformPoint(const std::string&, 
                         geometry_msgs::PointStamped&, 

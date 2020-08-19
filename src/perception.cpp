@@ -139,7 +139,7 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
     // Define grasp action mask
     cv::Mat l_graspMask;
     cv::Mat l_graspHSV = l_hsv.clone();
-    cv::inRange(l_graspHSV, cv::Scalar(23,168,0), cv::Scalar(29,193,255), l_graspMask);
+    cv::inRange(l_graspHSV, cv::Scalar(21,64,119), cv::Scalar(30,238,255), l_graspMask);
 
     // Define grasp action mask 2
     cv::Mat l_graspMask2;
@@ -149,7 +149,7 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
     // Define kick action mask
     cv::Mat l_kickMask;
     cv::Mat l_kickHSV = l_hsv.clone();
-    cv::inRange(l_kickHSV, cv::Scalar(0, 0, 130), cv::Scalar(180, 0, 255), l_kickMask);
+    cv::inRange(l_kickHSV, cv::Scalar(0,0,140), cv::Scalar(180,41,255), l_kickMask);
 
     // // Get pushable object pixel locations
     std::vector<cv::Point> l_pushPixelsLocation;
@@ -169,7 +169,8 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
 
     // Populate grasp object
     std::cout << "Number of grasp pixels: " << l_graspPixelsLocation.size() << std::endl;
-    if (l_graspPixelsLocation.size() > 400 && l_graspPixelsLocation.size() < 4600)
+    // if (l_graspPixelsLocation.size() > 400 && l_graspPixelsLocation.size() < 4600)
+    if (l_graspPixelsLocation.size() > 0)
     {
         if (DEBUGPERCEPTION)
         {
@@ -193,7 +194,8 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
 
     // Populate kick object
     std::cout << "Number of kick pixels: " << l_kickPixelsLocation.size() << std::endl;
-    if (l_kickPixelsLocation.size() > 250 && l_kickPixelsLocation.size() < 4800)
+    // if (l_kickPixelsLocation.size() > 250 && l_kickPixelsLocation.size() < 4800)
+    if (l_kickPixelsLocation.size() > 0)
     {
         if (DEBUGPERCEPTION)
         {
@@ -205,7 +207,8 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
 
     // // Populate push object
     std::cout << "Number of push pixels: " << l_pushPixelsLocation.size() << std::endl;
-    if (l_pushPixelsLocation.size() > 3500)
+    // if (l_pushPixelsLocation.size() > 3500)
+    if (l_pushPixelsLocation.size() > 0)
     {
         if (DEBUGPERCEPTION)
         {
@@ -223,7 +226,7 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
 
     cv::imshow("Push Mask", l_pushMask);
     cv::imshow("Grasp Mask", l_graspMask);
-    cv::imshow("Grasp Mask 2", l_graspMask2);
+    // cv::imshow("Grasp Mask 2", l_graspMask2);
     cv::imshow("Kick Mask", l_kickMask);
 
     cv::waitKey(0);
@@ -308,6 +311,16 @@ void Perception::populateObjectMessage(const unsigned int p_action,
                                            l_mx, 
                                            l_my);
 
+            // This is a hack that allows to
+            // filter out points that do not
+            // actually belong to the object
+            // itself
+            if (!pointWithinOffset(p_action, l_3dPointMapFrame))
+            {
+                // std::cout << "Point within offset: " << p_action << std::endl;
+                continue;
+            }
+
             // Populate vector with new
             // cell only if not already
             // present in the geometry set
@@ -346,6 +359,7 @@ void Perception::populateObjectMessage(const unsigned int p_action,
     }
 
     // Compute final mean point
+    std::cout << "Size: " << l_cellMessages.size();
     l_meanX /= l_cellMessages.size();
     l_meanY /= l_cellMessages.size();
 
@@ -470,5 +484,35 @@ void Perception::lookDown()
     if (DEBUGPERCEPTION)
     {
         ROS_INFO("Perception: head control trajectory sent.");
+    }
+}
+
+bool Perception::pointWithinOffset(const unsigned int p_action,
+                                   const geometry_msgs::PointStamped &p_w)
+{
+    // Check point offsets
+    if (p_action == 3)
+    {
+        float l_xdiff = abs(BOXMEAN.first) - abs(p_w.point.x);
+        float l_ydiff = abs(BOXMEAN.second) - abs(p_w.point.y);
+        // std::cout << "BOX X DIFF: " << abs(l_xdiff) << std::endl;
+        // std::cout << "BOX Y DIFF: " << abs(l_ydiff) << std::endl;
+        return (abs(l_xdiff) <= XBOXOFFSET && abs(l_ydiff) <= YBOXOFFSET);
+    }
+    else if (p_action == 1)
+    {
+        float l_xdiff = abs(BALLMEAN.first) - abs(p_w.point.x);
+        float l_ydiff = abs(BALLMEAN.second) - abs(p_w.point.y);
+        // std::cout << "BALL X DIFF: " << abs(l_xdiff) << std::endl;
+        // std::cout << "BALL Y DIFF: " << abs(l_ydiff) << std::endl;
+        return (abs(l_xdiff) <= XBALLOFFSET && abs(l_ydiff) <= YBALLOFFSET);
+    }
+    else
+    {
+        float l_xdiff = abs(PIKAMEAN.first) - abs(p_w.point.x);
+        float l_ydiff = abs(PIKAMEAN.second) - abs(p_w.point.y);
+        // std::cout << "PIKA X DIFF: " << abs(l_xdiff) << std::endl;
+        // std::cout << "PIKA Y DIFF: " << abs(l_ydiff) << std::endl;
+        return (abs(l_xdiff) <= XPIKAOFFSET && abs(l_ydiff) <= YPIKAOFFSET);
     }
 }

@@ -222,6 +222,7 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
     }
     else if (unsigned(p_obstacles[l_objIdx].object_class) == 5)
     {
+        std::cout << "Grasp control action set...." << std::endl;
         // Set action as grasp
         // for DWA control check
         m_graspAction = true;

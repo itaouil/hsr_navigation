@@ -9,8 +9,8 @@ from cv_bridge import CvBridge, CvBridgeError
 # Instantiate CvBridge
 bridge = CvBridge()
 
-lowH, lowS, lowV = 0, 0, 130
-highH, highS, highV = 180, 0, 255
+lowH, lowS, lowV = 0,0,140
+highH, highS, highV = 180,41,255
 
 lower_hsv = np.array([lowH, lowS, lowV])
 higher_hsv = np.array([highH, highS, highV])
@@ -20,14 +20,20 @@ def image_callback(msg):
         # Convert your ROS Image message to OpenCV2
         cv2_img = bridge.imgmsg_to_cv2(msg, "bgr8")
 
-        hsv = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2HSV)
+        time = msg.header.stamp
 
-        mask = cv2.inRange(hsv, lower_hsv, higher_hsv)
+        # Save images
+        cv2.imwrite(''+str(time)+'.jpeg', cv2_img)
+        rospy.sleep(1)
 
-        cv2_img = cv2.bitwise_and(cv2_img, cv2_img, mask=mask)
+        # hsv = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2HSV)
 
-        cv2.imshow('image', mask)
-        cv2.waitKey(3)
+        # mask = cv2.inRange(hsv, lower_hsv, higher_hsv)
+
+        # cv2_img = cv2.bitwise_and(cv2_img, cv2_img, mask=mask)
+
+        # cv2.imshow('image', mask)
+        # cv2.waitKey(3)
     except CvBridgeError as e:
         print(e)
 

@@ -1,0 +1,26 @@
+<annotation>
+	<folder>images</folder>
+	<filename>image334.jpg</filename>
+	<path>/home/hrl/Downloads/images/image334.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>3840</width>
+		<height>2160</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>kick</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>1299</xmin>
+			<ymin>544</ymin>
+			<xmax>2255</xmax>
+			<ymax>1486</ymax>
+		</bndbox>
+	</object>
+</annotation>
