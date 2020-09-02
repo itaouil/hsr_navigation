@@ -94,16 +94,11 @@ void Perception::setRGBD(const sensor_msgs::ImageConstPtr& p_rgb,
  */
 std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::Costmap2D *p_gcm)
 {
-    // Make head look down
+    // // Make head look down
     if (!m_firstTime)
     {
         lookDown();
     }
-
-    // Sleep for two seconds to
-    // avoid problems with illumination
-    // changes while head is moving
-    ros::Duration(2).sleep();
 
     if (DEBUGPERCEPTION)
     {
@@ -121,101 +116,59 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
         return l_objects;
     }
 
-    // Convert the RGB image
-    // to an HSV color space
-    cv::Mat l_hsv;
-    cv::cvtColor(m_rgbPtr->image, l_hsv, cv::COLOR_BGR2HSV);
+    // Create service client
+    ros::ServiceClient l_client;
+    l_client = m_nh.serviceClient<hsr_navigation::DetectionService>("detection_service");
 
-    if (DEBUGPERCEPTION)
-    {
-        ROS_INFO("Perception: converted BGR to HSV");
+    // Populate request
+    hsr_navigation::DetectionService l_service;
+    l_service.request.image = *(cv_bridge::CvImage(std_msgs::Header(), "bgr8", m_rgbPtr->image).toImageMsg());
+
+    // Call service
+    if (l_client.call(l_service))
+    { 
+        // Store labels and points
+        m_labels = l_service.response.labels.data;
+        m_points2d = l_service.response.points.data;
+
+        if (DEBUGPERCEPTION)
+        {
+            ROS_INFO("Detection service called successfully");
+        }
     }
-
-    // Define push action mask
-    cv::Mat l_pushMask;
-    cv::Mat l_pushHSV = l_hsv.clone();
-    cv::inRange(l_pushHSV, cv::Scalar(0, 0, 0), cv::Scalar(180, 255, 0), l_pushMask);
-
-    // Define grasp action mask
-    cv::Mat l_graspMask;
-    cv::Mat l_graspHSV = l_hsv.clone();
-    cv::inRange(l_graspHSV, cv::Scalar(21,64,119), cv::Scalar(30,238,255), l_graspMask);
-
-    // Define grasp action mask 2
-    cv::Mat l_graspMask2;
-    cv::Mat l_graspHSV2 = l_hsv.clone();
-    cv::inRange(l_graspHSV2, cv::Scalar(0,255,0), cv::Scalar(0,255,255), l_graspMask2);
-
-    // Define kick action mask
-    cv::Mat l_kickMask;
-    cv::Mat l_kickHSV = l_hsv.clone();
-    cv::inRange(l_kickHSV, cv::Scalar(0,0,140), cv::Scalar(180,41,255), l_kickMask);
-
-    // // Get pushable object pixel locations
-    std::vector<cv::Point> l_pushPixelsLocation;
-    cv::findNonZero(l_pushMask, l_pushPixelsLocation);
-
-    // Get graspable object pixel locations
-    std::vector<cv::Point> l_graspPixelsLocation;
-    cv::findNonZero(l_graspMask, l_graspPixelsLocation);
-
-    // Get graspable object2 pixel locations
-    std::vector<cv::Point> l_graspPixelsLocation2;
-    cv::findNonZero(l_graspMask2, l_graspPixelsLocation2);
-
-    // Get kick object pixel locations
-    std::vector<cv::Point> l_kickPixelsLocation;
-    cv::findNonZero(l_kickMask, l_kickPixelsLocation);
-
-    // Populate grasp object
-    std::cout << "Number of grasp pixels: " << l_graspPixelsLocation.size() << std::endl;
-    // if (l_graspPixelsLocation.size() > 400 && l_graspPixelsLocation.size() < 4600)
-    if (l_graspPixelsLocation.size() > 0)
+    else
     {
         if (DEBUGPERCEPTION)
         {
-            ROS_INFO("Grasp pixels detected.");
-        }
-
-        populateObjectMessage(5, p_gcm, l_graspPixelsLocation, l_objects);
+            ROS_ERROR("Failed to call detection service...");
+        }     
     }
 
-    // Populate grasp2 object
-    // std::cout << "Number of grasp2 pixels: " << l_graspPixelsLocation2.size() << std::endl;
-    // if (l_graspPixelsLocation2.size() > 400 && l_graspPixelsLocation2.size() < 4600)
-    // {
-    //     if (DEBUGPERCEPTION)
-    //     {
-    //         ROS_INFO("Grasp2 pixels detected.");
-    //     }
-
-    //     populateObjectMessage(5, p_gcm, l_graspPixelsLocation2, l_objects);
-    // }
-
-    // Populate kick object
-    std::cout << "Number of kick pixels: " << l_kickPixelsLocation.size() << std::endl;
-    // if (l_kickPixelsLocation.size() > 250 && l_kickPixelsLocation.size() < 4800)
-    if (l_kickPixelsLocation.size() > 0)
+    // Process object pixels (received from detection module)
+    for (int x = 0; x < m_labels.size(); x++)
     {
-        if (DEBUGPERCEPTION)
+        // Initialize action
+        int l_action = -1;
+
+        // Choose action based on label
+        if (m_labels[x] == "grasp")
         {
-            ROS_INFO("Kick pixels detected.");
+            l_action = 5;
+        }
+        else if (m_labels[x] == "kick")
+        {
+            l_action = 1;
+        }
+        else
+        {
+            l_action = 3;
         }
 
-        populateObjectMessage(1, p_gcm, l_kickPixelsLocation, l_objects);
-    }
+        std::cout << "Now processing: " << m_labels[x] << std::endl;
+        std::cout << "Number of pixels to it: " << m_points2d[x].data.size() << std::endl;
 
-    // // Populate push object
-    std::cout << "Number of push pixels: " << l_pushPixelsLocation.size() << std::endl;
-    // if (l_pushPixelsLocation.size() > 3500)
-    if (l_pushPixelsLocation.size() > 0)
-    {
-        if (DEBUGPERCEPTION)
-        {
-            ROS_INFO("Push pixels detected.");
-        }
-
-        populateObjectMessage(3, p_gcm, l_pushPixelsLocation, l_objects);
+        // Process object pixels
+        populateObjectMessage(l_action, p_gcm, m_points2d[x].data, l_objects);
     }
 
     // Reset m_uid
@@ -223,13 +176,6 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
 
     // Set flag
     m_firstTime = false;
-
-    cv::imshow("Push Mask", l_pushMask);
-    cv::imshow("Grasp Mask", l_graspMask);
-    // cv::imshow("Grasp Mask 2", l_graspMask2);
-    cv::imshow("Kick Mask", l_kickMask);
-
-    cv::waitKey(0);
 
     return l_objects;
 }
@@ -240,7 +186,7 @@ std::vector<hsr_navigation::ObjectMessage> Perception::getObstacles(costmap_2d::
  */
 void Perception::populateObjectMessage(const unsigned int p_action,
                                        costmap_2d::Costmap2D *p_gcm,
-                                       const std::vector<cv::Point> &p_locations,
+                                       const std::vector<hsr_navigation::Point> &p_locations,
                                        std::vector<hsr_navigation::ObjectMessage> &p_objs)
 {
     if (DEBUGPERCEPTION)
@@ -260,10 +206,11 @@ void Perception::populateObjectMessage(const unsigned int p_action,
         {   
             // Convert depth to meters
             l_depth *= 0.001;
-
+            
             // Compute world coordinates for
             // every pixel location in 2D
-            cv::Point3d l_3dPoint = m_phcm.projectPixelTo3dRay(l_point);
+            cv::Point2d l_2dPoint(l_point.x, l_point.y);
+            cv::Point3d l_3dPoint = m_phcm.projectPixelTo3dRay(l_2dPoint);
             l_3dPoint *= l_depth;
 
             // Create point stamped object
@@ -298,7 +245,7 @@ void Perception::populateObjectMessage(const unsigned int p_action,
     for (auto l_3dPointRGBDFrame: l_3dPoints)
     {
         try
-        {            
+        {
             // RGB-D to map transformation
             geometry_msgs::PointStamped l_3dPointMapFrame;
             transformPoint(FRAME_ID, l_3dPointMapFrame, l_3dPointRGBDFrame);
@@ -310,16 +257,6 @@ void Perception::populateObjectMessage(const unsigned int p_action,
                                            l_3dPointMapFrame.point.y, 
                                            l_mx, 
                                            l_my);
-
-            // This is a hack that allows to
-            // filter out points that do not
-            // actually belong to the object
-            // itself
-            if (!pointWithinOffset(p_action, l_3dPointMapFrame))
-            {
-                // std::cout << "Point within offset: " << p_action << std::endl;
-                continue;
-            }
 
             // Populate vector with new
             // cell only if not already
@@ -468,7 +405,7 @@ void Perception::lookDown()
     l_traj.points.resize(1);
     l_traj.points[0].positions.resize(2);
     l_traj.points[0].positions[0] = 0.0;
-    l_traj.points[0].positions[1] = -0.7;
+    l_traj.points[0].positions[1] = -0.5;
     l_traj.points[0].velocities.resize(2);
     for (size_t i = 0; i < 2; ++i) {
         l_traj.points[0].velocities[i] = 0.0;
@@ -485,34 +422,13 @@ void Perception::lookDown()
     {
         ROS_INFO("Perception: head control trajectory sent.");
     }
-}
 
-bool Perception::pointWithinOffset(const unsigned int p_action,
-                                   const geometry_msgs::PointStamped &p_w)
-{
-    // Check point offsets
-    if (p_action == 3)
-    {
-        float l_xdiff = abs(BOXMEAN.first) - abs(p_w.point.x);
-        float l_ydiff = abs(BOXMEAN.second) - abs(p_w.point.y);
-        // std::cout << "BOX X DIFF: " << abs(l_xdiff) << std::endl;
-        // std::cout << "BOX Y DIFF: " << abs(l_ydiff) << std::endl;
-        return (abs(l_xdiff) <= XBOXOFFSET && abs(l_ydiff) <= YBOXOFFSET);
-    }
-    else if (p_action == 1)
-    {
-        float l_xdiff = abs(BALLMEAN.first) - abs(p_w.point.x);
-        float l_ydiff = abs(BALLMEAN.second) - abs(p_w.point.y);
-        // std::cout << "BALL X DIFF: " << abs(l_xdiff) << std::endl;
-        // std::cout << "BALL Y DIFF: " << abs(l_ydiff) << std::endl;
-        return (abs(l_xdiff) <= XBALLOFFSET && abs(l_ydiff) <= YBALLOFFSET);
-    }
-    else
-    {
-        float l_xdiff = abs(PIKAMEAN.first) - abs(p_w.point.x);
-        float l_ydiff = abs(PIKAMEAN.second) - abs(p_w.point.y);
-        // std::cout << "PIKA X DIFF: " << abs(l_xdiff) << std::endl;
-        // std::cout << "PIKA Y DIFF: " << abs(l_ydiff) << std::endl;
-        return (abs(l_xdiff) <= XPIKAOFFSET && abs(l_ydiff) <= YPIKAOFFSET);
-    }
+    // // Wait for head trajectory
+    // // movement to be finished
+    // // with a timeour of 2 seconds
+    // ros::Time start_time = ros::Time::now();
+    // ros::Duration timeout(3.0);
+    // while(ros::Time::now() - start_time < timeout) {
+    //     ros::spinOnce();
+    // }
 }

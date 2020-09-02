@@ -78,6 +78,7 @@ private:
     bool m_initialized = false;
     bool m_publishFrame = false;
     bool m_postActionPlan = false;
+    bool m_intermediateMotion = false;
 
     // ROS members
     ros::Rate m_rate{10};

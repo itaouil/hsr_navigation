@@ -4,23 +4,6 @@
 #include <utility>
 #include <iostream>
 
-// Obstacles thresholds
-const float XBOXOFFSET(0.2);
-const float YBOXOFFSET(0.18);
-const std::pair<float, float> BOXMEAN = std::make_pair(2.48, -1.09);
-
-// const float XBOXOFFSET(0.2);
-// const float YBOXOFFSET(0.25);
-// const std::pair<float, float> BOXMEAN = std::make_pair(1.94, -0.7);
-
-const float XBALLOFFSET(0.12);
-const float YBALLOFFSET(0.16);
-const std::pair<float, float> BALLMEAN = std::make_pair(1.57, 0.79);
-
-const float XPIKAOFFSET(0.15);
-const float YPIKAOFFSET(0.15);
-const std::pair<float, float> PIKAMEAN = std::make_pair(1.35, -0.84);
-
 // General parameters
 const bool DEBUGCONTROL(true);
 const bool DEBUGPERCEPTION(true);

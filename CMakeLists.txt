@@ -56,6 +56,10 @@ set(OpenCV_LIBS opencv_core opencv_imgproc opencv_calib3d opencv_video opencv_fe
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
+    Point.msg
+    Points.msg
+    Labels.msg
+    Points2D.msg
     CellMessage.msg
     ObjectMessage.msg
     PlannerServiceReq.msg
@@ -67,6 +71,7 @@ add_service_files(
   FILES
   ActionService.srv
   PlannerService.srv
+  DetectionService.srv
 )
 
 ## Generate added messages and services with any dependencies listed here
@@ -74,6 +79,7 @@ generate_messages(
   DEPENDENCIES
     std_msgs
     nav_msgs
+    sensor_msgs
     geometry_msgs
     actionlib_msgs
 )

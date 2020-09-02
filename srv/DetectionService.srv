@@ -1,3 +1,4 @@
-string action
+sensor_msgs/Image image
 ---
-bool output
+hsr_navigation/Labels labels
+hsr_navigation/Points2D points

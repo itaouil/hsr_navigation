@@ -1,0 +1,1 @@
+hsr_navigation/Point[] data

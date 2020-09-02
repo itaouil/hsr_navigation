@@ -176,8 +176,13 @@ void Control::dwaControl(const std::vector<geometry_msgs::PoseStamped> &p_path)
                 m_publishFrame = false;
             }
             
+            // Unset intermediate motion flag
+            m_intermediateMotion = false;
+
             // Request new plan
+            std::cout << "Post action plan called..." << std::endl;
             m_postActionPlan = true;
+            
         }
     }
     else
@@ -209,7 +214,6 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
 
     // Get which object is to be manipulated
     unsigned int l_objIdx = p_obstacles.size() - 1;
-    // unsigned int l_objIdx = 0;
 
     // Set action to be performed
     // based on the obstacles uid 
@@ -217,8 +221,8 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
     if (unsigned(p_obstacles[l_objIdx].object_class) == 3)
     {
         // Set action as push
-        // for DWA control check
-        m_pushAction = true;
+        // for DWA control check (this should be true)
+        m_pushAction = false;
     }
     else if (unsigned(p_obstacles[l_objIdx].object_class) == 5)
     {
@@ -276,33 +280,10 @@ void Control::actionControl(const std::vector<geometry_msgs::PoseStamped> &p_pat
         std::cout << "Intermediate: " << l_intermediatePath.size() << std::endl;
     }
 
+    m_intermediateMotion = true;
+
     // Set intermediate path
     dwaControl(l_intermediatePath);
-
-    // if (!p_obstacles.empty())
-    // {
-    //     // Get which obstacle to manipulate
-    //     float l_minDistance = 100000000;
-    //     unsigned int l_objIdx = -1;
-    //     for (int x = 0; x < p_obstacles.size(); x++)
-    //     {
-    //         // Compute distance
-    //         float l_distance = distance(p_path[l_idx], p_obstacles[x].center_cell);
-
-    //         // Log
-    //         std::cout << "Object: " << unsigned(p_obstacles[x].object_class) << ". Distance: " << l_distance << std::endl; 
-
-    //         // Get min distance
-    //         if (l_distance < l_minDistance)
-    //         {
-    //             l_objIdx = x;
-    //             l_minDistance = l_distance;
-    //         }
-    //     }
-
-    //     std::cout << "Object ID to be manipulated is: " << l_objIdx << std::endl;
-    //     std::cout << "Min distance is: " << l_minDistance << std::endl;    
-    // }
 }
 
 /**
@@ -485,7 +466,7 @@ void Control::stopControl()
  */
 bool Control::actionInCourse()
 {
-    return (m_pushAction || m_graspAction || m_kickAction);
+    return (m_pushAction || m_graspAction || m_kickAction || m_intermediateMotion);
 }
 
 /**

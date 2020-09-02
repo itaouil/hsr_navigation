@@ -17,12 +17,17 @@
 // ROS msg/srv
 #include <sensor_msgs/Image.h>
 #include <geometry_msgs/Point.h>
+#include <hsr_navigation/Point.h>
+#include <hsr_navigation/Points.h>
+#include <hsr_navigation/Labels.h>
 #include <sensor_msgs/CameraInfo.h>
+#include <hsr_navigation/Points2D.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PointStamped.h>
 #include <hsr_navigation/CellMessage.h>
 #include <hsr_navigation/ObjectMessage.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <hsr_navigation/DetectionService.h>
 
 // HSR imports
 #include <trajectory_msgs/JointTrajectory.h>
@@ -76,7 +81,7 @@ private:
                         const geometry_msgs::PointStamped&);
     void populateObjectMessage(const unsigned int,
                                costmap_2d::Costmap2D*,
-                               const std::vector<cv::Point>&,
+                               const std::vector<hsr_navigation::Point>&,
                                std::vector<hsr_navigation::ObjectMessage>&);
 
     /**
@@ -89,7 +94,9 @@ private:
     bool m_firstTime = true;
     bool m_initialized = false;
     bool m_modelInitialized = false;
+    std::vector<std::string> m_labels;
     std::set<std::pair<int, int>> m_geometry;
+    std::vector<hsr_navigation::Points> m_points2d;
 
     // OpenCV members
     cv_bridge::CvImagePtr m_rgbPtr;

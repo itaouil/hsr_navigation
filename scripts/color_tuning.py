@@ -1,40 +1,81 @@
 # #!/usr/bin/env python3
 
 import cv2
+import sys
 import rospy
 import numpy as np
 from sensor_msgs.msg import Image
+
+# Import detecto library
+from detecto import core, utils, visualize
+
+# Drawing variables
+THICKNESS = 2
+COLOR_B = (255, 0, 0) 
+COLOR_G = (0, 255, 0) 
+COLOR_R = (0, 0, 255)
+
+# Load the model
+model = core.Model.load('/home/hrl/catkin_ws/src/hsr_navigation/scripts/model/model2.pth', ['push', 'kick', 'grasp'])
+
 from cv_bridge import CvBridge, CvBridgeError
 
 # Instantiate CvBridge
 bridge = CvBridge()
 
-lowH, lowS, lowV = 0,0,140
-highH, highS, highV = 180,41,255
-
-lower_hsv = np.array([lowH, lowS, lowV])
-higher_hsv = np.array([highH, highS, highV])
-
 def image_callback(msg):
     try:
+        # Convert sensor msg Image into opencv image
+        opencv_image = np.frombuffer(msg.data, dtype=np.uint8).reshape(msg.height, msg.width, -1)
+        opencv_image = opencv_image[...,::-1].copy()
+
         # Convert your ROS Image message to OpenCV2
-        cv2_img = bridge.imgmsg_to_cv2(msg, "bgr8")
+        # opencv_image = bridge.imgmsg_to_cv2(msg, "bgr8")
 
-        time = msg.header.stamp
+        print("Detection: Run prediction.")
 
-        # Save images
-        cv2.imwrite(''+str(time)+'.jpeg', cv2_img)
-        rospy.sleep(1)
+        # Run prediction
+        predictions = model.predict(opencv_image)
 
-        # hsv = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2HSV)
+        # Retrieve data from prediction
+        labels, boxes, scores = predictions
 
-        # mask = cv2.inRange(hsv, lower_hsv, higher_hsv)
+        print("Detection: Labels:", labels)
+        print("Detection: Scores:", scores)
+        print("Detection: Boxes:", boxes)
+        
+        print("Detection: Populating service response.")
 
-        # cv2_img = cv2.bitwise_and(cv2_img, cv2_img, mask=mask)
+        # Populate service response
+        for x in range(len(labels)):
 
-        # cv2.imshow('image', mask)
-        # cv2.waitKey(3)
-    except CvBridgeError as e:
+            # Skip processing low score
+            # detections or object that need
+            # to be pushed
+            if scores[x] < 0.53:
+                continue
+
+            # Get label corners (box)
+            xmin = int(boxes[x][0])
+            xmax = int(boxes[x][2])
+            ymin = int(boxes[x][1])
+            ymax = int(boxes[x][3])
+
+            # Draw rectangles
+            if (labels[x] == "push"):
+                cv2.rectangle(opencv_image, (xmin, ymin), (xmax, ymax), COLOR_B, THICKNESS)
+            
+            if (labels[x] == "grasp"):
+                cv2.rectangle(opencv_image, (xmin, ymin), (xmax, ymax), COLOR_G, THICKNESS)
+        
+            if (labels[x] == "kick"):
+                cv2.rectangle(opencv_image, (xmin, ymin), (xmax, ymax), COLOR_R, THICKNESS)
+            
+        # Displaying the image  
+        cv2.imshow("Detections", opencv_image)
+        cv2.waitKey(3)
+
+    except Exception as e:
         print(e)
 
 def main():

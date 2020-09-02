@@ -55,16 +55,16 @@ def kick():
     manipulation_setup()
 
     # Command to open the gripper
-    print("Action: closing gripper.")
-    gripper.command(1.2)
+    print("Action: opening gripper.")
+    gripper.command(1.3)
 
     # Kick: phase 1 (approach)
     print("Kick: phase 1.")
-    whole_body.move_end_effector_pose(geometry.pose(x=0.12, z=-0.3, ej=-1.57), OBJECT_TF_KICK)
+    whole_body.move_end_effector_pose(geometry.pose(x=0.13, z=-0.3, ej=-1.57), OBJECT_TF_KICK)
 
     # Kick: phase 1 (kick)
     print("Kick: phase 2.")
-    whole_body.move_end_effector_pose(geometry.pose(x=0.12, z=0.6), OBJECT_TF_KICK)
+    whole_body.move_end_effector_pose(geometry.pose(x=0.13, z=1.2), OBJECT_TF_KICK)
 
     # Log
     print("Kick: done.")
@@ -82,11 +82,11 @@ def grasp():
 
     # Grasp: phase 1 (approach)
     print("Grasp: phase 1.")
-    whole_body.move_end_effector_pose(geometry.pose(x=0.1, z=-0.1), OBJECT_TF_GRASP)
+    whole_body.move_end_effector_pose(geometry.pose(x=0.13, z=-0.1), OBJECT_TF_GRASP)
 
     # Grasp: phase 2 (grasp)
     print("Grasp: phase 2.")
-    whole_body.move_end_effector_pose(geometry.pose(x=0.1, z=-0.02), OBJECT_TF_GRASP)
+    whole_body.move_end_effector_pose(geometry.pose(x=0.13, z=-0.02), OBJECT_TF_GRASP)
 
     # Specify the force to grasp
     print("Grasp: closing gripper now.")
