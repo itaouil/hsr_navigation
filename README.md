@@ -2,6 +2,8 @@
 
 Navigation framework for the HSR mobile base robot by Toyota.
 
+You can watch the video demonstrating the package here: https://www.youtube.com/watch?v=IkanTA_ikvA&ab_channel=HumanoidsBonn
+
 ## Compilation
 
 Before being able to run the package, it has to be compiled. To do so start by cloning the project into your directory. This is going to be a two step compilation, where:
